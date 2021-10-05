@@ -1,4 +1,20 @@
 //-----------------------------------------------------------------------------
+// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
+//
+// This software is provided by MATRIX VISION GmbH "as is"
+// and any express or implied warranties, including, but not limited to, the
+// implied warranties of merchantability and fitness for a particular purpose
+// are disclaimed.
+//
+// In no event shall MATRIX VISION GmbH be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused and
+// on any theory of liability, whether in contract, strict liability, or tort
+// (including negligence or otherwise) arising in any way out of the use of
+// this software, even if advised of the possibility of such damage.
+
+//-----------------------------------------------------------------------------
 #ifndef mvDeviceManagerH
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define mvDeviceManagerH mvDeviceManagerH
@@ -13,7 +29,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif // __cplusplus
+#endif // #ifdef __cplusplus
 
 #if defined(MVIMPACT_ACQUIRE_H_) || defined(DOXYGEN_CPP_DOCUMENTATION)
 namespace mvIMPACT
@@ -22,25 +38,31 @@ namespace acquire
 {
 #endif // #if defined(MVIMPACT_ACQUIRE_H_) || defined(DOXYGEN_CPP_DOCUMENTATION)
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifdef DOXYGEN_SHOULD_SKIP_THIS
+#   define __vl_base_h__ // force doxygen to include mvIMPACT related functions
+#else
 #   ifdef _WIN32
 #       define DMR_CALL __stdcall
 #       ifndef WRAP_ANY
 #           define MVDMR_API
-#           ifdef __BORLANDC__ // is Borland compiler?
+#           if defined(__BORLANDC__) // is Borland compiler?
 #               pragma option push -b // force enums to size of integer
-#           endif // __BORLANDC__
+#           endif // #if defined(__BORLANDC__)
 #           ifndef NO_MV_DEVICE_MANAGER_AUTOLINK
-#               ifdef __BORLANDC__ // is Borland compiler?
-#                   pragma comment(lib,"mvDeviceManagerb.lib")
+#               if defined(__BORLANDC__) // is Borland compiler?
+#                   if __CODEGEARC__ >= 0X710
+#                       pragma comment(lib,"mvDeviceManagerb")
+#                   else
+#                       pragma comment(lib,"mvDeviceManagerb.lib")
+#                   endif // #if __CODEGEARC__ >= 0X710
 #                   pragma message( "Automatically linking with mvDeviceManagerb.lib" )
 #               elif defined(_MSC_VER) // is Microsoft compiler?
 #                   pragma comment(lib,"mvDeviceManager.lib")
 #                   pragma message( "Automatically linking with mvDeviceManager.lib" )
-#               endif // __BORLANDC__
-#           endif // NO_MV_DEVICE_MANAGER_AUTOLINK
-#       endif // ifndef WRAP_ANY
-#   else // not _WIN32
+#               endif // #if defined(__BORLANDC__)
+#           endif // #ifndef NO_MV_DEVICE_MANAGER_AUTOLINK
+#       endif // #ifndef WRAP_ANY
+#   else // #ifdef _WIN32
 #       ifndef WRAP_ANY
 #           if __GNUC__ >= 4
 #               define MVDMR_API __attribute__ ((visibility ("default")))
@@ -49,11 +71,7 @@ namespace acquire
 #           endif // #if __GNUC__ >= 4
 #       endif // ifndef WRAP_ANY
 #       define DMR_CALL
-#   endif // _WIN32
-#endif // DOXYGEN_SHOULD_SKIP_THIS
-
-#ifdef DOXYGEN_SHOULD_SKIP_THIS
-#   define __vl_base_h__ // force doxygen to include mvIMPACT related functions
+#   endif // #ifdef _WIN32
 #endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifdef __GNUC__
@@ -65,7 +83,7 @@ namespace acquire
 
 #if !defined(MVIMPACT_DEPRECATED_C) && !defined(DOXYGEN_SHOULD_SKIP_THIS)
 #   if !defined(MVIMPACT_ACQUIRE_H_) && !defined(NO_MVIMPACT_DEPRECATED_C_WARNINGS)
-#       if defined(__GNUC__) && (__GNUC__ >= 3) && defined(__GNUC_MINOR__) && (__GNUC_MINOR__ >= 1) // is at least GCC 3.1 compiler?
+#       if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__ ) >= 301) // is at least GCC 3.1 compiler?
 #           define MVIMPACT_DEPRECATED_C(FUNCTION) FUNCTION __attribute__ ((deprecated))
 #       elif defined(_MSC_VER) && (_MSC_VER >= 1310) // is at least VC 2003 compiler?
 #           define MVIMPACT_DEPRECATED_C(FUNCTION) __declspec(deprecated) FUNCTION
@@ -82,8 +100,9 @@ namespace acquire
 /**
  *  Channel specific data in an image is data, that in e.g. and RGB image
  *  might differ for the color components red, green and blue.
+ *
+ * \ingroup CommonInterface
  */
-/// \ingroup CommonInterface
 struct ChannelData
 //-----------------------------------------------------------------------------
 {
@@ -109,8 +128,9 @@ typedef struct ChannelData ChannelData;
 /// \brief Fully describes a captured image.
 /**
  *  This class serves as a describing structure for captured images.
+ *
+ * \ingroup CommonInterface
  */
-/// \ingroup CommonInterface
 struct ImageBuffer
 //-----------------------------------------------------------------------------
 {
@@ -137,12 +157,29 @@ struct ImageBuffer
      *  This address in connection with <b>mvIMPACT::acquire::ImageBuffer::iSize</b>
      *  is sufficient to copy the complete image without having any additional information about it.
      *
+     * \if (DOXYGEN_CPP_DOCUMENTATION || DOXYGEN_C_DOCUMENTATION)
      *  <b>EXAMPLE:</b><br><br>
      * \code
      *  const ImageBuffer* pib = getImageBufferFromSomewhere();
      *  unsigned char* pTempBuf = new unsigned char[ib.iSize];
      *  memcpy( pTempBuf, pib.vpData, pIB.iSize );
      * \endcode
+     * \elseif DOXYGEN_NET_DOCUMENTATION
+     * \attention To copy this data from within a .NET environment the appropriate marshaling functions must be used!
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \attention Do \b NOT use this pointer in Java! It references native, unmanaged memory and cannot be copied directly into
+     * a piece of managed Java memory. Use <b>mvIMPACT::acquire::ImageBufferDesc::copy()</b> instead (see code below)!
+     * \code
+     *  byte[] data = new byte[pRequest.getImageSize().read()];
+     *  pRequest.getImageBufferDesc().copy( data );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \attention There are various ways to access the data captured into a request object. One way would be by using the \c ctypes module:
+     * \code
+     *  ib = getImageBufferFromSomewhere()
+     *  cbuf = (ctypes.c_char * ib.iSize).from_address(int(ib.vpData))
+     * \endcode
+     * \endif
      *
      *  \note
      *  It's not always necessary to copy the image data! Each <b>mvIMPACT::acquire::ImageBuffer</b> is an
@@ -192,15 +229,23 @@ struct RequestInfo
      *  the property.
      *
      *  \attention
-     *  with version 2.4.0 this feature internally became a 64-bit value thus in order not to get truncated data the use of this parameter
-     *  from this structure is discouraged. Use direct access functions to the \a FrameID property of each request instead!
+     *  with version 2.4.0 this feature internally became a 64-bit value as certain supported standards (e.g. GigE Vision 2.x) using 64-bit identifiers for
+     *  tagging blocks of data. Thus in order not to get truncated data the use of this parameter
+     *  from this structure is discouraged. Use direct access functions to the \a FrameID property of each request instead! How to achieve this can e.g.
+     *  be seen in the source code of the function \c getRequestProp of \c exampleHelper_C.c. In this case \c FrameID should be passed as \c pPropName.
+     *  Not doing so might result in wraparounds back to 0 after 2^32 blocks of data have been captured even when the internal accurate value would be
+     *  0x0000000100000000.
      */
     int frameID;
     /// \brief The number of images captured since the driver has been initialised including the current image.
     /**
      *  \attention
-     *  with version 2.4.0 this feature internally became a 64-bit value thus in order not to get truncated data the use of this parameter
-     *  from this structure is discouraged. Use direct access functions to the \a FrameNr property of each request instead!
+     *  with version 2.4.0 this feature internally became a 64-bit value as certain supported standards (e.g. GigE Vision 2.x) using 64-bit identifiers for
+     *  tagging blocks of data. Thus in order not to get truncated data the use of this parameter
+     *  from this structure is discouraged. Use direct access functions to the \a FrameNr property of each request instead! How to achieve this can e.g.
+     *  be seen in the source code of the function \c getRequestProp of \c exampleHelper_C.c. In this case \c FrameNr should be passed as \c pPropName.
+     *  Not doing so might result in wraparounds back to 0 after 2^32 blocks of data have been captured even when the internal accurate value would be
+     *  0x0000000100000000.
      */
     int frameNr;
     /// \brief A timestamp (in us) defining the time the device started the exposure of the image associated with this request object.
@@ -280,8 +325,9 @@ struct RequestInfo
 /**
  *  This part of a complete request contains general status information about the
  *  request or the image currently referenced by it.
+ *
+ * \ingroup CommonInterface
  */
-/// \ingroup CommonInterface
 struct RequestResult
 //-----------------------------------------------------------------------------
 {
@@ -308,8 +354,9 @@ struct RequestResult
 /**
  *  \deprecated This structure has been declared <b>deprecated</b>. 'onChanged' callbacks can
  *  directly be registered on every feature now.
+ *
+ * \ingroup CommonInterface
  */
-/// \ingroup CommonInterface
 struct EventData
 //-----------------------------------------------------------------------------
 {
@@ -331,8 +378,9 @@ struct EventData
 /**
  *  Some functions accept this type as the input for certain parameter related
  *  functions such as obtaining a string representation of the parameter specified.
+ *
+ * \ingroup CommonInterface
  */
-/// \ingroup CommonInterface
 enum TImageRequestParam
 //-----------------------------------------------------------------------------
 {
@@ -380,14 +428,7 @@ enum TImpactBufferFlag
     /**
      *  This flag can be used to allow the continuous usage of the same mvIMPACT buffer. If this
      *  flag is NOT specified whenever a valid mvIMPACT buffer handle is passed to a function
-     *  accepting flags of type
-     *  \if DOXYGEN_CPP_DOCUMENTATION
-     *  <b>mvIMPACT::acquire::TImpactBufferFlag</b>
-     *  \else
-     *  <b>::TImpactBufferFlag</b>
-     *  \endif
-     *  it might free the
-     *  existing buffer and create a new one.
+     *  accepting this type of flags it might free the existing buffer and create a new one.
      *
      *  If this flag is specified and the new buffer doesn't match the existing one in terms of
      *  the number of bands, size, etc. the function will fail and return an error code. Thus this
@@ -410,15 +451,66 @@ enum TLibraryQuery
 };
 
 /// \brief A type for handles bound to a certain device.
+/**
+ * As 'C' is not a strongly typed language this simply adds an alias for \c int.
+ * Internally an \c int with a unique value is used to identify properties, methods and lists. The type
+ * HDEV therefore is nothing special. It is an integer value identifying the list containing the
+ * device properties available before opening the device. A HDEV therefore can also be passed to all
+ * functions expecting a HLIST or HOBJ type.
+ *
+ * \attention Functions expecting a HDRV will fail when fed with a HDEV as these functions obviously
+ * expect a different feature list!
+ */
 typedef int HDEV;
 /// \brief A type for handles bound to an interface of a certain device.
+/**
+ * As 'C' is not a strongly typed language this simply adds an alias for \c int.
+ * Internally an \c int with a unique value is used to identify properties, methods and lists. The type
+ * HDRV therefore is nothing special. It is an integer value identifying the list containing the
+ * device properties becoming available after opening the device. A HDRV therefore can also be passed to all
+ * functions expecting a HLIST or HOBJ type.
+ *
+ * \attention Functions expecting a HDEV will fail when fed with a HDRV as these functions obviously
+ * expect a different feature list!
+ */
 typedef int HDRV;
 /// \brief A type for handles bound to an object list.
+/**
+ * As 'C' is not a strongly typed language this simply adds an alias for \c int.
+ * Internally an \c int with a unique value is used to identify properties, methods and lists. The type
+ * HDEV therefore is nothing special. It is an integer value identifying a list of features. A HLIST therefore
+ * can also be passed to all functions expecting a HOBJ, HDEV(when it is the correct list) or HDRV(when it is the correct list).
+ *
+ * \attention Functions expecting a HDRV or HDEV will fail when fed with a HLIST identifier not referencing the correct feature list!
+ */
 typedef int HLIST;
 /// \brief A type for handles bound to an unspecified object.
+/**
+ * As 'C' is not a strongly typed language this simply adds an alias for \c int.
+ * Internally an \c int with a unique value is used to identify properties, methods and lists. The type
+ * HOBJ therefore is nothing special. It is an integer value identifying a feature (either a list of features, a property or a method).
+ * A HOBJ therefore can also be passed to all functions expecting a HLIST(when referencing a list), HDEV(when it is the correct list)
+ * or HDRV(when it is the correct list).
+ *
+ * \attention Functions expecting a HDRV or HDEV will fail when fed with a HOBJ identifier not referencing the correct feature list
+ * as will a function expecting a certain feature type while the HOBJ references another or no valid feature at all!
+ */
 typedef int HOBJ;
 
-#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
+/// \brief A type for handles bound to a video stream.
+/**
+ * As 'C' is not a strongly typed language this simply adds an alias for \c void*.
+ * Internally this pointer however will be checked for validity in various ways.
+ */
+typedef void* HDMR_VIDEO_STREAM;
+
+#ifndef DOXYGEN_CPP_DOCUMENTATION
+
+/// \brief a handle to the device manager bound to the list of all devices.
+typedef int HDMR;
+
+#ifndef WRAP_ANY
+
 typedef struct EventData EventData;
 typedef struct ImageBuffer ImageBuffer;
 typedef struct RequestInfo RequestInfo;
@@ -426,12 +518,6 @@ typedef struct RequestResult RequestResult;
 typedef enum TImageRequestParam TImageRequestParam;
 typedef enum TImpactBufferFlag TImpactBufferFlag;
 typedef enum TLibraryQuery TLibraryQuery;
-#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-
-#if !defined(DOXYGEN_CPP_DOCUMENTATION) && !defined(WRAP_ANY)
-
-/// \brief a handle to the device manager bound to the list of all devices.
-typedef int HDMR;
 
 #ifdef __cplusplus
 /// \brief A constant defining the maximum length of the strings in the <b>TDMR_DeviceInfo</b> structure.
@@ -447,7 +533,7 @@ const size_t INFO_STRING_SIZE = 38;
  *  This is used if <b>__cplusplus</b> is NOT defined.
  */
 #define INFO_STRING_SIZE (38)
-#endif // __cplusplus
+#endif // #ifdef __cplusplus
 
 //-----------------------------------------------------------------------------
 /// \brief Valid handle check modes.
@@ -772,7 +858,6 @@ MVDMR_API TDMR_ERROR DMR_CALL DMR_LoadSetting( HDRV hDrv, const char* pName, TSt
 MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveSetting( HDRV hDrv, const char* pName, TStorageFlag storageFlags, TScope scope );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_LoadSettingFromDefault( HDRV hDrv, TScope scope );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveSettingToDefault( HDRV hDrv, TScope scope );
-MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveSystemToDefault( HDRV hDrv, TScope scope ) );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_IsSettingAvailable( const char* pName, TStorageLocation storageLocation, TScope scope );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_DeleteSetting( const char* pName, TStorageLocation location, TScope scope );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_ExportCameraDescription( HDRV hDrv, HLIST hCameraDescList );
@@ -782,12 +867,13 @@ MVDMR_API TDMR_ERROR DMR_CALL DMR_CopyCameraDescription( HDRV hDrv, HLIST hCamer
 MVDMR_API TDMR_ERROR DMR_CALL DMR_SetDeviceID( HDEV hDev, int newID );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_UpdateFirmware( HDEV hDev );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_UpdateDigitalInputs( HDRV hDrv );
-MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_UpgradeDeviceFeatures( HDEV hDev, const char* pLicenceFilename, int reserved, int reserved2 ) );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_CreateUserDataEntry( HDEV hDev, HLIST* pEntry );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_DeleteUserDataEntry( HDEV hDev, HLIST hEntry );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_WriteUserDataToHardware( HDEV hDev );
+#if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_EventWaitFor( HDRV hDrv, int timeout_ms, TDeviceEventType mask, int reserved, int reserved2, TDeviceEventType* pResultType ) );
 MVIMPACT_DEPRECATED_C( MVDMR_API TDMR_ERROR DMR_CALL DMR_EventGetData( HDRV hDrv, TDeviceEventType type, int reserved, int reserved2, EventData* pResult, size_t resultSize ) );
+#endif // #if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 
 // device independent image buffer related functions
 MVDMR_API TDMR_ERROR DMR_CALL DMR_AllocImageRequestBufferDesc( ImageBuffer** ppBuffer, int channelCount );
@@ -798,6 +884,17 @@ MVDMR_API TDMR_ERROR DMR_CALL DMR_ReleaseImageBuffer( ImageBuffer** ppBuffer );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_CopyImageBuffer( const ImageBuffer* pSrc, ImageBuffer** ppDst, int flags );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_LoadImageBuffer( ImageBuffer** ppBuffer, const char* pFileName, TImageFileFormat format );
 MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveImageBuffer( const ImageBuffer* pBuffer, const char* pFileName, TImageFileFormat format );
+
+// video stream related functions
+MVDMR_API TDMR_ERROR DMR_CALL DMR_InitVideoStreamAPI( void* pReserved, size_t reserved );
+MVDMR_API TDMR_ERROR DMR_CALL DMR_OpenVideoStream( const char* pFileName, const unsigned int imageWidth, const unsigned int imageHeight, const TVideoCodec codec, const unsigned int quality_pc, const unsigned int bitrate, HDMR_VIDEO_STREAM* pHVideoStream );
+MVDMR_API TDMR_ERROR DMR_CALL DMR_CloseVideoStream( HDMR_VIDEO_STREAM hVideoStream );
+MVDMR_API TDMR_ERROR DMR_CALL DMR_SaveImageBufferToVideoStream( HDMR_VIDEO_STREAM hVideoStream, const ImageBuffer* pBuffer, const int64_type timestamp_us );
+MVDMR_API TDMR_ERROR DMR_CALL DMR_ImageRequestSaveToVideoStream( HDRV hDrv, int requestNr, HDMR_VIDEO_STREAM hVideoStream );
+MVDMR_API TDMR_ERROR DMR_CALL DMR_PauseVideoStream( HDMR_VIDEO_STREAM hVideoStream );
+MVDMR_API TDMR_ERROR DMR_CALL DMR_ResumeVideoStream( HDMR_VIDEO_STREAM hVideoStream );
+MVDMR_API TDMR_ERROR DMR_CALL DMR_IsVideoStreamPaused( HDMR_VIDEO_STREAM hVideoStream );
+
 // miscellaneous functions
 MVDMR_API const char* DMR_CALL DMR_ErrorCodeToString( int errorCode );
 MVDMR_API const char* DMR_CALL DMR_GetVersion( TLibraryQuery libraryQuery );
@@ -854,7 +951,8 @@ MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetParent( HOBJ hObj, HOBJ* phParent 
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetMaxValCount( HOBJ hProp, unsigned int* pValCount );
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetValCount( HOBJ hProp, unsigned int* pValCount );
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetValCount( HOBJ hProp, unsigned int valCount );
-MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinary( HOBJ hProp, char* pBuf, unsigned int bufSize, int index );
+MVIMPACT_DEPRECATED_C( MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinary( HOBJ hProp, char* pBuf, unsigned int bufSize, int index ) );
+MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinaryEx( HOBJ hProp, char* pBuf, unsigned int* pBufSize, int index );
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_SetBinary( HOBJ hProp, const char* pBuf, unsigned int bufSize, int index );
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinaryBufferSize( HOBJ hProp, unsigned int* pBufSize, int index );
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetBinaryBufferMaxSize( HOBJ hProp, unsigned int* pBufSize );
@@ -903,10 +1001,12 @@ typedef char* ( *SCF )( const char* pBuf, size_t bufSize );
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_GetSWithInplaceConstruction( HOBJ hObj, TOBJ_StringQuery sq, char** pResult, SCF constructionFunc, int mode, int reserved );
 MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_FreeSMemory( char* pBuffer );
 
-#endif // DOXYGEN_CPP_DOCUMENTATION && WRAP_ANY
+#endif // #ifndef WRAP_ANY
+
+#endif // #ifndef DOXYGEN_CPP_DOCUMENTATION
 
 #ifndef __GNUC__
-#pragma pack(pop) // restore previous structure alignment
+#   pragma pack(pop) // restore previous structure alignment
 #endif
 #undef ATTR_PACK
 
@@ -924,8 +1024,8 @@ MVDMR_API TPROPHANDLING_ERROR DMR_CALL OBJ_FreeSMemory( char* pBuffer );
 #   ifdef _WIN32
 #       ifdef __BORLANDC__ // is Borland compiler?
 #           pragma option pop
-#       endif // __BORLANDC__
-#   endif // _WIN32
+#       endif // #ifdef __BORLANDC__
+#   endif // #ifdef _WIN32
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 
 #endif // mvDeviceManagerH

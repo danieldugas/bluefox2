@@ -1,4 +1,20 @@
 //-----------------------------------------------------------------------------
+// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
+//
+// This software is provided by MATRIX VISION GmbH "as is"
+// and any express or implied warranties, including, but not limited to, the
+// implied warranties of merchantability and fitness for a particular purpose
+// are disclaimed.
+//
+// In no event shall MATRIX VISION GmbH be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused and
+// on any theory of liability, whether in contract, strict liability, or tort
+// (including negligence or otherwise) arising in any way out of the use of
+// this software, even if advised of the possibility of such damage.
+
+//-----------------------------------------------------------------------------
 #ifndef mvPropHandlingDatatypesH
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define mvPropHandlingDatatypesH mvPropHandlingDatatypesH
@@ -16,7 +32,7 @@ namespace acquire
 {
 #endif // #if defined(MVIMPACT_ACQUIRE_H_) || defined(DOXYGEN_CPP_DOCUMENTATION)
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 #   if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 typedef __int64 int64_type;
 typedef unsigned __int64 uint64_type;
@@ -32,15 +48,15 @@ typedef uint64_t uint64_type;
 #   else
 #       error "unsupported target environment"
 #   endif // #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-#endif // #ifndef DOXYGEN_SHOULD_SKIP_THIS
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 
 //=============================================================================
 //========================= constants =========================================
 //=============================================================================
 #ifdef __cplusplus
-/// \brief A constant to check for a invalid ID returned from the property handling module.
+/// \brief A constant to check for an invalid ID returned from the property handling module.
 const int INVALID_ID                      = -1;
-#   ifndef DOXYGEN_CPP_DOCUMENTATION
+#   if !defined(DOXYGEN_CPP_DOCUMENTATION) && !defined(WRAP_ANY)
 // property limits
 /// \brief The index value to query the maximum value defined for this property.
 const int PROP_MAX_VAL                    = -1;
@@ -59,9 +75,9 @@ const int PROP_LAST_CONSTANT          = PROP_MAX_BINARY_BUFFER_SIZE;
  *  call the C-layer and need to pass an allocated string buffer to that function.
  */
 const unsigned int DEFAULT_STRING_SIZE_LIMIT   = 8192;
+#   endif // #if !defined(DOXYGEN_CPP_DOCUMENTATION) && !defined(WRAP_ANY)
 /// \brief A constant defining the unique identifier for the root component list containing all other lists.
 const int ROOT_LIST                   = 0;
-#   endif // DOXYGEN_CPP_DOCUMENTATION
 /// \brief A constant defining that property values will be read from an array property until the last value.
 const int END_OF_LIST                              = -1;
 // flags to define the search mode
@@ -244,9 +260,9 @@ enum TComponentFlag // flags_attribute, uint_type
     cfShouldBeDisplayedAsEnumeration = 0x1000,
     /// \brief This feature will \b ALWAYS execute internal update callbacks and will treat each write attempt to this feature as a value different from the current one.
     cfAlwaysForceUpdate = 0x2000
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     , cfLast = cfShouldBeDisplayedAsEnumeration
-#endif // DOXYGEN_SHOULD_SKIP_THIS
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 };
 
 //-----------------------------------------------------------------------------
@@ -375,7 +391,7 @@ enum TPROPHANDLING_ERROR
      *  A list operation for this component has been called but this
      *  component does not reference a list.
      *
-     *  \b [-2000]
+     *  \n \b [-2000]
      */
     PROPHANDLING_NOT_A_LIST = -2000,
     /// \brief This component is not a property.
@@ -383,7 +399,7 @@ enum TPROPHANDLING_ERROR
      *  A property operation for this component has been called but
      *  this component does not reference a property.
      *
-     *  \b [-2001]
+     *  \n \b [-2001]
      */
     PROPHANDLING_NOT_A_PROPERTY = -2001,
     /// \brief This component is not a method.
@@ -391,7 +407,7 @@ enum TPROPHANDLING_ERROR
      *  A method operation for this component has been called but
      *  this component does not reference a method.
      *
-     *  \b [-2002]
+     *  \n \b [-2002]
      */
     PROPHANDLING_NOT_A_METHOD = -2002,
     /// \brief The caller has no read rights for this component.
@@ -399,7 +415,7 @@ enum TPROPHANDLING_ERROR
      *  It has been tried to read data from this component, but the
      *  caller has no read rights for this component.
      *
-     * \b [-2003]
+     * \n \b [-2003]
      */
     PROPHANDLING_NO_READ_RIGHTS = -2003,
     /// \brief The caller has no write rights for this component.
@@ -407,7 +423,7 @@ enum TPROPHANDLING_ERROR
      *  It has been tried to modify data of this component, but the
      *  caller has no write rights for this component.
      *
-     *  \b [-2004]
+     *  \n \b [-2004]
      */
     PROPHANDLING_NO_WRITE_RIGHTS = -2004,
     /// \brief The caller can't modify the size of this component.
@@ -422,7 +438,7 @@ enum TPROPHANDLING_ERROR
      *  check if the new size might exceeds this maximum value by calling
      *  the appropriate function.
      *
-     *  \b [-2005]
+     *  \n \b [-2005]
      */
     PROPHANDLING_NO_MODIFY_SIZE_RIGHTS = -2005,
     /// \brief The two involved components are not compatible.
@@ -430,7 +446,7 @@ enum TPROPHANDLING_ERROR
      *  An operation requiring two compatible components has been
      *  called with two components, which are not compatible.
      *
-     *  \b [-2006]
+     *  \n \b [-2006]
      */
     PROPHANDLING_INCOMPATIBLE_COMPONENTS = -2006,
     //PROPHANDLING_NO_USER_ALLOCATED_MEMORY = -2007, // no longer supported
@@ -439,7 +455,7 @@ enum TPROPHANDLING_ERROR
      *  This error might also be generated if a certain feature is not available on the current
      *  platform.
      *
-     *  \b [-2008]
+     *  \n \b [-2008]
      */
     PROPHANDLING_UNSUPPORTED_PARAMETER = -2008,
     /// \brief Different sized value buffers have been passed.
@@ -448,7 +464,7 @@ enum TPROPHANDLING_ERROR
      *  sized value buffers to a function while one is too small to hold
      *  all the information.
      *
-     *  \b [-2009]
+     *  \n \b [-2009]
      */
     PROPHANDLING_SIZE_MISMATCH = -2009,
     /// \brief A feature that is not implemented so far has been requested.
@@ -457,7 +473,7 @@ enum TPROPHANDLING_ERROR
      *  far. This error code is only provided for compatibility and will be
      *  set in very rare cases only.
      *
-     *  \b [-2010]
+     *  \n \b [-2010]
      */
     PROPHANDLING_IMPLEMENTATION_MISSING = -2010,
     /// \brief An access token object couldn't be created.
@@ -468,7 +484,7 @@ enum TPROPHANDLING_ERROR
      *  \deprecated This error code currently is not used anywhere within this framework.
      *  It might be removed in a future version.
      *
-     *  \b [-2011]
+     *  \n \b [-2011]
      */
     PROPHANDLING_ACCESSTOKEN_CREATION_FAILED = -2011,
     /// \brief It has been tried to assign an invalid value to a property.
@@ -481,11 +497,11 @@ enum TPROPHANDLING_ERROR
      *  To find out, which values are allowed for the property in question
      *  the user should
      *
-     *  - check if the property defines a translation dictionary
-     *  - check the allowed values within a translation dictionary if one is defined
-     *  - check the min and max value for properties, that define limits
+     * &bull; Check if the property defines a translation dictionary. \n \n
+     * &bull; Check the allowed values within a translation dictionary if one is defined. \n \n
+     * &bull; Check the min and max value for properties, that define limits. \n \n
      *
-     *  \b [-2012]
+     *  \n \b [-2012]
      */
     PROPHANDLING_INVALID_PROP_VALUE = -2012,
     /// \brief The properties translation table has been corrupted.
@@ -493,7 +509,7 @@ enum TPROPHANDLING_ERROR
      *  The properties translation table has been corrupted for an unknown
      *  reason and can't be used anymore.
      *
-     *  \b [-2013]
+     *  \n \b [-2013]
      */
     PROPHANDLING_PROP_TRANSLATION_TABLE_CORRUPTED = -2013,
     /// \brief Invalid value index.
@@ -508,7 +524,7 @@ enum TPROPHANDLING_ERROR
      *  flag set. Other properties will automatically adjust the size once the user
      *  writes to an index out of bounds.
      *
-     *  \b [-2014]
+     *  \n \b [-2014]
      */
     PROPHANDLING_PROP_VAL_ID_OUT_OF_BOUNDS = -2014,
     /// \brief This property doesn't define a translation table.
@@ -516,7 +532,7 @@ enum TPROPHANDLING_ERROR
      *  The caller tried to modify a translation table, that hasn't been
      *  defined for this property.
      *
-     *  \b [-2015]
+     *  \n \b [-2015]
      */
     PROPHANDLING_PROP_TRANSLATION_TABLE_NOT_DEFINED = -2015,
     /// \brief An invalid value has been passed to the property.
@@ -529,7 +545,7 @@ enum TPROPHANDLING_ERROR
      *  Another reason for this error might be when a user tried to access e.g. a
      *  float property with functions meant to be used for int properties.
      *
-     *  \b [-2016]
+     *  \n \b [-2016]
      */
     PROPHANDLING_INVALID_PROP_VALUE_TYPE = -2016,
     /// \brief A too large value has been passed.
@@ -537,7 +553,7 @@ enum TPROPHANDLING_ERROR
      *  One or more of the values the caller tried to write to the
      *  property are larger than the max. allowed value for this property.
      *
-     *  \b [-2017]
+     *  \n \b [-2017]
      */
     PROPHANDLING_PROP_VAL_TOO_LARGE = -2017,
     /// \brief A too small value has been passed.
@@ -545,22 +561,22 @@ enum TPROPHANDLING_ERROR
      *  One or more of the values the caller tried to write to the
      *  property are smaller than the min. allowed value for this property.
      *
-     *  \b [-2018]
+     *  \n \b [-2018]
      */
     PROPHANDLING_PROP_VAL_TOO_SMALL = -2018,
     /// \brief The specified component could not be found.
     /**
-     *  \b [-2019]
+     *  \n \b [-2019]
      */
     PROPHANDLING_COMPONENT_NOT_FOUND = -2019,
     /// \brief An invalid list has been referenced.
     /**
-     *  \b [-2020]
+     *  \n \b [-2020]
      */
     PROPHANDLING_LIST_ID_INVALID = -2020,
     /// \brief An invalid component within a list has been referenced.
     /**
-     *  \b [-2021]
+     *  \n \b [-2021]
      */
     PROPHANDLING_COMPONENT_ID_INVALID = -2021,
     /// \brief The specified list index is occupied.
@@ -569,7 +585,7 @@ enum TPROPHANDLING_ERROR
      *  the insert the newly created component into a list at a position
      *  already used to store another component.
      *
-     *  \b [-2022]
+     *  \n \b [-2022]
      */
     PROPHANDLING_LIST_ENTRY_OCCUPIED = -2022,
     /// \brief The specified component already has an owner.
@@ -578,12 +594,12 @@ enum TPROPHANDLING_ERROR
      *  already has an owner. An owner once defined can't be modified
      *  anymore.
      *
-     *  \b [-2023]
+     *  \n \b [-2023]
      */
     PROPHANDLING_COMPONENT_HAS_OWNER_ALREADY = -2023,
     /// \brief It has been tried to register the same component at twice in the same list.
     /**
-     *  \b [-2024]
+     *  \n \b [-2024]
      */
     PROPHANDLING_COMPONENT_ALREADY_REGISTERED = -2024,
     /// \brief The desired data can't be accessed or found.
@@ -595,22 +611,22 @@ enum TPROPHANDLING_ERROR
      *  desired data (e.g. a user tries to delete a setting that is stored with
      *  global scope but does not have elevated access rights).
      *
-     *  \b [-2025]
+     *  \n \b [-2025]
      */
     PROPHANDLING_LIST_CANT_ACCESS_DATA = -2025,
     /// \brief The function pointer of the referenced method object is invalid.
     /**
-     *  \b [-2026]
+     *  \n \b [-2026]
      */
     PROPHANDLING_METHOD_PTR_INVALID = -2026,
     /// \brief A method object has an invalid parameter list.
     /**
-     *  \b [-2027]
+     *  \n \b [-2027]
      */
     PROPHANDLING_METHOD_INVALID_PARAM_LIST = -2027,
     /// \brief This indicates an internal error occurred within the SWIG generated wrapper code, when working under Python.
     /**
-     *  \b [-2028]
+     *  \n \b [-2028]
      */
     PROPHANDLING_SWIG_ERROR = -2028,
     /// \brief A invalid input parameter has been passed to a function of this module.
@@ -618,17 +634,17 @@ enum TPROPHANDLING_ERROR
      *  In most cases this might be a unassigned pointer, where a valid pointer
      *  to a user defined storage location was expected.
      *
-     *  \b [-2029]
+     *  \n \b [-2029]
      */
     PROPHANDLING_INVALID_INPUT_PARAMETER = -2029,
     /// \brief The user tried to modify a registered callback, but no callback has been registered for this component.
     /**
-     *  \b [-2030]
+     *  \n \b [-2030]
      */
     PROPHANDLING_COMPONENT_NO_CALLBACK_REGISTERED = -2030,
     /// \brief The user tried to read data into a user supplied storage location, but the buffer was too small to accommodate the result.
     /**
-     *  \b [-2031]
+     *  \n \b [-2031]
      */
     PROPHANDLING_INPUT_BUFFER_TOO_SMALL = -2031,
     /// \brief The number of parameters is incorrect.
@@ -637,17 +653,17 @@ enum TPROPHANDLING_ERROR
      *  parameters and the number of parameters passed to the function does not match the
      *  number of required parameters.
      *
-     *  \b [-2032]
+     *  \n \b [-2032]
      */
     PROPHANDLING_WRONG_PARAM_COUNT = -2032,
     /// \brief The user tried to execute an operation, which is not supported by the component he is referring to.
     /**
-     *  \b [-2033]
+     *  \n \b [-2033]
      */
     PROPHANDLING_UNSUPPORTED_OPERATION = -2033,
     /// \brief The user tried to save(serialize) a property list without having the right to do this.
     /**
-     *  \b [-2034]
+     *  \n \b [-2034]
      */
     PROPHANDLING_CANT_SERIALIZE_DATA = -2034,
     /// \brief The user tried to use a file to update or create a component list, that does not contain valid data for this operation.
@@ -655,7 +671,7 @@ enum TPROPHANDLING_ERROR
      *  This e.g. might happen, if the file does not contain valid XML data or XML data that is not
      *  well formed.
      *
-     *  \b [-2035]
+     *  \n \b [-2035]
      */
     PROPHANDLING_INVALID_FILE_CONTENT = -2035,
     /// \brief This error will occur when the modules internal representation of the tree structure does not allow the allocation of a new list.
@@ -663,7 +679,7 @@ enum TPROPHANDLING_ERROR
      *  In this case either new list can't be allocated. The only way to solve this problem is to delete
      *  another list.
      *
-     *  \b [-2036]
+     *  \n \b [-2036]
      */
     PROPHANDLING_CANT_ALLOCATE_LIST = -2036,
     /// \brief The referenced list has no space left to register this component at the desired position.
@@ -671,7 +687,7 @@ enum TPROPHANDLING_ERROR
      *  There might however be an empty space within the list where this element could be registered, but
      *  no more components can be registered at the end of this list.
      *
-     *  \b [-2037]
+     *  \n \b [-2037]
      */
     PROPHANDLING_CANT_REGISTER_COMPONENT = -2037,
     /// \brief The user tried to assign a value to a property, that is invalid.
@@ -680,20 +696,20 @@ enum TPROPHANDLING_ERROR
      *  arise e.g. when a string property doesn't allow the string to contain numbers. In this
      *  case trying to set the properties value to 'blabla7bla' would cause this error.
      *
-     *  \b [-2038]
+     *  \n \b [-2038]
      */
     PROPHANDLING_PROP_VALIDATION_FAILED = -2038,
     // If new error codes must be added this happens HERE!
     // When adding a new value here NEVER forget to update the internal string AND exception table!
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     /// \brief Needed for compile time checks for invalid error code values
     PROPHANDLING_PSEUDO_LAST_ASSIGNED_ERROR_CODE,
     /// \brief A dummy constant to mark the last error code currently defined for property module related errors.
     PROPHANDLING_LAST_ASSIGNED_ERROR_CODE = PROPHANDLING_PSEUDO_LAST_ASSIGNED_ERROR_CODE - 2,
-#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     /// \brief Defines the last valid error code value for the property module.
     /**
-     *  \b [-2099]
+     *  \n \b [-2099]
      */
     PROPHANDLING_LAST_VALID_ERROR_CODE = -2099
 };
@@ -713,7 +729,7 @@ enum TStorageFlag // flags_attribute, uint_type
     /**
      *  Store/load operations will done in XML format in this case.
      */
-    sfDefault = 0x0,
+    sfDefault = 0x00000000,
     /// \brief Stores/loads the setting in/from a platform dependent location
     /**
      *  Under Windows&copy; the Registry will be used to as a platform dependent location, while under
@@ -725,7 +741,7 @@ enum TStorageFlag // flags_attribute, uint_type
      *  A call to a load function with this flag with the corresponding XML file in the applications directory
      *  might succeed under Linux while it fails under Windows&copy;.
      */
-    sfNative = 0x1,
+    sfNative = 0x00000001,
     /// \brief Stores/loads the setting in raw mode.
     /**
      *  \note
@@ -734,53 +750,53 @@ enum TStorageFlag // flags_attribute, uint_type
      *  properties. This only makes sense for very special applications and therefore is not needed to
      *  write applications, that load and store current settings.
      */
-    sfRaw = 0x2,
+    sfRaw = 0x00000002,
     /// \brief Stores lists volatile.
     /**
      *  under Windows&copy; when the <b>mvIMPACT::acquire::sfNative</b> flag is set this will store the
      *  component list as a volatile key in the Registry. This means that the data will remain in the
      *  Registry until the system is shut down.
      */
-    sfVolatile = 0x4,
+    sfVolatile = 0x00000004,
     /// \brief If set properties translation dictionaries will be processed for this import/export operation.
     /**
      *  This option forces the function to process the translation dictionaries, which might
      *  be assigned to properties.
      */
-    sfProcessPropTranslationDict = 0x8,
+    sfProcessPropTranslationDict = 0x00000008,
     /// \brief If set ALL entries in the store data will be created.
     /**
      *  When loading a setting not only the current lists data will be updated, but also
      *  properties, lists or data, which is found in the storage location but not in the setting
      *  to update will be added to the setting as well.
      */
-    sfCreateMissingEntries = 0x10,
+    sfCreateMissingEntries = 0x00000010,
     /// \brief If set read-only components will be processed for this import/export operation.
     /**
      *  When importing, exporting or updating a component list components with the
      *  <b>mvIMPACT::acquire::cfWriteAccess</b> not set will be ignored.
      */
-    sfProcessReadOnlyComponents = 0x20,
+    sfProcessReadOnlyComponents = 0x00000020,
     /// \brief If set data for properties will no be updated.
     /**
      *  If this flag is set the values stored by the property will be ignored for this import/export operation.
      *  \note
      *  This flag is ignored, if <b>mvIMPACT::acquire::sfNative</b> is specified.
      */
-    sfIgnorePropData = 0x40,
+    sfIgnorePropData = 0x00000040,
     /// \brief If set the documentation string will be processed.
     /**
      *  If this flag is set the documentation string will be processed for this import/export operation.
      *  \note
      *  This flag is ignored, if <b>mvIMPACT::acquire::sfNative</b> is specified.
      */
-    sfProcessDocString = 0x80,
+    sfProcessDocString = 0x00000080,
     /// \brief If set the defined constants for properties will be processed.
     /**
      *  If this flag is set the defined constants for properties will be processed
      *  for this import/export operation.
      */
-    sfProcessPropConstantsDict = 0x100,
+    sfProcessPropConstantsDict = 0x00000100,
     /// \brief If set the lists inheritance relationship will be processed.
     /**
      *  If this flag is set the inheritance relationship between lists will be
@@ -817,14 +833,14 @@ enum TStorageFlag // flags_attribute, uint_type
      * \endcode
      *  - this feature is not available when <b>mvIMPACT::acquire::sfNative</b> is specified.
      */
-    sfProcessInheritance = 0x200,
+    sfProcessInheritance = 0x00000200,
     /// \brief Specifies if basic data shall be processed.
     /**
      *  For e.g. settings it's not necessary to import/export information about the value
      *  type for properties or the size of lists etc. as this information is available internally
      *  anyway. So interface functions dealing with settings should specify this flag in any case.
      */
-    sfIgnoreBasicData = 0x400,
+    sfIgnoreBasicData = 0x00000400,
     /// \brief Specifies if invisible components shall be processed.
     /**
      *  When invisible data doesn't need to be processed this flag can be specified. Invisible
@@ -834,20 +850,20 @@ enum TStorageFlag // flags_attribute, uint_type
      *  This feature is currently only supported for output operations and is ignored for input
      *  operations.
      */
-    sfIgnoreInvisible = 0x800,
-    /// \brief Stores/loads the setting in/from an XML file
+    sfIgnoreInvisible = 0x00000800,
+    /// \brief Stores/loads the setting in/from an XML file.
     /**
      *  If this flag is specified the data will be imported/exported from/to an XML file.
      */
-    sfFile = 0x1000,
+    sfFile = 0x00001000,
     /// \brief If set the display name will be processed.
     /**
      *  If this flag is set the display name will be processed for this import/export operation.
      *  \note
      *  This flag is ignored, if <b>mvIMPACT::acquire::sfNative</b> is specified.
      */
-    sfProcessDisplayName = 0x2000,
-    /// \brief Stores/loads the setting in/from RAM file
+    sfProcessDisplayName = 0x00002000,
+    /// \brief Stores/loads the setting in/from RAM file.
     /**
      *  If this flag is specified the data will be imported/exported from/to RAM. Data stored this way should be
      *  freed when no longer needed to avoid a waste of memory. However when shutting down mvIMPACT Acquire completely
@@ -858,19 +874,33 @@ enum TStorageFlag // flags_attribute, uint_type
      * \since 2.19.0
      */
     sfRAM = 0x4000,
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     /// \brief For internal use only!
-    sfReserved1 = 0x8000,
+    sfReserved1 = 0x00008000,
     /// \brief For internal use only!
-    sfReserved2 = 0x10000,
-#endif // #ifndef DOXYGEN_SHOULD_SKIP_THIS
+    sfReserved2 = 0x00010000,
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     /// \brief Specifies if the 'is-default' flag for components shall be ignored during import/export operations.
     /**
      *  If this flag is set the 'is-default' flag will not be processed during this import/export operation.
      *  \note
      *  This flag is ignored, if <b>mvIMPACT::acquire::sfNative</b> is specified.
      */
-    sfDontProcessDefault = 0x20000
+    sfDontProcessDefault = 0x00020000,
+    /// \brief Processes GenICam sequencer set related data during a storage operation.
+    /**
+     * \note This flag will affect devices operated in GenICam interface layout only!
+     * \attention Settings stored this way cannot be loaded on systems running mvIMPACT Acquire versions smaller than 2.28.0.
+     * \since 2.28.0
+     */
+    sfProcessGenICamSequencerData = 0x00040000,
+    /// \brief Processes GenICam user set related data during a storage operation.
+    /**
+     * \note This flag will affect devices operated in GenICam interface layout only!
+     * \attention Settings stored this way cannot be loaded on systems running mvIMPACT Acquire versions smaller than 2.28.0.
+     * \since 2.28.0
+     */
+    sfProcessGenICamUserSetData = 0x00080000
 };
 
 //-----------------------------------------------------------------------------
@@ -883,6 +913,7 @@ enum TStorageFlag // flags_attribute, uint_type
  */
 /// \ingroup CommonInterface
 enum TStorageLocation // uint_type
+//-----------------------------------------------------------------------------
 {
     /// \brief Stores/loads the setting in/from a platform dependent location
     /**
@@ -934,9 +965,9 @@ enum TStorageLocation // uint_type
 enum TScope
 //-----------------------------------------------------------------------------
 {
-    /// Save the setting as global as possible.
+    /// \brief Save the setting as global as possible.
     sGlobal = 0,
-    /// Save the setting in a user specific location.
+    /// \brief Save the setting in a user specific location.
     sUser = 1
 };
 

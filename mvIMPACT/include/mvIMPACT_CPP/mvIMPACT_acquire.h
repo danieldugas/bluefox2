@@ -1,4 +1,20 @@
 //-----------------------------------------------------------------------------
+// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
+//
+// This software is provided by MATRIX VISION GmbH "as is"
+// and any express or implied warranties, including, but not limited to, the
+// implied warranties of merchantability and fitness for a particular purpose
+// are disclaimed.
+//
+// In no event shall MATRIX VISION GmbH be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused and
+// on any theory of liability, whether in contract, strict liability, or tort
+// (including negligence or otherwise) arising in any way out of the use of
+// this software, even if advised of the possibility of such damage.
+
+//-----------------------------------------------------------------------------
 #ifndef MVIMPACT_ACQUIRE_H_
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define MVIMPACT_ACQUIRE_H_ MVIMPACT_ACQUIRE_H_
@@ -6,31 +22,76 @@
 //-----------------------------------------------------------------------------
 #ifdef SWIG
 #   ifdef SWIGPYTHON
-#       define WRAP_PYTHON
+#       ifndef WRAP_PYTHON
+#           define WRAP_PYTHON
+#       endif
 #   endif
 #   ifdef SWIGJAVA
-#       define WRAP_JAVA
+#       ifndef WRAP_JAVA
+#           define WRAP_JAVA
+#       endif
 #   endif
 #endif
 
 #ifdef WRAP_PYTHON
-#   define PYTHON_ONLY(X) X
-#   define PYTHON_CPP_SWITCH(PYTHON_WRAPPER_CODE,CPP_WRAPPER_CODE) PYTHON_WRAPPER_CODE
+#   ifndef PYTHON_ONLY
+#       define PYTHON_ONLY(X) X
+#   endif
+#   ifndef PYTHON_CPP_SWITCH
+#       define PYTHON_CPP_SWITCH(PYTHON_WRAPPER_CODE,CPP_WRAPPER_CODE) PYTHON_WRAPPER_CODE
+#   endif
 #   ifndef WRAP_ANY
 #       define WRAP_ANY
 #   endif // #ifndef WRAP_ANY
 #else // #ifdef WRAP_PYTHON
-#   define PYTHON_ONLY(X)
-#   define PYTHON_CPP_SWITCH(PYTHON_WRAPPER_CODE,CPP_WRAPPER_CODE) CPP_WRAPPER_CODE
+#   ifndef PYTHON_ONLY
+#       define PYTHON_ONLY(X)
+#   endif
+#   ifndef PYTHON_CPP_SWITCH
+#       define PYTHON_CPP_SWITCH(PYTHON_WRAPPER_CODE,CPP_WRAPPER_CODE) CPP_WRAPPER_CODE
+#   endif
 #endif // #ifdef WRAP_PYTHON
 
+#ifdef WRAP_JAVA
+#   ifndef JAVA_ONLY
+#       define JAVA_ONLY(X) X
+#   endif
+#   ifndef JAVA_CPP_SWITCH
+#       define JAVA_CPP_SWITCH(JAVA_WRAPPER_CODE,CPP_WRAPPER_CODE) JAVA_WRAPPER_CODE
+#   endif
+#   ifndef WRAP_ANY
+#       define WRAP_ANY
+#   endif // #ifndef WRAP_ANY
+#else // #ifdef WRAP_JAVA
+#   ifndef JAVA_ONLY
+#       define JAVA_ONLY(X)
+#   endif
+#   ifndef JAVA_CPP_SWITCH
+#       define JAVA_CPP_SWITCH(JAVA_WRAPPER_CODE,CPP_WRAPPER_CODE) CPP_WRAPPER_CODE
+#   endif
+#endif // #ifdef WRAP_JAVA
+
+#if defined(WRAP_PYTHON) || defined(WRAP_JAVA)
+#   ifndef PYTHON_OR_JAVA_ONLY
+#       define PYTHON_OR_JAVA_ONLY(X) X
+#   endif
+#else
+#   ifndef PYTHON_OR_JAVA_ONLY
+#       define PYTHON_OR_JAVA_ONLY(X)
+#   endif
+#endif // #if defined(WRAP_PYTHON) || defined(WRAP_JAVA)
+
 #if !defined(MVIMPACT_DEPRECATED_CPP)
-#   ifdef WRAP_PYTHON
+#   ifdef WRAP_ANY
 #       define MVIMPACT_DEPRECATED_CPP(FUNCTION)
-#   elif defined(__GNUC__) && (__GNUC__ >= 3) && defined(__GNUC_MINOR__) && (__GNUC_MINOR__ >= 1) // is at least GCC 3.1 compiler?
+#   elif defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__ ) >= 301) // is at least GCC 3.1 compiler?
 #       define MVIMPACT_DEPRECATED_CPP(FUNCTION) FUNCTION __attribute__ ((deprecated))
-#   elif defined(_MSC_VER) && (_MSC_VER >= 1310) // is at least VC 2003 compiler?
-#       define MVIMPACT_DEPRECATED_CPP(FUNCTION) __declspec(deprecated) FUNCTION
+#   elif defined(_MSC_VER)
+#       if _MSC_VER >= 1310 // is at least VC 2003 compiler?
+#           define MVIMPACT_DEPRECATED_CPP(FUNCTION) __declspec(deprecated) FUNCTION
+#       else
+#           define MVIMPACT_DEPRECATED_CPP(FUNCTION) FUNCTION
+#       endif // #if _MSC_VER >= 1310
 #   else
 #       define MVIMPACT_DEPRECATED_CPP(FUNCTION) FUNCTION
 #   endif // compiler check
@@ -57,8 +118,11 @@
 #endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 
 #ifndef WRAP_ANY
+#   include <algorithm>
 #   include <assert.h>
+#   include <common/auto_array_ptr.h>
 #   include <common/crt/mvstring.h>
+#   include <common/function_cast.h>
 #   include <limits.h>
 #   include <map>
 #   ifdef __BORLANDC__ // is Borland compiler?
@@ -316,7 +380,7 @@ class ENotAList : public EComponent
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ENotAList( const std::string& componentname, const std::string& errorOrigin ) : EComponent( "Component " + componentname + " is not a list. Unable to perform list operation", errorOrigin, PROPHANDLING_NOT_A_LIST ) {}
+    explicit ENotAList( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EComponent( boMsgIsNameOnly ? "Component '" + msg + "' is not a list. Unable to perform list operation" : msg, errorOrigin, PROPHANDLING_NOT_A_LIST ) {}
     virtual ~ENotAList() throw() {}
 };
 
@@ -326,7 +390,7 @@ class ENotAProperty : public EComponent
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ENotAProperty( const std::string& componentname, const std::string& errorOrigin ) : EComponent( "Component " + componentname + " is not a property. Unable to perform property operation", errorOrigin, PROPHANDLING_NOT_A_PROPERTY ) {}
+    explicit ENotAProperty( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EComponent( boMsgIsNameOnly ? "Component '" + msg + "' is not a property. Unable to perform property operation" : msg, errorOrigin, PROPHANDLING_NOT_A_PROPERTY ) {}
     virtual ~ENotAProperty() throw() {}
 };
 
@@ -336,7 +400,7 @@ class ENotAMethod : public EComponent
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ENotAMethod( const std::string& componentname, const std::string& errorOrigin ) : EComponent( "Component " + componentname + " is not a method. Unable to perform function call operation", errorOrigin, PROPHANDLING_NOT_A_METHOD ) {}
+    explicit ENotAMethod( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EComponent( boMsgIsNameOnly ? "Component '" + msg + "' is not a method. Unable to perform function call operation" : msg, errorOrigin, PROPHANDLING_NOT_A_METHOD ) {}
     virtual ~ENotAMethod() throw() {}
 };
 
@@ -346,7 +410,7 @@ class ENoReadRights : public EComponent
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ENoReadRights( const std::string& compname, const std::string& errorOrigin ) : EComponent( "No read rights for component " + compname, errorOrigin, PROPHANDLING_NO_READ_RIGHTS ) {}
+    explicit ENoReadRights( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EComponent( boMsgIsNameOnly ? "No read rights for component '" + msg + "'" : msg, errorOrigin, PROPHANDLING_NO_READ_RIGHTS ) {}
     virtual ~ENoReadRights() throw() {}
 };
 
@@ -356,7 +420,7 @@ class ENoWriteRights : public EComponent
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ENoWriteRights( const std::string& compname, const std::string& errorOrigin ) : EComponent( "No write rights for component " + compname, errorOrigin, PROPHANDLING_NO_WRITE_RIGHTS ) {}
+    explicit ENoWriteRights( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EComponent( boMsgIsNameOnly ? "No write rights for component '" + msg + "'" : msg, errorOrigin, PROPHANDLING_NO_WRITE_RIGHTS ) {}
     virtual ~ENoWriteRights() throw() {}
 };
 
@@ -366,7 +430,7 @@ class ENoModifySizeRights : public EComponent
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ENoModifySizeRights( const std::string& compname, const std::string& errorOrigin ) : EComponent( "Component " + compname + "s size is fixed and therefore cannot be modified", errorOrigin, PROPHANDLING_NO_MODIFY_SIZE_RIGHTS ) {}
+    explicit ENoModifySizeRights( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EComponent( boMsgIsNameOnly ? "Component '" + msg + "'s size is fixed and therefore cannot be modified" : msg, errorOrigin, PROPHANDLING_NO_MODIFY_SIZE_RIGHTS ) {}
     virtual ~ENoModifySizeRights() throw() {}
 };
 
@@ -376,7 +440,7 @@ class EIncompatibleComponents : public EComponent
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EIncompatibleComponents( const std::string& name, const std::string& errorOrigin ) : EComponent( "Component " + name + " has been compared with an incompatible type (might differ in components, size, etc.)", errorOrigin, PROPHANDLING_INCOMPATIBLE_COMPONENTS ) {}
+    explicit EIncompatibleComponents( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EComponent( boMsgIsNameOnly ? "Component '" + msg + "' has been compared with an incompatible type (might differ in components, size, etc.)" : msg, errorOrigin, PROPHANDLING_INCOMPATIBLE_COMPONENTS ) {}
     virtual ~EIncompatibleComponents() throw() {}
 };
 
@@ -384,7 +448,7 @@ public:
 // PROPERTY EXCEPTION CLASSES :
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-/// \brief A base class for \b mvIMPACT::acquire::Property related exceptions from the property module
+/// \brief A base class for \b mvIMPACT::acquire::Property related exceptions from the property module.
 /**
  * This exception object will never be raised in the code. It can't be constructed
  * directly but to check for \b mvIMPACT::acquire::Property related errors a catch block for
@@ -412,7 +476,7 @@ class EInvalidValue : public EProperty
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EInvalidValue( const std::string& propname, const std::string& errorOrigin ) : EProperty( "Invalid value for property " + propname, errorOrigin, PROPHANDLING_INVALID_PROP_VALUE ) {}
+    explicit EInvalidValue( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EProperty( boMsgIsNameOnly ? "Invalid value for property '" + msg + "'" : msg, errorOrigin, PROPHANDLING_INVALID_PROP_VALUE ) {}
     virtual ~EInvalidValue() throw() {}
 };
 
@@ -422,7 +486,7 @@ class EValIDOutOfBounds : public EProperty
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EValIDOutOfBounds( const std::string& propname, const std::string& errorOrigin ) : EProperty( "Value ID out of bounds for " + propname, errorOrigin, PROPHANDLING_PROP_VAL_ID_OUT_OF_BOUNDS ) {}
+    explicit EValIDOutOfBounds( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EProperty( boMsgIsNameOnly ? "Value ID out of bounds for property '" + msg + "'" : msg, errorOrigin, PROPHANDLING_PROP_VAL_ID_OUT_OF_BOUNDS ) {}
     virtual ~EValIDOutOfBounds() throw() {}
 };
 
@@ -432,7 +496,7 @@ class ETranslationTableCorrupted : public EProperty
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ETranslationTableCorrupted( const std::string& propname, const std::string& errorOrigin ) : EProperty( "The translation dictionary of " + propname + " is corrupted", errorOrigin, PROPHANDLING_PROP_TRANSLATION_TABLE_CORRUPTED ) {}
+    explicit ETranslationTableCorrupted( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EProperty( boMsgIsNameOnly ? "The translation dictionary of property '" + msg + "' is corrupted" : msg, errorOrigin, PROPHANDLING_PROP_TRANSLATION_TABLE_CORRUPTED ) {}
     virtual ~ETranslationTableCorrupted() throw() {}
 };
 
@@ -442,7 +506,7 @@ class ETranslationTableNotDefined : public EProperty
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ETranslationTableNotDefined( const std::string& propname, const std::string& errorOrigin ) : EProperty( "Translation dictionary has not been defined for property " + propname, errorOrigin, PROPHANDLING_PROP_TRANSLATION_TABLE_NOT_DEFINED ) {}
+    explicit ETranslationTableNotDefined( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EProperty( boMsgIsNameOnly ? "Translation dictionary has not been defined for property '" + msg + "'" : msg, errorOrigin, PROPHANDLING_PROP_TRANSLATION_TABLE_NOT_DEFINED ) {}
     virtual ~ETranslationTableNotDefined() throw() {}
 };
 
@@ -452,7 +516,7 @@ class EInvalidValueType : public EProperty
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EInvalidValueType( const std::string& propname, const std::string& errorOrigin ) : EProperty( "Property " + propname + " does not support this value type", errorOrigin, PROPHANDLING_INVALID_PROP_VALUE_TYPE ) {}
+    explicit EInvalidValueType( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EProperty( boMsgIsNameOnly ? "Property '" + msg + "' does not support this value type" : msg, errorOrigin, PROPHANDLING_INVALID_PROP_VALUE_TYPE ) {}
     virtual ~EInvalidValueType() throw() {}
 };
 
@@ -463,7 +527,7 @@ class EValTooLarge : public EProperty
 {
 public:
     explicit EValTooLarge( const std::string& msg, const std::string& errorOrigin ) : EProperty( msg, errorOrigin, PROPHANDLING_PROP_VAL_TOO_LARGE ) {}
-    explicit EValTooLarge( const std::string& value, const std::string& maxValue, const std::string& propname, const std::string& errorOrigin ) : EProperty( "The value " + value + " is higher than the maximum value(" + maxValue + ") for property " + propname, errorOrigin, PROPHANDLING_PROP_VAL_TOO_LARGE ) {}
+    explicit EValTooLarge( const std::string& value, const std::string& maxValue, const std::string& propName, const std::string& errorOrigin ) : EProperty( "The value '" + value + "' is larger than the maximum value(" + maxValue + ") for property '" + propName + "'", errorOrigin, PROPHANDLING_PROP_VAL_TOO_LARGE ) {}
     virtual ~EValTooLarge() throw() {}
 };
 
@@ -474,7 +538,7 @@ class EValTooSmall : public EProperty
 {
 public:
     explicit EValTooSmall( const std::string& msg, const std::string& errorOrigin ) : EProperty( msg, errorOrigin, PROPHANDLING_PROP_VAL_TOO_SMALL ) {}
-    explicit EValTooSmall( const std::string& value, const std::string& minValue, const std::string& propname, const std::string& errorOrigin ) : EProperty( "The value(" + value + ") is smaller than the minimum value(" + minValue + ") for property " + propname, errorOrigin, PROPHANDLING_PROP_VAL_TOO_SMALL ) {}
+    explicit EValTooSmall( const std::string& value, const std::string& minValue, const std::string& propName, const std::string& errorOrigin ) : EProperty( "The value'" + value + "' is smaller than the minimum value(" + minValue + ") for property '" + propName + "'", errorOrigin, PROPHANDLING_PROP_VAL_TOO_SMALL ) {}
     virtual ~EValTooSmall() throw() {}
 };
 
@@ -484,7 +548,7 @@ class EValidationFailed : public EProperty
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EValidationFailed( const std::string& propname, const std::string& errorOrigin ) : EProperty( "The assigned value doesn't pass the validation test for property " + propname, errorOrigin, PROPHANDLING_PROP_VALIDATION_FAILED ) {}
+    explicit EValidationFailed( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EProperty( boMsgIsNameOnly ? "The assigned value doesn't pass the validation test for property '" + msg + "'" : msg, errorOrigin, PROPHANDLING_PROP_VALIDATION_FAILED ) {}
     virtual ~EValidationFailed() throw() {}
 };
 
@@ -561,7 +625,7 @@ class ECantAccessData : public EPropertyList
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ECantAccessData( const std::string& path, const std::string& errorOrigin ) : EPropertyList( "Cannot access data from " + path, errorOrigin, PROPHANDLING_LIST_CANT_ACCESS_DATA ) {}
+    explicit ECantAccessData( const std::string& msg, const std::string& errorOrigin, bool boMsgIsPathOnly = true ) : EPropertyList( boMsgIsPathOnly ? "Cannot access data from '" + msg + "'" : msg, errorOrigin, PROPHANDLING_LIST_CANT_ACCESS_DATA ) {}
     virtual ~ECantAccessData() throw() {}
 };
 
@@ -607,7 +671,7 @@ class EMethodPtrInvalid : public EMethod
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EMethodPtrInvalid( const std::string& methodname, const std::string& errorOrigin ) : EMethod( "The function pointer for Method " + methodname + " is invalid", errorOrigin, PROPHANDLING_METHOD_PTR_INVALID ) {}
+    explicit EMethodPtrInvalid( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EMethod( boMsgIsNameOnly ? "The function pointer for Method '" + msg + "' is invalid" : msg, errorOrigin, PROPHANDLING_METHOD_PTR_INVALID ) {}
     virtual ~EMethodPtrInvalid() throw() {}
 };
 
@@ -662,7 +726,7 @@ class EInvalidInputParameter : public EPropertyHandling
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EInvalidInputParameter( const std::string& errorOrigin ) : EPropertyHandling( "One or more of the input parameters are invalid ( unassigned pointers? )", errorOrigin, PROPHANDLING_INVALID_INPUT_PARAMETER ) {}
+    explicit EInvalidInputParameter( const std::string& errorOrigin ) : EPropertyHandling( "One or more of the input parameters are invalid (unassigned pointers?)", errorOrigin, PROPHANDLING_INVALID_INPUT_PARAMETER ) {}
     explicit EInvalidInputParameter( const std::string& msg, const std::string& errorOrigin ) : EPropertyHandling( msg, errorOrigin, PROPHANDLING_INVALID_INPUT_PARAMETER ) {}
     virtual ~EInvalidInputParameter() throw() {}
 };
@@ -704,7 +768,7 @@ class ECantSerializeData : public EPropertyHandling
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit ECantSerializeData( const std::string& listname, const std::string& errorOrigin ) : EPropertyHandling( "No serialize rights for list " + listname, errorOrigin, PROPHANDLING_CANT_SERIALIZE_DATA ) {}
+    explicit ECantSerializeData( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EPropertyHandling( boMsgIsNameOnly ? "No serialize rights for list '" + msg + "'" : msg, errorOrigin, PROPHANDLING_CANT_SERIALIZE_DATA ) {}
     virtual ~ECantSerializeData() throw() {}
 };
 
@@ -714,7 +778,7 @@ class EInvalidFileContent : public EPropertyHandling
 //-----------------------------------------------------------------------------
 {
 public:
-    explicit EInvalidFileContent( const std::string& path, const std::string& errorOrigin ) : EPropertyHandling( "The file " + path + " does not contain valid data for this operation", errorOrigin, PROPHANDLING_INVALID_FILE_CONTENT ) {}
+    explicit EInvalidFileContent( const std::string& msg, const std::string& errorOrigin, bool boMsgIsNameOnly = true ) : EPropertyHandling( boMsgIsNameOnly ? "The file '" + msg + "' does not contain valid data for this operation" : msg, errorOrigin, PROPHANDLING_INVALID_FILE_CONTENT ) {}
     virtual ~EInvalidFileContent() throw() {}
 };
 
@@ -729,7 +793,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-/// \brief A factory class to raise mvIMPACT acquire related exceptions
+/// \brief A factory class to raise mvIMPACT acquire related exceptions.
 /**
  * This class contains a collection of static member functions that are used inside the
  * interface to raise the appropriate exception in case of an error
@@ -800,7 +864,7 @@ class ComponentAccess
 protected:
     /// \brief An internal constant that defines by which factor dynamic buffers will grow when the current size is not sufficient.
     enum { BUFFER_INCREMENT_FACTOR = 6 };
-    /// \brief A unique identifier for the internal driver object referenced by this instance of \b mvIMPACT::acquire::ComponentAccess
+    /// \brief A unique identifier for the internal driver object referenced by this instance of \b mvIMPACT::acquire::ComponentAccess.
     HOBJ m_hObj;
     /// \brief A helper function to query certain component related string parameters.
     /**
@@ -809,33 +873,36 @@ protected:
      */
     std::string compGetStringParam( /// The type of the parameter to read
         TOBJ_StringQuery query,
-        /// An additional parameter
+        /// [in] An additional parameter
         int param1 = 0,
-        /// An additional parameter
+        /// [in] An additional parameter
         int param2 = 0 ) const
     {
         char* pStr = 0;
-        TPROPHANDLING_ERROR result;
-        std::string resultString;
-        result = OBJ_GetSWithInplaceConstruction( m_hObj, query, &pStr, stringAllocator, param1, param2 );
-        if( pStr )
+        std::string stringParam;
+        const TPROPHANDLING_ERROR result = OBJ_GetSWithInplaceConstruction( m_hObj, query, &pStr, stringAllocator, param1, param2 );
+        if( result == PROPHANDLING_NO_ERROR )
         {
-            resultString = std::string( pStr );
+            if( pStr )
+            {
+                stringParam = std::string( pStr );
+            }
+            delete [] pStr;
         }
-        delete [] pStr;
-        if( result != PROPHANDLING_NO_ERROR )
+        else
         {
+            delete [] pStr;
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return resultString;
+        return stringParam;
     }
     /// \brief Constructs a new \b mvIMPACT::acquire::ComponentAccess object to a driver object.
     explicit ComponentAccess(
-        /// A valid handle to a component object
+        /// [in] A valid handle to a component object
         HOBJ hObj ) : m_hObj( hObj )
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_CheckHandle( m_hObj, hcmOwnerList ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_CheckHandle( m_hObj, hcmOwnerList );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -851,13 +918,21 @@ protected:
     }
 public:
     virtual ~ComponentAccess( void ) {}
-#ifndef WRAP_PYTHON
+    /// \brief Constructs a new \b mvIMPACT::acquire::ComponentAccess from an existing one.
+    ComponentAccess(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::ComponentAccess object, this object shall be created from
+        const ComponentAccess& src ) : m_hObj( src.m_hObj ) {}
     /// \brief Allows implicit conversion to a HOBJ.
     operator HOBJ() const
     {
         return m_hObj;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, be explicit: use method hObj(); Python variables lack a type specifier, so a conversion operator is useless for variable assignment anyhow)
+    /// \brief Allows assignments of \b mvIMPACT::acquire::ComponentAccess objects.
+    ComponentAccess& operator=( const ComponentAccess& rhs )
+    {
+        m_hObj = rhs.m_hObj;
+        return *this;
+    }
     /// \brief Returns the current changed counter for the component referenced by this object.
     /**
      *  This changed counter is incremented internally each time the component is modified.
@@ -871,44 +946,103 @@ public:
      *  any way while the latter one will only be incremented if the attributes (e.g. the
      *  flags) but \b NOT if e.g. the value(s) of a property has been modified.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
-     *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
-     *  // EXAMPLE
      *  //-----------------------------------------------------------------------------
      *  struct ComponentRef
      *  //-----------------------------------------------------------------------------
      *  {
-     *    mvIMPACT::acquire::Component* m_pc;
-     *    unsigned int m_lastChangedCount;
-     *    ComponentRef( mvIMPACT::acquire::Component* pc ) : m_pc(pc), m_lastChangedCount(0) {}
+     *    mvIMPACT::acquire::Component c_;
+     *    unsigned int lastChangedCount_;
+     *    ComponentRef( mvIMPACT::acquire::Component c ) : c_( c ), lastChangedCount_( 0 ) {}
      *  };
      *
      *  //-----------------------------------------------------------------------------
      *  void fn( ComponentRef& cr )
      *  //-----------------------------------------------------------------------------
      *  {
-     *    if( cr.m_pc )
+     *    if( cr.c_.isValid() )
      *    {
-     *      unsigned int currentChangedCount = cr.m_pc->changedCounter();
-     *      if( currentChangedCount != cr.m_lastChangedCount ) )
+     *      const unsigned int currentChangedCount = cr.c_.changedCounter();
+     *      if( currentChangedCount != cr.lastChangedCount_ )
      *      {
-     *        // something has happened since the last check.
+     *        // something has happened since the last check!
      *        doWhatNeedsToBeDone();
      *        // and remember the current changed counter
-     *        cr.m_lastChangedCount = currentChangedCount;
+     *        cr.lastChangedCount_ = currentChangedCount;
      *      }
      *    }
      *  }
      * \endcode
-     *  \endif
-     *  \return The current changed counter of this object.
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  import mvIMPACT.acquire.*;
+     *
+     *  //-----------------------------------------------------------------------------
+     *  public class ComponentRef
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    private Component c_;
+     *    private long lastChangedCount_;
+     *    public ComponentRef( Component c ) : c_( c ), lastChangedCount_( 0 ) {}
+     *    public Component getComponent()
+     *    {
+     *      return c_;
+     *    }
+     *    public long getLastChangedCounter()
+     *    {
+     *      return lastChangedCount_;
+     *    }
+     *    public void setLastChangedCounter( long changedCounter )
+     *    {
+     *      lastChangedCount_ = lastChangedCount;
+     *    }
+     *  }
+     *
+     *  // ...more code, class definition etc.
+     *
+     *  //-----------------------------------------------------------------------------
+     *  public static void fn( ComponentRef cr )
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    if( cr.c_.isValid() )
+     *    {
+     *      final long currentChangedCount = cr.getComponent().changedCounter();
+     *      if( currentChangedCount != cr.getLastChangedCounter() )
+     *      {
+     *        // something has happened since the last check!
+     *        doWhatNeedsToBeDone();
+     *        // and remember the current changed counter
+     *        cr.setLastChangedCounter( currentChangedCount );
+     *      }
+     *    }
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  class ComponentRef
+     *    def __init__(self, c):
+     *      self.c_ = c
+     *      self.lastChangedCount_ = 0
+     *
+     *  def fn(cr):
+     *    if cr.c_.isValid:
+     *      currentChangedCount = cr.c_.changedCounter()
+     *      if currentChangedCount != cr.lastChangedCount_:
+     *        # something has happened since the last check!
+     *        doWhatNeedsToBeDone()
+     *        # and remember the current changed counter
+     *        cr.lastChangedCount_ = currentChangedCount
+     * \endcode
+     * \endif
+     *
+     * \return The current changed counter of this object.
      */
     unsigned int changedCounter( void ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int changedCounter;
-        if( ( result = OBJ_GetChangedCounter( m_hObj, &changedCounter ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetChangedCounter( m_hObj, &changedCounter );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -932,9 +1066,9 @@ public:
      */
     unsigned int changedCounterAttr( void ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int changedCounter;
-        if( ( result = OBJ_GetChangedCounterAttr( m_hObj, &changedCounter ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetChangedCounterAttr( m_hObj, &changedCounter );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -992,17 +1126,18 @@ public:
  * \endcode
  *
  *  Where the prefix 'L' means this is a list, 'P' that this is a property.
- *  Assuming that we have and iterator referencing list 'C', calling \b mvIMPACT::acquire::ComponentIterator::firstChild
- *  e.g. would return a new iterator referencing object 'PE', while calling \b mvIMPACT::acquire::ComponentIterator::nextSibling
- *  would have returned a reference to 'PD' and \b mvIMPACT::acquire::ComponentIterator::parent would have
+ *  Assuming that we have and iterator referencing list 'C', calling \b mvIMPACT::acquire::Component::firstChild
+ *  e.g. would return a new iterator referencing object 'PE', while calling \b mvIMPACT::acquire::Component::nextSibling
+ *  would have returned a reference to 'PD' and \b mvIMPACT::acquire::Component::parent would have
  *  returned a reference to object 'LA'.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
- *  \b EXAMPLE \b 1:
+ *  \b "EXAMPLE 1":
  *
- *  A new \b mvIMPACT::acquire::ComponentIterator is created with the \a ID of list 'C':
+ * A new \b mvIMPACT::acquire::Component is created with the \a ID of list 'C':
+ *
+ *  \if DOXYGEN_CPP_DOCUMENTATION
  * \code
- *  ComponentIterator it(ID_of_list_C);
+ *  Component it(ID_of_list_C);
  *  it = it.firstChild();    // now we are referencing 'PE'
  *  it = it.lastSibling();   // moves to 'PG'
  *  it = it.firstSibling();  // moves back to PE'
@@ -1010,17 +1145,39 @@ public:
  *  it = it.firstSibling();  // moves back to PE'
  *  it = it.parent();        // we are referencing 'LC' again
  * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  Component it = new Component(ID_of_list_C);
+ *  it = it.firstChild();    // now we are referencing 'PE'
+ *  it = it.lastSibling();   // moves to 'PG'
+ *  it = it.firstSibling();  // moves back to PE'
+ *  it = it.nextSibling();   // moves to 'PF'
+ *  it = it.firstSibling();  // moves back to PE'
+ *  it = it.parent();        // we are referencing 'LC' again
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  it = acquire.Component(ID_of_list_C);
+ *  it = it.firstChild()    # now we are referencing 'PE'
+ *  it = it.lastSibling()   # moves to 'PG'
+ *  it = it.firstSibling()  # moves back to PE'
+ *  it = it.nextSibling()   # moves to 'PF'
+ *  it = it.firstSibling()  # moves back to PE'
+ *  it = it.parent()        # we are referencing 'LC' again
+ * \endcode
+ * \endif
  *
- *  \b EXAMPLE \b 2:
+ *  \b "EXAMPLE 2":
  *
  *  Iterate over a complete list including sub lists. This will result in a list
  *  of all lists and properties that reside in the list the iterator currently
  *  is moving through to be written to the standard output. The name of the component
  *  and every parent component will be printed into the standard output:
  *
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
- *  //-----------------------------------------------------------------------------
- *  void ParseList( ComponentIterator iter, const string& path = "" )
+ * //-----------------------------------------------------------------------------
+ *  void ParseList( Component iter, const string& path = "" )
  *  //-----------------------------------------------------------------------------
  *  {
  *    while( iter.isValid() )
@@ -1037,7 +1194,7 @@ public:
  *        else if( iter.isProp() )
  *        {
  *          // do property specific stuff e.g. read the value
- *          Property prop(iter);
+ *          Property prop( iter );
  *          cout << "Property " << path << prop.name() << "(value(s): ";
  *          unsigned int valCount = prop.valCount();
  *          for( unsigned int i=0; i<valCount; i++ )
@@ -1061,13 +1218,103 @@ public:
  *  {
  *    ComponentList baselist;
  *    // ....
- *    ComponentIterator it(baselist);
- *    ParseList(it);
+ *    Component it( baselist );
+ *    ParseList( it );
  *    // ....
  *    return 0;
- *  }
+ * }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ * //-----------------------------------------------------------------------------
+ * public class FeatureListParser
+ * //-----------------------------------------------------------------------------
+ * {
+ *   static
+ *   {
+ *     try
+ *     {
+ *       System.loadLibrary( "mvIMPACT_Acquire.java" );
+ *     }
+ *     catch( UnsatisfiedLinkError e )
+ *     {
+ *       System.err.println( "Native code library failed to load. Make sure the 'mvIMPACT_Acquire.java' library can be found in the systems search path.\n" + e );
+ *       System.exit( 1 );
+ *     }
+ *  }
+ *
+ *  //-----------------------------------------------------------------------------
+ *  public static void ParseList( Component iter, final String path )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    while( iter.isValid() )
+ *    {
+ *      if( iter.isVisible() )
+ *      {
+ *        if( iter.isList() )
+ *        {
+ *          // do some list specific stuff
+ *          System.out.println( String.format( "List     %s%s/", path, iter.name() ) );
+ *          // move down into the list and append its name to the path
+ *          ParseList( iter.firstChild(), path + iter.name() + "/" );
+ *        }
+ *        else if( iter.isProp() )
+ *        {
+ *          // do property specific stuff e.g. read the value
+ *          Property prop = new Property(iter.hObj());
+ *          StringBuilder values = new StringBuilder();
+ *
+ *          final long valCount = prop.valCount();
+ *          for( long i=0; i<valCount; i++ )
+ *          {
+ *            values.append( prop.readS( ( int )i ) );
+ *            if( i < valCount - 1 )
+ *            {
+ *              values.append( ", " );
+ *            }
+ *          }
+ *          System.out.println( String.format( "Property %s%s(value(s): %s)", path, prop.name(), values.toString() ) );
+ *        }
+ *      }
+ *      iter = iter.nextSibling();
+ *    }
+ *  }
+ *
+ *  //-----------------------------------------------------------------------------
+ *  public static void main( String[] args )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    // ....
+ *    Component baselist( gethObjOfListToParse() );
+ *    ParseList( it );
+ *    // ....
+ *  }
+ * }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ * def ParseList(iter, path = ""):
+ *  while iter.isValid:
+ *    if iter.isVisible:
+ *      if iter.isList:
+ *        # do some list specific stuff
+ *        print("List     {0}{1}/".format(path, iter.name()))
+ *        # move down into the list and append its name to the path
+ *        ParseList(iter.firstChild(), path + iter.name() + "/")
+ *      elif iter.isProp:
+ *        # do property specific stuff e.g. read the value
+ *        prop = acquire.Property(iter.hObj())
+ *        values = []
+ *        valCount = prop.valCount()
+ *        for i in range(valCount):
+ *          values.append(prop.readS(i))
+ *        print("Property {0}{1}(value(s): {2})".format(path, prop.name(), string.join(values, ",")))
+ *    iter = iter.nextSibling()
+ *
+ * it = acquire.Component(gethObjOfListToParse())
+ * ParseList(it)
+ * \endcode
+ * \endif
  */
 class Component : public ComponentAccess
 //-----------------------------------------------------------------------------
@@ -1077,9 +1324,9 @@ private:
     template<typename _FnQuery> size_t queryFeatureCount( _FnQuery pFnQuery ) const
     //-----------------------------------------------------------------------------
     {
-        TPROPHANDLING_ERROR result;
         size_t featureCount = 0;
-        if( ( result = pFnQuery( m_hObj, 0, 0, &featureCount ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = pFnQuery( m_hObj, 0, 0, &featureCount );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1089,14 +1336,14 @@ private:
     template<typename _FnQuery> size_t queryFeatures( std::vector<Component>& v, _FnQuery pFnQuery ) const
     //-----------------------------------------------------------------------------
     {
-        TPROPHANDLING_ERROR result;
         v.clear();
         size_t featureCount = queryFeatureCount( pFnQuery );
         if( featureCount > 0 )
         {
             std::vector<HOBJ> buf;
             buf.resize( featureCount );
-            if( ( result = pFnQuery( m_hObj, 0, &( *( buf.begin() ) ), &featureCount ) ) != PROPHANDLING_NO_ERROR )
+            const TPROPHANDLING_ERROR result = pFnQuery( m_hObj, 0, &( *( buf.begin() ) ), &featureCount );
+            if( result != PROPHANDLING_NO_ERROR )
             {
                 ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
             }
@@ -1112,10 +1359,10 @@ private:
     template<typename _FnQuery> HOBJ queryFeature( _FnQuery pFnQuery, int index ) const
     //-----------------------------------------------------------------------------
     {
-        TPROPHANDLING_ERROR result;
         HOBJ hObj;
         size_t featureCount = 1;
-        if( ( result = pFnQuery( m_hObj, index, &hObj, &featureCount ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = pFnQuery( m_hObj, index, &hObj, &featureCount );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1126,21 +1373,18 @@ private:
     //-----------------------------------------------------------------------------
     {
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pBuf = new char[bufSize];
+        auto_array_ptr<char> pBuf( bufSize );
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        while( ( result = pFnQuery( m_hObj, pBuf, bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        while( ( result = pFnQuery( m_hObj, pBuf.get(), bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
-            delete [] pBuf;
             bufSize *= BUFFER_INCREMENT_FACTOR;
-            pBuf = new char[bufSize];
+            pBuf.realloc( bufSize );
         }
-        std::string value( pBuf );
-        delete [] pBuf;
         if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return value;
+        return std::string( pBuf.get() );
     }
 public:
     /// \brief Constructs a new access object to a driver object.
@@ -1149,16 +1393,19 @@ public:
         HOBJ hObj ) : ComponentAccess( hObj ) {}
     /// \brief Constructs a new unbound access object.
     explicit Component( void ) {}
-#if !defined(WRAP_PYTHON)
+    /// \brief Constructs a new \b mvIMPACT::acquire::Component from an existing one.
+    Component(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::Component object, this object shall be created from
+        const Component& src ) : ComponentAccess( src ) {}
     /// \brief Moves to the next sibling(the next feature in the current list of features).
     /**
      *  \return A self reference
      */
     Component& operator++( void ) // prefix
     {
-        TPROPHANDLING_ERROR result;
         HOBJ nextSibling;
-        if( ( result = OBJ_GetNextSibling( m_hObj, &nextSibling ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetNextSibling( m_hObj, &nextSibling );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1175,16 +1422,21 @@ public:
         ++*this;
         return temp;
     }
-#endif // #if !defined(WRAP_PYTHON)
+    /// \brief Allows assignments of \b mvIMPACT::acquire::Component objects.
+    Component& operator=( const Component& rhs )
+    {
+        ComponentAccess::operator=( rhs );
+        return *this;
+    }
     /// \brief Moves to the first sibling(the first feature in the current list of features).
     /**
      *  \return A new \b mvIMPACT::acquire::Component object
      */
     Component firstSibling( void ) const
     {
-        TPROPHANDLING_ERROR result;
         HOBJ hNew = INVALID_ID;
-        if( ( result = OBJ_GetFirstSibling( m_hObj, &hNew ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetFirstSibling( m_hObj, &hNew );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1199,9 +1451,9 @@ public:
      */
     Component lastSibling( void ) const
     {
-        TPROPHANDLING_ERROR result;
         HOBJ hNew = INVALID_ID;
-        if( ( result = OBJ_GetLastSibling( m_hObj, &hNew ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetLastSibling( m_hObj, &hNew );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1224,9 +1476,9 @@ public:
      */
     Component firstChild( void ) const
     {
-        TPROPHANDLING_ERROR result;
         HOBJ hNew = INVALID_ID;
-        if( ( result = OBJ_GetFirstChild( m_hObj, &hNew ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetFirstChild( m_hObj, &hNew );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1238,9 +1490,9 @@ public:
      */
     Component parent( void ) const
     {
-        TPROPHANDLING_ERROR result;
         HOBJ hNew = INVALID_ID;
-        if( ( result = OBJ_GetParent( m_hObj, &hNew ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetParent( m_hObj, &hNew );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1260,9 +1512,9 @@ public:
      */
     TComponentFlag flags( void ) const
     {
-        TPROPHANDLING_ERROR result;
         TComponentFlag flags;
-        if( ( result = OBJ_GetFlags( m_hObj, &flags ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetFlags( m_hObj, &flags );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1273,28 +1525,22 @@ public:
      *  \return The flags associated with this component as a string.
      */
     std::string flagsAsString(
-        /// [in] A user definable string to separate the individual flags.
-        ///
-        /// The default value is ' | ' resulting in the string to look e.g.
-        /// like this: <b>'cfWriteAccess | cfReadAccess'</b>
+        /// [in] A user definable string to separate the individual flags. The default value is ' | ' resulting in the string to look e.g. like this: <b>'cfWriteAccess | cfReadAccess'</b>
         const std::string& separator = " | " ) const
     {
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pBuf = new char[bufSize];
+        auto_array_ptr<char> pBuf( bufSize );
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        while( ( result = OBJ_GetFlagsS( m_hObj, separator.c_str(), pBuf, bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        while( ( result = OBJ_GetFlagsS( m_hObj, separator.c_str(), pBuf.get(), pBuf.parCnt() ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
-            delete [] pBuf;
             bufSize *= BUFFER_INCREMENT_FACTOR;
-            pBuf = new char[bufSize];
+            pBuf.realloc( bufSize );
         }
-        std::string value( pBuf );
-        delete [] pBuf;
         if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return value;
+        return std::string( pBuf.get() );
     }
     /// \brief Checks if this component is currently referencing the default for this component.
     /**
@@ -1305,9 +1551,9 @@ public:
      */
     bool isDefault( void ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int isDefault;
-        if( ( result = OBJ_IsDefault( m_hObj, &isDefault ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_IsDefault( m_hObj, &isDefault );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1407,8 +1653,8 @@ public:
      */
     const Component& restoreDefault( void ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_RestoreDefault( m_hObj ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_RestoreDefault( m_hObj );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1420,9 +1666,9 @@ public:
      */
     TComponentType type( void ) const
     {
-        TPROPHANDLING_ERROR result;
         TComponentType type;
-        if( ( result = OBJ_GetType( m_hObj, &type ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetType( m_hObj, &type );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1456,9 +1702,9 @@ public:
      */
     TComponentVisibility visibility( void ) const
     {
-        TPROPHANDLING_ERROR result;
         TComponentVisibility visibility;
-        if( ( result = OBJ_GetVisibility( m_hObj, &visibility ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetVisibility( m_hObj, &visibility );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1481,21 +1727,18 @@ public:
         TComponentVisibility visibility )
     {
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pBuf = new char[bufSize];
+        auto_array_ptr<char> pBuf( bufSize );
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        while( ( result = OBJ_VisibilityToString( visibility, pBuf, bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        while( ( result = OBJ_VisibilityToString( visibility, pBuf.get(), bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
-            delete [] pBuf;
             bufSize *= BUFFER_INCREMENT_FACTOR;
-            pBuf = new char[bufSize];
+            pBuf.realloc( bufSize );
         }
-        std::string value( pBuf );
-        delete [] pBuf;
         if( result != PROPHANDLING_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
-        return value;
+        return std::string( pBuf.get() );
     }
     /// \brief Returns the recommended representation for this component.
     /**
@@ -1510,9 +1753,9 @@ public:
      */
     TComponentRepresentation representation( void ) const
     {
-        TPROPHANDLING_ERROR result;
         TComponentRepresentation representation;
-        if( ( result = OBJ_GetRepresentation( m_hObj, &representation ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetRepresentation( m_hObj, &representation );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -1541,21 +1784,18 @@ public:
         TComponentRepresentation representation )
     {
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pBuf = new char[bufSize];
+        auto_array_ptr<char> pBuf( bufSize );
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        while( ( result = OBJ_RepresentationToString( representation, pBuf, bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        while( ( result = OBJ_RepresentationToString( representation, pBuf.get(), bufSize ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
-            delete [] pBuf;
             bufSize *= BUFFER_INCREMENT_FACTOR;
-            pBuf = new char[bufSize];
+            pBuf.realloc( bufSize );
         }
-        std::string value( pBuf );
-        delete [] pBuf;
         if( result != PROPHANDLING_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
-        return value;
+        return std::string( pBuf.get() );
     }
     /// \brief Returns the number of features selected by the current one.
     /**
@@ -1706,8 +1946,34 @@ public:
 //-----------------------------------------------------------------------------
 /// \brief A simple helper class to wrap the creation of a callback object.
 /**
- * Applications need to derive from this class and must re-implement the function
+  * Applications need to derive from this class and must re-implement the function
  * \b mvIMPACT::acquire::ComponentCallback::execute.
+ *
+ * By deriving from this class it will become possible to receive a notification whenever
+ * an object derived from \b mvIMPACT::acquire::Component has changed. So e.g. an application
+ * could register a callback on the \b mvIMPACT::acquire::Device::state property to get
+ * notified when e.g. a certain device has been unplugged or restarted.
+ *
+ * \note
+ * A \c change is not necessarily a changed value of a property but also any other change
+ * in behaviour like a change in visibility or availability. So when a callback has been registered
+ * for a certain read-only component that becomes writable for some reason the registered
+ * callback would be executed as well.
+ *
+ * A single instance of an object derived from this class can hold an arbitrary number of
+ * components which are monitored. components can be registered by calling the \b mvIMPACT::acquire::ComponentCallback::registerComponent
+ * function, so it is not necessary to create and hold a callback instance for every feature that shall be
+ * monitored. Since when the callback is executed the information about the object that has
+ * triggered it will be supplied as one the input parameters it is easy to decide what has
+ * to be done.
+ *
+ * \attention
+ * Reading and understanding the documentation supplied with the \b mvIMPACT::acquire::ComponentCallback::execute function
+ * is vital to write error-free code!
+ *
+ * \attention
+ * It is \b NOT save to call \b mvIMPACT::acquire::ComponentCallback::registerComponent and \b mvIMPACT::acquire::ComponentCallback::unregisterComponent
+ * from parallel threads! If this is absolutely necessary appropriate synchronization code must be wrapped around these calls by the calling code!
  *
  * \since 1.12.18
  *
@@ -1748,7 +2014,7 @@ class ComponentCallback
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -1768,13 +2034,13 @@ public:
     {
         m_pRefData->callbackUserData_.pUserData_ = pUserData;
         m_pRefData->callbackUserData_.pCallback_ = this;
-        TPROPHANDLING_ERROR result = OBJ_CreateCallback( ctOnChanged, myCallback, &m_pRefData->callbackUserData_, &m_pRefData->handle_ );
+        const TPROPHANDLING_ERROR result = OBJ_CreateCallback( ctOnChanged, myCallback, &m_pRefData->callbackUserData_, &m_pRefData->handle_ );
         if( result != PROPHANDLING_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
     }
-    /// \brief Copy constructor
+    /// \brief Copy constructor.
     /**
      * Creates a new object from an existing device object. Keep in mind that this new object
      * will provide access to the very same objects. This constructor
@@ -1785,7 +2051,7 @@ public:
     {
         ++( m_pRefData->m_refCnt );
     }
-    /// \brief Class destructor
+    /// \brief Class destructor.
     /**
      * This will automatically unregister all components still referencing this callback and will
      * free all internal resources.
@@ -1794,8 +2060,7 @@ public:
     {
         dealloc();
     }
-#ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::ComponentCallback objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::ComponentCallback objects.
     ComponentCallback& operator=( const ComponentCallback& rhs )
     {
         if( this != &rhs )
@@ -1807,7 +2072,6 @@ public:
         }
         return *this;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Checks if a component is currently registered for this callback or not.
     /**
      * \return
@@ -1834,10 +2098,10 @@ public:
         {
             return false;
         }
-        TPROPHANDLING_ERROR result = OBJ_AttachCallback( c.hObj(), m_pRefData->handle_ );
+        const TPROPHANDLING_ERROR result = OBJ_AttachCallback( c.hObj(), m_pRefData->handle_ );
         if( result != PROPHANDLING_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
         m_pRefData->objectsRegistered_.insert( c.hObj() );
         return true;
@@ -1857,30 +2121,58 @@ public:
         {
             return false;
         }
-        TPROPHANDLING_ERROR result = OBJ_DetachCallback( c.hObj(), m_pRefData->handle_ );
+        const TPROPHANDLING_ERROR result = OBJ_DetachCallback( c.hObj(), m_pRefData->handle_ );
         if( result != PROPHANDLING_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
         m_pRefData->objectsRegistered_.erase( *it );
         return true;
     }
     /// \brief The callback function.
     /**
-     * Re-implement this function in a derived class in order to get the desired behaviour.
+     * Re-implement this function in a derived class in order to implement a custom behaviour.
      *
      * \note
-     * Please note that this function might be executed from \b ANY thread context, which is
-     * most likely not the same as used by the application thus appropriate mechanisms to ensure
+     * Please note that this function will be executed within the thread context that is \b causing this callback,
+     * thus by any thread belonging to the internal device driver instance. There is a high chance that this is
+     * a different thread than any known to by the application, thus appropriate mechanisms to ensure
      * correct execution must be implemented by an application(e.g. GUI applications might send an
-     * event to the main thread instead of directly accessing GUI elements).
+     * event to the main thread instead of directly accessing GUI elements from here).
+     *
+     * As each device driver instance internally creates multiple threads and since components can be modified by the
+     * driver framework from any of these threads, the thread context might in fact be different each time
+     * this function gets called. Accessing data from objects that are inherited from \b mvIMPACT::acquire::Component is
+     * thread safe so e.g. property values can be read out in parallel securely!
+     * However this 'execute' in a worst case (when several components have been registered to a single callback) might in
+     * fact be called in parallel so everything that happens in here should be designed accordingly!
+     *
+     * \attention
+     * It is \b NOT recommended to do time consuming stuff here! This function should be considered as something like an
+     * interrupt instead: Just take a note about what did just happen and leave. The calling thread will block until this
+     * function does return which might have all sorts of consequences if this takes a lot of time. In the worst case
+     * e.g. image data might get lost!
+     *
+     * \b GenICam \b event \b specific:
+     * When dealing with GenICam device events from a single device only within this callback
+     * due to the internal design it is guaranteed that this callback will NOT be executed in parallel
+     * since the device events will be received sequentially and will always be reported by the same
+     * (device driver instance related) thread! So when e.g. registering for changes to the following
+     * properties:
+     * - mvIMPACT::acquire::GenICam::EventControl::eventLine4RisingEdgeTimestamp
+     * - mvIMPACT::acquire::GenICam::EventControl::eventLine5RisingEdgeTimestamp
+     * - mvIMPACT::acquire::GenICam::EventControl::eventExposureEndTimestamp
+     * for a single device only then the following things are guaranteed:
+     * - The thread context used by the \b mvIMPACT::acquire::ComponentCallback::execute function will always be the same until the device is either closed or the connection is lost e.g. due to a reboot
+     * - \b mvIMPACT::acquire::ComponentCallback::execute function will \b NOT be called concurrently
+     * - The event property changes will be reported in the same order as generated by the device
      */
     virtual void execute(
         /// [in] The component that did cause the callback to be executed
-        Component& /*c*/,
+        Component& PYTHON_OR_JAVA_ONLY( c ),
         /// [in] A pointer to user specific data that was bound to this callback instance
         /// upon construction
-        void* /*pUserData*/ ) {}
+        void* PYTHON_OR_JAVA_ONLY( pUserData ) ) {}
 };
 
 //-----------------------------------------------------------------------------
@@ -1917,6 +2209,17 @@ public:
     {
         bindSearchBase( baselist, pathToSearchBase );
     }
+    /// \brief Constructs a new \b mvIMPACT::acquire::ComponentLocatorBase from an existing one.
+    ComponentLocatorBase(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::ComponentLocatorBase object, this object shall be created from
+        const ComponentLocatorBase& src ) : ComponentAccess( src ), m_searchbase( src.m_searchbase ) {}
+    /// \brief Allows assignments of \b mvIMPACT::acquire::ComponentLocatorBase objects.
+    ComponentLocatorBase& operator=( const ComponentLocatorBase& rhs )
+    {
+        ComponentAccess::operator=( rhs );
+        m_searchbase = rhs.m_searchbase;
+        return *this;
+    }
     /// \brief Binds an access object to an internal driver object.
     /**
      * \return
@@ -1924,7 +2227,8 @@ public:
      * - false otherwise. In case false is returned by this function the component could not
      * be bound, which means subsequent calls using \a access will fail or throw an exception.
      */
-    bool bindComponent( /// [in,out] The access object to bind to the driver object.
+    bool bindComponent(
+        /// [in,out] The access object to bind to the driver object.
         Component& access,
         /// [in] The path and/or name of the object to be located.
         const std::string& name,
@@ -1960,9 +2264,9 @@ public:
         }
         else
         {
-            TPROPHANDLING_ERROR result;
             HLIST hList;
-            if( ( result = OBJ_GetHandleEx( baselist, pathToSearchBase.c_str(), &hList, smIgnoreProperties | smIgnoreMethods, 0 ) ) != PROPHANDLING_NO_ERROR )
+            const TPROPHANDLING_ERROR result = OBJ_GetHandleEx( baselist, pathToSearchBase.c_str(), &hList, smIgnoreProperties | smIgnoreMethods, 0 );
+            if( result != PROPHANDLING_NO_ERROR )
             {
                 ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, baselist );
             }
@@ -1971,7 +2275,7 @@ public:
         }
         return m_searchbase;
     }
-    /// \brief Tries to locate a certain component in a hierarchy of components
+    /// \brief Tries to locate a certain component in a hierarchy of components.
     /**
      *  \return A unique identifier to the component if found or \b mvIMPACT::acquire::INVALID_ID if the component couldn't
      *  be found.
@@ -1991,9 +2295,9 @@ public:
         /// of sub lists. -1 will search in ALL sub lists.
         int maxSearchDepth = INT_MAX ) const
     {
-        TPROPHANDLING_ERROR result;
         HOBJ hObj;
-        if( ( result = OBJ_GetHandleEx( m_searchbase, name.c_str(), &hObj, searchMode, maxSearchDepth ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetHandleEx( m_searchbase, name.c_str(), &hObj, searchMode, maxSearchDepth );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_searchbase );
         }
@@ -2033,16 +2337,32 @@ public:
         /// the search base.
         HLIST baselist ) : ComponentLocatorBase( baselist ) {}
     /// \brief Constructs a new locator and searches the search base list.
-    explicit ComponentLocator(  /// [in] A unique identifier to the base list from where to start to search for
+    explicit ComponentLocator(
+        /// [in] A unique identifier to the base list from where to start to search for
         /// the search base.
         HLIST baselist,
         /// [in] The name or path ('/' separated) to the search base.
         const std::string& pathToSearchBase ) : ComponentLocatorBase( baselist, pathToSearchBase ) {}
+    /// \brief Constructs a new \b mvIMPACT::acquire::ComponentLocator from an existing one.
+    ComponentLocator(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::ComponentLocator object, this object shall be created from
+        const ComponentLocator& src ) : ComponentLocatorBase( src ) {}
+    /// \brief Allows assignments of \b mvIMPACT::acquire::ComponentLocator objects.
+    ComponentLocator& operator=( const ComponentLocator& rhs )
+    {
+        ComponentLocatorBase::operator=( rhs );
+        return *this;
+    }
 };
 
+#if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 //-----------------------------------------------------------------------------
 /// \brief A class to iterate over component lists.
 /**
+ * \deprecated
+ * These days this class is just a typedef mapping the class <b>mvIMPACT::acquire::Component</b> to this type for
+ * compatibility reasons. New applications should work with the <b>mvIMPACT::acquire::Component</b> class instead.
+ *
  *  This object can be used to navigate through component lists of
  *  unknown content.
  *
@@ -2064,10 +2384,11 @@ public:
  *  would have returned a reference to 'PD' and \b mvIMPACT::acquire::ComponentIterator::parent would have
  *  returned a reference to object 'LA'.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
  *  \b "EXAMPLE 1":
  *
- *  A new \b mvIMPACT::acquire::ComponentIterator is created with the \a ID of list 'C':
+ * A new \b mvIMPACT::acquire::ComponentIterator is created with the \a ID of list 'C':
+ *
+ *  \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  ComponentIterator it(ID_of_list_C);
  *  it = it.firstChild();    // now we are referencing 'PE'
@@ -2077,6 +2398,27 @@ public:
  *  it = it.firstSibling();  // moves back to PE'
  *  it = it.parent();        // we are referencing 'LC' again
  * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  ComponentIterator it = new ComponentIterator(ID_of_list_C);
+ *  it = it.firstChild();    // now we are referencing 'PE'
+ *  it = it.lastSibling();   // moves to 'PG'
+ *  it = it.firstSibling();  // moves back to PE'
+ *  it = it.nextSibling();   // moves to 'PF'
+ *  it = it.firstSibling();  // moves back to PE'
+ *  it = it.parent();        // we are referencing 'LC' again
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  it = acquire.ComponentIterator(ID_of_list_C);
+ *  it = it.firstChild()    # now we are referencing 'PE'
+ *  it = it.lastSibling()   # moves to 'PG'
+ *  it = it.firstSibling()  # moves back to PE'
+ *  it = it.nextSibling()   # moves to 'PF'
+ *  it = it.firstSibling()  # moves back to PE'
+ *  it = it.parent()        # we are referencing 'LC' again
+ * \endcode
+ * \endif
  *
  *  \b "EXAMPLE 2":
  *
@@ -2085,8 +2427,9 @@ public:
  *  is moving through to be written to the standard output. The name of the component
  *  and every parent component will be printed into the standard output:
  *
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
- *  //-----------------------------------------------------------------------------
+ * //-----------------------------------------------------------------------------
  *  void ParseList( ComponentIterator iter, const string& path = "" )
  *  //-----------------------------------------------------------------------------
  *  {
@@ -2132,11 +2475,102 @@ public:
  *    ParseList(it);
  *    // ....
  *    return 0;
+ * }
+ * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ * //-----------------------------------------------------------------------------
+ * public class FeatureListParser
+ * //-----------------------------------------------------------------------------
+ * {
+ *   static
+ *   {
+ *     try
+ *     {
+ *       System.loadLibrary( "mvIMPACT_Acquire.java" );
+ *     }
+ *     catch( UnsatisfiedLinkError e )
+ *     {
+ *       System.err.println( "Native code library failed to load. Make sure the 'mvIMPACT_Acquire.java' library can be found in the systems search path.\n" + e );
+ *       System.exit( 1 );
+ *     }
  *  }
+ *
+ *  //-----------------------------------------------------------------------------
+ *  public static void ParseList( Component iter, final String path )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    while( iter.isValid() )
+ *    {
+ *      if( iter.isVisible() )
+ *      {
+ *        if( iter.isList() )
+ *        {
+ *          // do some list specific stuff
+ *          System.out.println( String.format( "List     %s%s/", path, iter.name() ) );
+ *          // move down into the list and append its name to the path
+ *          ParseList( iter.firstChild(), path + iter.name() + "/" );
+ *        }
+ *        else if( iter.isProp() )
+ *        {
+ *          // do property specific stuff e.g. read the value
+ *          Property prop = new Property(iter.hObj());
+ *          StringBuilder values = new StringBuilder();
+ *
+ *          final long valCount = prop.valCount();
+ *          for( long i=0; i<valCount; i++ )
+ *          {
+ *            values.append( prop.readS( ( int )i ) );
+ *            if( i < valCount - 1 )
+ *            {
+ *              values.append( ", " );
+ *            }
+ *          }
+ *          System.out.println( String.format( "Property %s%s(value(s): %s)", path, prop.name(), values.toString() ) );
+ *        }
+ *      }
+ *      iter = iter.nextSibling();
+ *    }
+ *  }
+ *
+ *  //-----------------------------------------------------------------------------
+ *  public static void main( String[] args )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    // ....
+ *    ComponentIterator baselist = gethObjOfListToParse();
+ *    ParseList(it);
+ *    // ....
+ *  }
+ * }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ * def ParseList(iter, path = ""):
+ *  while iter.isValid:
+ *    if iter.isVisible:
+ *      if iter.isList:
+ *        # do some list specific stuff
+ *        print("List     {0}{1}/".format(path, iter.name()))
+ *        # move down into the list and append its name to the path
+ *        ParseList(iter.firstChild(), path + iter.name() + "/")
+ *      elif iter.isProp:
+ *        # do property specific stuff e.g. read the value
+ *        prop = acquire.Property(iter.hObj())
+ *        values = []
+ *        valCount = prop.valCount()
+ *        for i in range(valCount):
+ *          values.append(prop.readS(i))
+ *        print("Property {0}{1}(value(s): {2})".format(path, prop.name(), string.join(values, ",")))
+ *    iter = iter.nextSibling()
+ *
+ * it = acquire.ComponentIterator(gethObjOfListToParse())
+ * ParseList(it)
  * \endcode
  * \endif
  */
 typedef Component ComponentIterator;
+#endif // #if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 
 //-----------------------------------------------------------------------------
 /// \brief A class to provide access to component lists.
@@ -2159,15 +2593,25 @@ public:
     }
     /// \brief Constructs a new unbound \b mvIMPACT::acquire::ComponentList object.
     explicit ComponentList() {}
+    /// \brief Constructs a new \b mvIMPACT::acquire::ComponentList from an existing one.
+    ComponentList(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::ComponentList object, this object shall be created from
+        const ComponentList& src ) : Component( src ) {}
+    /// \brief Allows assignments of \b mvIMPACT::acquire::ComponentList objects.
+    ComponentList& operator=( const ComponentList& rhs )
+    {
+        Component::operator=( rhs );
+        return *this;
+    }
     /// \brief Returns The number of valid component entries in the referenced list.
     /**
      *  \return The number of valid component entries in the referenced list.
      */
     unsigned int size( void ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int size;
-        if( ( result = OBJ_GetElementCount( m_hObj, &size ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetElementCount( m_hObj, &size );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -2197,6 +2641,19 @@ class Method : public Component
 {
     // do not allow assignments
     Method& operator=( const Method& );
+
+    static bool isCharacterInStringList( std::string::value_type c, const std::vector<std::string>& strings )
+    {
+        const std::vector<std::string>::size_type stringCount = strings.size();
+        for ( std::vector<std::string>::size_type i = 0; i < stringCount; i++ )
+        {
+            if( strings[i].find( c ) != std::string::npos )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 public:
     /// \brief Constructs a new \b mvIMPACT::acquire::Method object.
     explicit Method(
@@ -2210,6 +2667,91 @@ public:
     }
     /// \brief Constructs a new unbound \b mvIMPACT::acquire::Method object.
     explicit Method() {}
+    /// \brief Constructs a new \b mvIMPACT::acquire::Method from an existing one.
+    Method(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::Method object, this object shall be created from
+        const Method& src ) : Component( src ) {}
+    /// \brief Calls an underlying driver function.
+    /**
+     * This function can be used to call any driver function which is registered
+     * for the device it is called for. To call a function successfully the parameters
+     * passed to the function must match the parameters expected by the function.
+     *
+     * The parameters are passed as a list of strings.
+     *
+     * To find out what kind of parameters are expected by the function use
+     * the function \b mvIMPACT::acquire::Method::paramList().
+     *
+     * floating point values can be passed either with a '.' or a ',' acting as the
+     * decimal point.
+     *
+     * 'empty' strings can be passed as a single underline('_').rs.
+     *
+     * \if DOXYGEN_CPP_DOCUMENTATION
+     *
+     * \code
+     * // call a function expecting a string and a float
+     * vector<string> params;
+     * params.push_back( "stringParam" );
+     * params.push_back( "3.14" );
+     * meth.call( params );
+     * \endcode
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     * // call a function expecting a string and a float
+     * ArrayList<String> list = new ArrayList<String>();
+     * list.add( "stringParam" );
+     * list.add( "3.14" );
+     * StringVector params = new StringVector( list );
+     * meth.call( params );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     * # call a function expecting a string and a float
+     * params = []
+     * params.append("stringParam")
+     * params.append("3.14")
+     * meth.call(params)
+     * \endcode
+     * \endif
+     * \return An integer value. For a typical function that is part of the driver SDK this integer value will be
+     *  - \b mvIMPACT::acquire::DMR_NO_ERROR if successful.
+     *  - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR otherwise.
+     */
+    int call(
+        /// [in] The parameters to be passed to the function as a list of strings
+        const std::vector<std::string>& params ) const
+    {
+        if( params.empty() )
+        {
+            return call();
+        }
+        const std::vector<std::string>::size_type paramCount = params.size();
+        if( paramCount == 1 )
+        {
+            return call( params[0] );
+        }
+        const std::string separators( " $%&!?=*#:;()" );
+        const std::string::size_type separatorCount = separators.size();
+        for ( std::string::size_type i = 0; i < separatorCount; i++ )
+        {
+            if( !isCharacterInStringList( separators[i], params ) )
+            {
+                const std::string delimiter( separators.substr( i, 1 ) );
+                std::string parameterList;
+                for( std::vector<std::string>::size_type j = 0; j < paramCount; j++ )
+                {
+                    if( !parameterList.empty() )
+                    {
+                        parameterList.append( delimiter );
+                    }
+                    parameterList.append( params[j] );
+                }
+                return call( parameterList, delimiter );
+            }
+        }
+        throw EInvalidParameterList( "A valid parameter delimiter could not be determined from the internal list('" + separators + "'). At least one occurrence of each of these characters has been detected in parameter list passed to this function" );
+    }
     /// \brief Calls an underlying driver function.
     /**
      * This function can be used to call any driver function which is registered
@@ -2227,10 +2769,10 @@ public:
      *
      * 'empty' strings can be passed as a single underline('_').
      *
-     * \warning
+     * \attention
      * The characters '.', ',' and '_' can't be used as delimiters.
      *
-     * \if DOXYGEN_CPP_DOCUMENTATION
+     * \if (DOXYGEN_CPP_DOCUMENTATION || DOXYGEN_JAVA_DOCUMENTATION)
      *
      * \code
      * // call a function expecting a string and a float
@@ -2240,6 +2782,16 @@ public:
      * // where an empty string shall be passed
      * // parameters are separated by '%'
      * meth.call( "1000%666%_", "%" );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     * # call a function expecting a string and a float
+     * # value parameters separated by spaces
+     * meth.call("stringParam 3,14")
+     * # call of a function expecting 2 integers an a string
+     * # where an empty string shall be passed
+     * # parameters are separated by '%'
+     * meth.call("1000%666%_", "%")
      * \endcode
      * \endif
      * \return An integer value. For a typical function that is part of the driver SDK this integer value will be
@@ -2252,9 +2804,9 @@ public:
         /// [in] A string containing valid delimiter characters for the parameter string
         const std::string& delimiters = " " ) const
     {
-        TPROPHANDLING_ERROR result;
         int retval;
-        if( ( result = OBJ_Execute( m_hObj, params.c_str(), delimiters.c_str(), &retval ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_Execute( m_hObj, params.c_str(), delimiters.c_str(), &retval );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -2274,9 +2826,9 @@ public:
      */
     int call( void ) const
     {
-        TPROPHANDLING_ERROR result;
         int retval;
-        if( ( result = OBJ_Execute( m_hObj, 0, 0, &retval ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_Execute( m_hObj, 0, 0, &retval );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -2362,13 +2914,25 @@ enum TPropertyLimits
  *  So you can either assign the value of an integer property by using the standard 'write' function
  *  that accepts the value to be the type of the property or the function \b mvIMPACT::acquire::Property::writeS
  *  can be used to set the property via a string containing the new value.
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  PropertyI prop(hObj);
  *  prop.writeS("5"); // string assignment
  *  prop.write(5); // integer assignment
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  PropertyI prop = new PropertyI(hObj);
+ *  prop.writeS("5"); // string assignment
+ *  prop.write(5); // integer assignment
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  prop = acquire.PropertyI(hObj)
+ *  prop.writeS("5") # string assignment
+ *  prop.write(5) # integer assignment
+ * \endcode
+ * \endif
  *
  *  In addition to that \e float and \e int Properties might define a translation dictionary. This cannot be
  *  done by the user, but the user can work with the dictionary afterwards. A translation
@@ -2387,13 +2951,25 @@ enum TPropertyLimits
  *  assign its value or its actual data type. A float property e.g. might define a translation
  *  table like this: 'Auto -> 0', 'auto -> 1', 'OnLowLevel -> 2'. Now to set this property
  *  to use the 'on low level' trigger mode this can be done by calling one of the 'write' functions.
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
- *  PropertyICameraTriggerMode& prop = getPropertyFromSomewhere();
+ *  PropertyICameraTriggerMode prop = getPropertyFromSomewhere();
  *  prop.writeS("OnLowLevel"); // set value via the translation string
  *  prop.write(ctmOnLowLevel); // set value via enum type
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  PropertyI prop = getPropertyFromSomewhere();
+ *  prop.writeS("OnLowLevel"); // set value via the translation string
+ *  prop.write(TCameraTriggerMode.ctmOnLowLevel); // set value via enum type
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  prop = getPropertyFromSomewhere() # assuming this function will return a 'PropertyICameraTriggerMode' instance!
+ *  prop.writeS("OnLowLevel") # set value via the translation string
+ *  prop.write(acquire.ctmOnLowLevel) # set value via enum type
+ * \endcode
+ * \endif
  *
  *  This can also be extremely useful to populate combo boxes for GUI applications.
  *
@@ -2414,14 +2990,26 @@ enum TPropertyLimits
 class Property : public Component
 //-----------------------------------------------------------------------------
 {
+#ifdef BUILD_FOR_JAVA
+public:
+    // For building the Java interface this must be public but this does not do any harm as
+    // only affects internal behaviour!
+    Property& operator=( const Property& rhs )
+    {
+        Component::operator=( rhs );
+        return *this;
+    }
+private:
+#else
     // do not allow assignments! This makes sure the user can't assign e.g. the
     // gain property to the property for controlling the expose time
     Property& operator=( const Property& );
+#endif // #ifdef BUILD_FOR_JAVA
     bool isConstDefinedInternal( TPropertyLimits constant ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int isDefined;
-        if( ( result = OBJ_IsConstantDefined( m_hObj, constant, &isDefined ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_IsConstantDefined( m_hObj, constant, &isDefined );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -2463,6 +3051,10 @@ public:
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, PROPHANDLING_NOT_A_PROPERTY, hProp );
         }
     }
+    /// \brief Constructs a new \b mvIMPACT::acquire::Property from an existing one.
+    Property(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::Property object, this object shall be created from
+        const Property& src ) : Component( src ) {}
     /// \brief Checks if this enumerated property allows the combination of enum values.
     /**
      *  If this function returns true, the enum constants can be 'ored' together. This works
@@ -2475,11 +3067,12 @@ public:
      * \code
      *  prop = getPropFromSomewhere()
      *  prop.write( 1 | 2 )
-     *  prop.write( "one | two")
+     *  prop.write( "one | two" )
      * \endcode
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
      *  If this function returns true code like this will be valid:
+     *
+     *  \if DOXYGEN_CPP_DOCUMENTATION
      *
      * \code
      *  enum TEnum
@@ -2491,6 +3084,17 @@ public:
      *  typedef EnumPropertyI<TEnum> PropertyIEnum;
      *  PropertyIEnum p = getPropFromSomewhere();
      *  p.write( TEnum(eA | eB) );
+     * \endcode
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  ImageProcessing ip = new ImageProcessing( pDev );
+     *  ip.getMirrorMode().write( TMirrorMode.mmTopDown | TMirrorMode.mmLeftRight );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  prop = getPropFromSomewhere()
+     *  prop.write(1 | 2)
+     *  prop.write("one | two")
      * \endcode
      *  \endif
      *  \return
@@ -2511,9 +3115,9 @@ public:
      */
     unsigned int dictSize( void ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int size = 0;
-        if( ( result = OBJ_GetDictSize( m_hObj, &size ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetDictSize( m_hObj, &size );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -2529,6 +3133,7 @@ public:
     {
         return ( dictSize() > 0 );
     }
+#if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
     /// \brief Checks if a certain constant is defined for this property(\b deprecated).
     /**
      *  \deprecated
@@ -2545,9 +3150,9 @@ public:
     MVIMPACT_DEPRECATED_CPP( bool isConstDefined(
                                  /// [in] The constant whose existence is in question
                                  TPropertyLimits constant ) const );
-    /// \brief Checks if a maximum value is defined for this property
+#endif // #if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
+    /// \brief Checks if a maximum value is defined for this property.
     /**
-     *
      *  \since 1.12.63
      *
      *  \return
@@ -2558,9 +3163,8 @@ public:
     {
         return isConstDefinedInternal( plMaxValue );
     }
-    /// \brief Checks if a minimum value is defined for this property
+    /// \brief Checks if a minimum value is defined for this property.
     /**
-     *
      *  \since 1.12.63
      *
      *  \return
@@ -2571,9 +3175,8 @@ public:
     {
         return isConstDefinedInternal( plMinValue );
     }
-    /// \brief Checks if a step width is defined for this property
+    /// \brief Checks if a step width is defined for this property.
     /**
-     *
      *  \since 1.12.63
      *
      *  \return
@@ -2598,27 +3201,25 @@ public:
         const std::string& format = "" ) const
     {
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pBuf = new char[bufSize];
+        auto_array_ptr<char> pBuf( bufSize );
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        while( ( result = OBJ_GetSFormattedEx( m_hObj, pBuf, &bufSize, ( ( format != "" ) ? format.c_str() : 0 ), index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        while( ( result = OBJ_GetSFormattedEx( m_hObj, pBuf.get(), &bufSize, ( ( format != "" ) ? format.c_str() : 0 ), index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
-            delete [] pBuf;
-            pBuf = new char[bufSize];
+            bufSize *= BUFFER_INCREMENT_FACTOR;
+            pBuf.realloc( bufSize );
         }
-        std::string value( pBuf );
-        delete [] pBuf;
         if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return value;
+        return std::string( pBuf.get() );
     }
     /// \brief Reads data from this property as a string.
     /**
      *  This function can be used to query a set of values if this property stores more
      *  than a single value which might be useful for GUI applications.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  PropertyI p = getPropFromSomewhere();
      *  p.write( 1 );
@@ -2629,7 +3230,29 @@ public:
      *  s = p.readSArray( "%4d", " ", 0, 1 );
      *  // now s should contain '   1,   2'
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  PropertyI p = getPropFromSomewhere();
+     *  p.write( 1 );
+     *  p.write( 2, 1 );
+     *  p.write( 666, 2 );
+     *  String s = p.readSArray( "%d", "&&:", 1 );
+     *  // now s should contain '2&&:666'
+     *  s = p.readSArray( "%4d", " ", 0, 1 );
+     *  // now s should contain '   1,   2'
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  PropertyI p = getPropFromSomewhere()
+     *  p.write(1)
+     *  p.write(2, 1)
+     *  p.write(666, 2)
+     *  s = p.readSArray("%d", "&&:", 1)
+     *  # now s should contain '2&&:666'
+     *  s = p.readSArray("%4d", " ", 0, 1)
+     *  # now s should contain '   1,   2'
+     * \endcode
+     * \endif
      *
      *  \note If the caller does not have the needed rights this function might throw an
      *  exception of the type \b mvIMPACT::acquire::ImpactAcquireException.
@@ -2652,10 +3275,10 @@ public:
         int mode = 0 ) const
     {
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pBuf = new char[bufSize];
+        auto_array_ptr<char> pBuf( bufSize );
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         while( ( result = OBJ_GetSArrayFormattedEx( m_hObj,
-                          pBuf,
+                          pBuf.get(),
                           &bufSize,
                           ( format != "" ) ? format.c_str() : 0,
                           ( delimiter != "" ) ? delimiter.c_str() : 0,
@@ -2663,16 +3286,14 @@ public:
                           endIndex,
                           mode ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
-            delete [] pBuf;
-            pBuf = new char[bufSize];
+            bufSize *= BUFFER_INCREMENT_FACTOR;
+            pBuf.realloc( bufSize );
         }
-        std::string value( pBuf );
-        delete [] pBuf;
         if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return value;
+        return std::string( pBuf.get() );
     }
     /// \brief Removes a certain value from the property's data.
     /**
@@ -2682,8 +3303,8 @@ public:
         /// [in] The index of the value to be removed
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_RemoveVal( m_hObj, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_RemoveVal( m_hObj, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -2715,14 +3336,14 @@ public:
         /// [in] The new number of values this property shall be allowed to store
         unsigned int newSize ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_SetValCount( m_hObj, newSize ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_SetValCount( m_hObj, newSize );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
         return *this;
     }
-    /// \brief Returns the internal format string this property uses to convert data to strings
+    /// \brief Returns the internal format string this property uses to convert data to strings.
     /**
      *  \return A string containing the format string internally used by the property
      *  whenever the user reads a value as a string without specifying a format string and
@@ -2741,9 +3362,9 @@ public:
      */
     unsigned int valCount( void ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int valCount;
-        if( ( result = OBJ_GetValCount( m_hObj, &valCount ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetValCount( m_hObj, &valCount );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -2758,15 +3379,15 @@ public:
      */
     unsigned int maxValCount( void ) const
     {
-        TPROPHANDLING_ERROR result;
         unsigned int maxValCount;
-        if( ( result = OBJ_GetMaxValCount( m_hObj, &maxValCount ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetMaxValCount( m_hObj, &maxValCount );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
         return maxValCount;
     }
-    /// \brief Assigns a new value to this property
+    /// \brief Assigns a new value to this property.
     /**
      *  The user caller have \b "write rights" for this property in order to be able to
      *  modify its value. Also if \a index is greater than the current internal data array
@@ -2777,7 +3398,8 @@ public:
      *  exception of the type \b mvIMPACT::acquire::ImpactAcquireException.
      *
      *  \sa
-     *  \b mvIMPACT::acquire::Component::isWriteable, \n\b mvIMPACT::acquire::Component::flags, \n
+     *  \b mvIMPACT::acquire::Component::isWriteable, \n
+     *  \b mvIMPACT::acquire::Component::flags, \n
      *  \b mvIMPACT::acquire::Property::writeS
      *
      *  \return A const reference to the calling property.
@@ -2788,14 +3410,14 @@ public:
         /// [in] The index of the value to modify
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_SetS( m_hObj, value.c_str(), index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_SetS( m_hObj, value.c_str(), index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
         return *this;
     }
-    /// \brief Assigns new values to this property
+    /// \brief Assigns new values to this property.
     /**
      *  The user must have \b "write rights" for this property in order to be able to
      *  modify its values. Also if \a index is greater than the current internal data array
@@ -2833,18 +3455,18 @@ public:
 };
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-#   if !defined(WRAP_PYTHON) // This was already deprecated when the Python wrapper was published
+#   if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 //-----------------------------------------------------------------------------
 inline bool Property::isConstDefined( TPropertyLimits constant ) const
 //-----------------------------------------------------------------------------
 {
     return isConstDefinedInternal( constant );
 }
-#   endif // #if !defined(WRAP_PYTHON)
+#   endif // #if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA)
 #endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 
 //-----------------------------------------------------------------------------
-/// \brief A template class to represent float properties and enumerated float properties
+/// \brief A template class to represent float properties and enumerated float properties.
 /**
  *  The template parameter specifies the enum to use as the value type for this
  *  enumerated property. The class itself however is restricted for float values.
@@ -2867,10 +3489,14 @@ public:
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, PROPHANDLING_INVALID_PROP_VALUE_TYPE, hProp );
         }
     }
+    /// \brief Constructs a new \b mvIMPACT::acquire::EnumPropertyF from an existing one.
+    EnumPropertyF(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::EnumPropertyF object, this object shall be created from
+        const EnumPropertyF& src ) : Property( src ) {}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     typedef ZYX value_type;
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-    /// \brief This function queries the property's translation table
+    /// \brief This function queries the property's translation table.
     /**
      *  If this property defines a translation table the strings and their corresponding
      *  translation values will be written into \a sequence. If the property does \b NOT
@@ -2887,18 +3513,16 @@ public:
         /// [out] A reference to a container which will receive the data from the properties translation dictionary.
         std::vector<std::pair<std::string, ZYX> >& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        unsigned int size = dictSize();
-
+        const unsigned int size = dictSize();
         double* pVal = new double[size];
         char** ppBuf = new char* [size];
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-
         for( size_t i = 0; i < size; i++ )
         {
             ppBuf[i] = new char[bufSize];
         }
 
+        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         while( ( result = OBJ_GetFDictEntries( m_hObj, ppBuf, bufSize, pVal, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
@@ -2944,22 +3568,17 @@ public:
     {
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pTranslationString = new char[bufSize];
-        while( ( result = OBJ_GetFDictEntry( m_hObj, pTranslationString, bufSize, 0, index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        auto_array_ptr<char> pTranslationString( bufSize );
+        while( ( result = OBJ_GetFDictEntry( m_hObj, pTranslationString.get(), bufSize, 0, index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
-            delete [] pTranslationString;
-            pTranslationString = new char[bufSize];
+            pTranslationString.realloc( bufSize );
         }
-
-        std::string translationString( pTranslationString );
-        delete [] pTranslationString;
-
         if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return translationString;
+        return std::string( pTranslationString.get() );
     }
     /// \brief This function reads a single translation table value entry from a property.
     /**
@@ -2974,15 +3593,15 @@ public:
         /// [in] The index of the entry to read from the property.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         double value;
-        if( ( result = OBJ_GetFDictEntry( m_hObj, 0, 0, &value, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetFDictEntry( m_hObj, 0, 0, &value, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return static_cast<ZYX>( result );
+        return static_cast<ZYX>( value );
     }
-    /// \brief This function queries a list of valid strings for this property
+    /// \brief This function queries a list of valid strings for this property.
     /**
      *  If this property defines a translation table all valid strings will be written into \a sequence.
      *  If the property does \b NOT define a translation table \a sequence will be empty after this function call.
@@ -2998,17 +3617,15 @@ public:
         /// [out] A reference to a container to store the data read from the property into.
         std::vector<std::string>& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        unsigned int size = dictSize();
-
+        const unsigned int size = dictSize();
         char** ppBuf = new char* [size];
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-
         for( size_t i = 0; i < size; i++ )
         {
             ppBuf[i] = new char[bufSize];
         }
 
+        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         while( ( result = OBJ_GetFDictEntries( m_hObj, ppBuf, bufSize, 0, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
@@ -3041,7 +3658,7 @@ public:
         return *this;
     }
 
-    /// \brief This function queries a list of valid values for this property
+    /// \brief This function queries a list of valid values for this property.
     /**
      *  If this property defines a translation table all valid values will be written into \a sequence.
      *  If the property does \b NOT
@@ -3059,7 +3676,6 @@ public:
         /// [out] A reference to a container to store the data read from the property into.
         std::vector<ZYX>& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         const unsigned int size = dictSize();
         if( size == 0 )
         {
@@ -3068,8 +3684,8 @@ public:
         }
 
         double* pVal = new double[size];
-
-        if( ( result = OBJ_GetFDictEntries( m_hObj, 0, 0, pVal, size ) ) == PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetFDictEntries( m_hObj, 0, 0, pVal, size );
+        if( result == PROPHANDLING_NO_ERROR )
         {
             sequence.resize( size );
             for( unsigned int i = 0; i < size; i++ )
@@ -3077,7 +3693,6 @@ public:
                 sequence[i] = static_cast<ZYX>( pVal[i] );
             }
         }
-
         delete [] pVal;
 
         if( result != PROPHANDLING_NO_ERROR )
@@ -3096,8 +3711,8 @@ public:
         int index = 0 ) const
     {
         double val;
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_GetF( m_hObj, &val, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetF( m_hObj, &val, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -3197,7 +3812,7 @@ public:
             unsigned int valCnt = valuesToRead( start, end );
             sequence.resize( valCnt );
             double* pValues = new double[valCnt];
-            TPROPHANDLING_ERROR result = OBJ_GetFArray( m_hObj, pValues, valCnt, start );
+            const TPROPHANDLING_ERROR result = OBJ_GetFArray( m_hObj, pValues, valCnt, start );
             for( unsigned int i = 0; i < valCnt; i++ )
             {
                 sequence[i] = static_cast<ZYX>( pValues[i] );
@@ -3225,8 +3840,8 @@ public:
         /// [in] The index defining at which position to write the value.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_SetF( m_hObj, static_cast<double>( value ), index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_SetF( m_hObj, static_cast<double>( value ), index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -3274,7 +3889,7 @@ public:
             {
                 pValues[i] = sequence[i];
             }
-            TPROPHANDLING_ERROR result = OBJ_SetFArray( m_hObj, pValues, valCnt, index );
+            const TPROPHANDLING_ERROR result = OBJ_SetFArray( m_hObj, pValues, valCnt, index );
             delete [] pValues;
             if( result != PROPHANDLING_NO_ERROR )
             {
@@ -3294,10 +3909,9 @@ public:
  *  Provided for convenience only. This type represents a standard float property type.
  */
 typedef EnumPropertyF<double> PropertyF;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyF, EnumPropertyF, double ) )
 
 //-----------------------------------------------------------------------------
-/// \brief A template class to represent 32 bit integer properties and 32 bit enumerated integer properties
+/// \brief A template class to represent 32 bit integer properties and 32 bit enumerated integer properties.
 /**
  *  The template parameter specifies the enum to use as the value type for this
  *  enumerated property. The class itself however is restricted for integer values.
@@ -3321,10 +3935,14 @@ public:
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, PROPHANDLING_INVALID_PROP_VALUE_TYPE, hProp );
         }
     }
+    /// \brief Constructs a new \b mvIMPACT::acquire::EnumPropertyI from an existing one.
+    EnumPropertyI(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::EnumPropertyI object, this object shall be created from
+        const EnumPropertyI& src ) : Property( src ) {}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     typedef ZYX value_type;
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-    /// \brief This function queries the property's translation table
+    /// \brief This function queries the property's translation table.
     /**
      *  If this property defines a translation table the strings and their corresponding
      *  translation values will be written into \a sequence. If the property does \b NOT
@@ -3342,18 +3960,16 @@ public:
         /// [out] A reference to a container which will receive the data from the properties translation dictionary.
         std::vector<std::pair<std::string, ZYX> >& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        unsigned int size = dictSize();
-
+        const unsigned int size = dictSize();
         int* pVal = new int[size];
         char** ppBuf = new char* [size];
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-
         for( size_t i = 0; i < size; i++ )
         {
             ppBuf[i] = new char[bufSize];
         }
 
+        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         while( ( result = OBJ_GetIDictEntries( m_hObj, ppBuf, bufSize, pVal, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
@@ -3399,22 +4015,17 @@ public:
     {
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pTranslationString = new char[bufSize];
-        while( ( result = OBJ_GetIDictEntry( m_hObj, pTranslationString, bufSize, 0, index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        auto_array_ptr<char> pTranslationString( bufSize );
+        while( ( result = OBJ_GetIDictEntry( m_hObj, pTranslationString.get(), bufSize, 0, index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
-            delete [] pTranslationString;
-            pTranslationString = new char[bufSize];
+            pTranslationString.realloc( bufSize );
         }
-
-        std::string translationString( pTranslationString );
-        delete [] pTranslationString;
-
         if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return translationString;
+        return std::string( pTranslationString.get() );
     }
     /// \brief This function reads a single translation table value entry from a property.
     /**
@@ -3429,15 +4040,15 @@ public:
         /// [in] The index of the entry to read from the property.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         int value;
-        if( ( result = OBJ_GetIDictEntry( m_hObj, 0, 0, &value, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetIDictEntry( m_hObj, 0, 0, &value, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
         return static_cast<ZYX>( value );
     }
-    /// \brief This function queries a list of valid strings for this property
+    /// \brief This function queries a list of valid strings for this property.
     /**
      *  If this property defines a translation table all valid strings will be written into \a sequence.
      *  If the property does \b NOT define a translation table \a sequence will be empty after this function call.
@@ -3453,17 +4064,15 @@ public:
         /// [out] A reference to a container to store the data read from the property into.
         std::vector<std::string>& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        unsigned int size = dictSize();
-
+        const unsigned int size = dictSize();
         char** ppBuf = new char* [size];
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-
         for( size_t i = 0; i < size; i++ )
         {
             ppBuf[i] = new char[bufSize];
         }
 
+        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         while( ( result = OBJ_GetIDictEntries( m_hObj, ppBuf, bufSize, 0, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
@@ -3496,7 +4105,7 @@ public:
         return *this;
     }
 
-    /// \brief This function queries a list of valid values for this property
+    /// \brief This function queries a list of valid values for this property.
     /**
      *  If this property defines a translation table all valid values will be written into \a sequence.
      *  If the property does \b NOT
@@ -3514,7 +4123,6 @@ public:
         /// [out] A reference to a container to store the data read from the property into.
         std::vector<ZYX>& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         const unsigned int size = dictSize();
         if( size == 0 )
         {
@@ -3523,8 +4131,8 @@ public:
         }
 
         int* pVal = new int[size];
-
-        if( ( result = OBJ_GetIDictEntries( m_hObj, 0, 0, pVal, size ) ) == PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetIDictEntries( m_hObj, 0, 0, pVal, size );
+        if( result == PROPHANDLING_NO_ERROR )
         {
             sequence.resize( size );
             for( unsigned int i = 0; i < size; i++ )
@@ -3532,7 +4140,6 @@ public:
                 sequence[i] = static_cast<ZYX>( pVal[i] );
             }
         }
-
         delete [] pVal;
 
         if( result != PROPHANDLING_NO_ERROR )
@@ -3551,8 +4158,8 @@ public:
         int index = 0 ) const
     {
         int val;
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_GetI( m_hObj, &val, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetI( m_hObj, &val, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -3652,7 +4259,7 @@ public:
             unsigned int valCnt = valuesToRead( start, end );
             sequence.resize( valCnt );
             int* pValues = new int[valCnt];
-            TPROPHANDLING_ERROR result = OBJ_GetIArray( m_hObj, pValues, valCnt, start );
+            const TPROPHANDLING_ERROR result = OBJ_GetIArray( m_hObj, pValues, valCnt, start );
             for( unsigned int i = 0; i < valCnt; i++ )
             {
                 sequence[i] = static_cast<ZYX>( pValues[i] );
@@ -3680,8 +4287,8 @@ public:
         /// [in] The index defining at which position to write the value.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_SetI( m_hObj, static_cast<int>( value ), index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_SetI( m_hObj, static_cast<int>( value ), index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -3729,7 +4336,7 @@ public:
             {
                 pValues[i] = sequence[i];
             }
-            TPROPHANDLING_ERROR result = OBJ_SetIArray( m_hObj, pValues, valCnt, index );
+            const TPROPHANDLING_ERROR result = OBJ_SetIArray( m_hObj, pValues, valCnt, index );
             delete [] pValues;
             if( result != PROPHANDLING_NO_ERROR )
             {
@@ -3744,211 +4351,172 @@ public:
     }
 };
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAcquisitionMode
+#if defined(WRAP_JAVA) || defined(BUILD_FOR_JAVA)
+typedef EnumPropertyI<int> PropertyIAcquisitionMode;
+typedef EnumPropertyI<int> PropertyIAcquisitionStartStopBehaviour;
+typedef EnumPropertyI<int> PropertyIAoiMode;
+typedef EnumPropertyI<int> PropertyIBayerConversionMode;
+typedef EnumPropertyI<int> PropertyIBayerMosaicParity;
+typedef EnumPropertyI<int> PropertyIBayerWhiteBalanceResult;
+typedef EnumPropertyI<int> PropertyIBoolean;
+typedef EnumPropertyI<int> PropertyICameraOutput;
+typedef EnumPropertyI<int> PropertyIChannelSplitMode;
+typedef EnumPropertyI<int> PropertyIColorTwistInputCorrectionMatrixMode;
+typedef EnumPropertyI<int> PropertyIColorTwistOutputCorrectionMatrixMode;
+typedef EnumPropertyI<int> PropertyIColorProcessingMode;
+typedef EnumPropertyI<int> PropertyIDarkCurrentFilterMode;
+typedef EnumPropertyI<int> PropertyIDefectivePixelsFilterMode;
+typedef EnumPropertyI<int> PropertyIDeviceAccessMode;
+typedef EnumPropertyI<int> PropertyIDeviceAutoNegotiatePacketSizeMode;
+typedef EnumPropertyI<int> PropertyIDeviceCapability;
+typedef EnumPropertyI<int> PropertyIDeviceClass;
+typedef EnumPropertyI<int> PropertyIDeviceInterfaceLayout;
+typedef EnumPropertyI<int> PropertyIDeviceLoadSettings;
+typedef EnumPropertyI<int> PropertyIDeviceState;
+typedef EnumPropertyI<int> PropertyIDFirmwareUpdateResult;
+typedef EnumPropertyI<int> PropertyIFlatFieldFilterCorrectionMode;
+typedef EnumPropertyI<int> PropertyIFlatFieldFilterMode;
+typedef EnumPropertyI<int> PropertyIHWUpdateResult;
+typedef EnumPropertyI<int> PropertyIImageBufferPixelFormat;
+typedef EnumPropertyI<int> PropertyIImageBufferFormatReinterpreterMode;
+typedef EnumPropertyI<int> PropertyIImageDestinationPixelFormat;
+typedef EnumPropertyI<int> PropertyIImageProcessingFilter;
+typedef EnumPropertyI<int> PropertyIImageProcessingMode;
+typedef EnumPropertyI<int> PropertyIImageProcessingOptimization;
+typedef EnumPropertyI<int> PropertyIImageProcessingResult;
+typedef EnumPropertyI<int> PropertyIRequestImageMemoryMode;
+typedef EnumPropertyI<int> PropertyIImageRequestControlMode;
+typedef EnumPropertyI<int> PropertyIInterfaceEnumerationBehaviour;
+typedef EnumPropertyI<int> PropertyILUTGammaMode;
+typedef EnumPropertyI<int> PropertyILUTImplementation;
+typedef EnumPropertyI<int> PropertyILUTInterpolationMode;
+typedef EnumPropertyI<int> PropertyILUTMapping;
+typedef EnumPropertyI<int> PropertyILUTMode;
+typedef EnumPropertyI<int> PropertyIMirrorMode;
+typedef EnumPropertyI<int> PropertyIMirrorOperationMode;
+typedef EnumPropertyI<int> PropertyIPolarizedDataExtractionMode;
+typedef EnumPropertyI<int> PropertyIPolarizedDataExtractionInterpolationMode;
+typedef EnumPropertyI<int> PropertyIRequestResult;
+typedef EnumPropertyI<int> PropertyIRequestState;
+typedef EnumPropertyI<int> PropertyIScalerMode;
+typedef EnumPropertyI<int> PropertyIScalerInterpolationMode;
+typedef EnumPropertyI<int> PropertyIUserDataAccessRight;
+typedef EnumPropertyI<int> PropertyIUserDataReconnectBehaviour;
+typedef EnumPropertyI<int> PropertyIWhiteBalanceCalibrationMode;
+typedef EnumPropertyI<int> PropertyIWhiteBalanceParameter;
+#else
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAcquisitionMode.
 typedef EnumPropertyI<TAcquisitionMode> PropertyIAcquisitionMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAcquisitionMode, EnumPropertyI, mvIMPACT::acquire::TAcquisitionMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAcquisitionStartStopBehaviour
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAcquisitionStartStopBehaviour.
 typedef EnumPropertyI<TAcquisitionStartStopBehaviour> PropertyIAcquisitionStartStopBehaviour;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAcquisitionStartStopBehaviour, EnumPropertyI, mvIMPACT::acquire::TAcquisitionStartStopBehaviour ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAoiMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAoiMode.
 typedef EnumPropertyI<TAoiMode> PropertyIAoiMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAoiMode, EnumPropertyI, mvIMPACT::acquire::TAoiMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBayerConversionMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBayerConversionMode.
 typedef EnumPropertyI<TBayerConversionMode> PropertyIBayerConversionMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBayerConversionMode, EnumPropertyI, mvIMPACT::acquire::TBayerConversionMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBayerMosaicParity
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBayerMosaicParity.
 typedef EnumPropertyI<TBayerMosaicParity> PropertyIBayerMosaicParity;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBayerMosaicParity, EnumPropertyI, mvIMPACT::acquire::TBayerMosaicParity ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBayerWhiteBalanceResult
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBayerWhiteBalanceResult.
 typedef EnumPropertyI<TBayerWhiteBalanceResult> PropertyIBayerWhiteBalanceResult;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBayerWhiteBalanceResult, EnumPropertyI, mvIMPACT::acquire::TBayerWhiteBalanceResult ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBoolean
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBoolean.
 typedef EnumPropertyI<TBoolean> PropertyIBoolean;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBoolean, EnumPropertyI, mvIMPACT::acquire::TBoolean ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraOutput
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraOutput.
 typedef EnumPropertyI<TCameraOutput> PropertyICameraOutput;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraOutput, EnumPropertyI, mvIMPACT::acquire::TCameraOutput ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TChannelSplitMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TChannelSplitMode.
 typedef EnumPropertyI<TChannelSplitMode> PropertyIChannelSplitMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIChannelSplitMode, EnumPropertyI, mvIMPACT::acquire::TChannelSplitMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TColorTwistInputCorrectionMatrixMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TColorTwistInputCorrectionMatrixMode.
 typedef EnumPropertyI<TColorTwistInputCorrectionMatrixMode> PropertyIColorTwistInputCorrectionMatrixMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIColorTwistInputCorrectionMatrixMode, EnumPropertyI, mvIMPACT::acquire::TColorTwistInputCorrectionMatrixMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TColorTwistOutputCorrectionMatrixMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TColorTwistOutputCorrectionMatrixMode.
 typedef EnumPropertyI<TColorTwistOutputCorrectionMatrixMode> PropertyIColorTwistOutputCorrectionMatrixMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIColorTwistOutputCorrectionMatrixMode, EnumPropertyI, mvIMPACT::acquire::TColorTwistOutputCorrectionMatrixMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TColorProcessingMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TColorProcessingMode.
 typedef EnumPropertyI<TColorProcessingMode> PropertyIColorProcessingMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIColorProcessingMode, EnumPropertyI, mvIMPACT::acquire::TColorProcessingMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDarkCurrentFilterMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDarkCurrentFilterMode.
 typedef EnumPropertyI<TDarkCurrentFilterMode> PropertyIDarkCurrentFilterMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDarkCurrentFilterMode, EnumPropertyI, mvIMPACT::acquire::TDarkCurrentFilterMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDefectivePixelsFilterMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDefectivePixelsFilterMode.
 typedef EnumPropertyI<TDefectivePixelsFilterMode> PropertyIDefectivePixelsFilterMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDefectivePixelsFilterMode, EnumPropertyI, mvIMPACT::acquire::TDefectivePixelsFilterMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceAccessMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceAccessMode.
 typedef EnumPropertyI<TDeviceAccessMode> PropertyIDeviceAccessMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceAccessMode, EnumPropertyI, mvIMPACT::acquire::TDeviceAccessMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceCapability
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceAutoNegotiatePacketSizeMode.
+typedef EnumPropertyI<TDeviceAutoNegotiatePacketSizeMode> PropertyIDeviceAutoNegotiatePacketSizeMode;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceCapability.
 typedef EnumPropertyI<TDeviceCapability> PropertyIDeviceCapability;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceCapability, EnumPropertyI, mvIMPACT::acquire::TDeviceCapability ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceClass
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceClass.
 typedef EnumPropertyI<TDeviceClass> PropertyIDeviceClass;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceClass, EnumPropertyI, mvIMPACT::acquire::TDeviceClass ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceInterfaceLayout
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceInterfaceLayout.
 typedef EnumPropertyI<TDeviceInterfaceLayout> PropertyIDeviceInterfaceLayout;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceInterfaceLayout, EnumPropertyI, mvIMPACT::acquire::TDeviceInterfaceLayout ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceLoadSettings
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceLoadSettings.
 typedef EnumPropertyI<TDeviceLoadSettings> PropertyIDeviceLoadSettings;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceLoadSettings, EnumPropertyI, mvIMPACT::acquire::TDeviceLoadSettings ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceState
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceState.
 typedef EnumPropertyI<TDeviceState> PropertyIDeviceState;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceState, EnumPropertyI, mvIMPACT::acquire::TDeviceState ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TFlatFieldFilterCorrectionMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TFlatFieldFilterCorrectionMode.
 typedef EnumPropertyI<TFlatFieldFilterCorrectionMode> PropertyIFlatFieldFilterCorrectionMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIFlatFieldFilterCorrectionMode, EnumPropertyI, mvIMPACT::acquire::TFlatFieldFilterCorrectionMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TFlatFieldFilterMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TFlatFieldFilterMode.
 typedef EnumPropertyI<TFlatFieldFilterMode> PropertyIFlatFieldFilterMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIFlatFieldFilterMode, EnumPropertyI, mvIMPACT::acquire::TFlatFieldFilterMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::THWUpdateResult
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::THWUpdateResult.
 typedef EnumPropertyI<THWUpdateResult> PropertyIHWUpdateResult;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIHWUpdateResult, EnumPropertyI, mvIMPACT::acquire::THWUpdateResult ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageBufferPixelFormat
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageBufferPixelFormat.
 typedef EnumPropertyI<TImageBufferPixelFormat> PropertyIImageBufferPixelFormat;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageBufferPixelFormat, EnumPropertyI, mvIMPACT::acquire::TImageBufferPixelFormat ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageBufferPixelFormat
-typedef EnumPropertyI<TBufferPartDataType> PropertyI64BufferPartDataType;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyI64BufferPartDataType, EnumPropertyI, mvIMPACT::acquire::TBufferPartDataType ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageBufferFormatReinterpreterMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageBufferFormatReinterpreterMode.
 typedef EnumPropertyI<TImageBufferFormatReinterpreterMode> PropertyIImageBufferFormatReinterpreterMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageBufferFormatReinterpreterMode, EnumPropertyI, mvIMPACT::acquire::TImageBufferFormatReinterpreterMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageDestinationPixelFormat
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageDestinationPixelFormat.
 typedef EnumPropertyI<TImageDestinationPixelFormat> PropertyIImageDestinationPixelFormat;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageDestinationPixelFormat, EnumPropertyI, mvIMPACT::acquire::TImageDestinationPixelFormat ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingFilter
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingFilter.
 typedef EnumPropertyI<TImageProcessingFilter> PropertyIImageProcessingFilter;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingFilter, EnumPropertyI, mvIMPACT::acquire::TImageProcessingFilter ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingMode.
 typedef EnumPropertyI<TImageProcessingMode> PropertyIImageProcessingMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingMode, EnumPropertyI, mvIMPACT::acquire::TImageProcessingMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingOptimization
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingOptimization.
 typedef EnumPropertyI<TImageProcessingOptimization> PropertyIImageProcessingOptimization;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingOptimization, EnumPropertyI, mvIMPACT::acquire::TImageProcessingOptimization ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingResult
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageProcessingResult.
 typedef EnumPropertyI<TImageProcessingResult> PropertyIImageProcessingResult;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingResult, EnumPropertyI, mvIMPACT::acquire::TImageProcessingResult ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRequestImageMemoryMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRequestImageMemoryMode.
 typedef EnumPropertyI<TRequestImageMemoryMode> PropertyIRequestImageMemoryMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIRequestImageMemoryMode, EnumPropertyI, mvIMPACT::acquire::TRequestImageMemoryMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageRequestControlMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageRequestControlMode.
 typedef EnumPropertyI<TImageRequestControlMode> PropertyIImageRequestControlMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageRequestControlMode, EnumPropertyI, mvIMPACT::acquire::TImageRequestControlMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTGammaMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TInterfaceEnumerationBehaviour.
+typedef EnumPropertyI<TInterfaceEnumerationBehaviour> PropertyIInterfaceEnumerationBehaviour;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTGammaMode.
 typedef EnumPropertyI<TLUTGammaMode> PropertyILUTGammaMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTGammaMode, EnumPropertyI, mvIMPACT::acquire::TLUTGammaMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTImplementation
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTImplementation.
 typedef EnumPropertyI<TLUTImplementation> PropertyILUTImplementation;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTImplementation, EnumPropertyI, mvIMPACT::acquire::TLUTImplementation ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTInterpolationMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTInterpolationMode.
 typedef EnumPropertyI<TLUTInterpolationMode> PropertyILUTInterpolationMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTInterpolationMode, EnumPropertyI, mvIMPACT::acquire::TLUTInterpolationMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTMapping
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTMapping.
 typedef EnumPropertyI<TLUTMapping> PropertyILUTMapping;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTMapping, EnumPropertyI, mvIMPACT::acquire::TLUTMapping ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLUTMode.
 typedef EnumPropertyI<TLUTMode> PropertyILUTMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTMode, EnumPropertyI, mvIMPACT::acquire::TLUTMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMirrorMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMirrorMode.
 typedef EnumPropertyI<TMirrorMode> PropertyIMirrorMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIMirrorMode, EnumPropertyI, mvIMPACT::acquire::TMirrorMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMirrorOperationMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMirrorOperationMode.
 typedef EnumPropertyI<TMirrorOperationMode> PropertyIMirrorOperationMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIMirrorOperationMode, EnumPropertyI, mvIMPACT::acquire::TMirrorOperationMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRequestResult
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TPolarizedDataExtractionMode.
+typedef EnumPropertyI<TPolarizedDataExtractionMode> PropertyIPolarizedDataExtractionMode;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TPolarizedDataExtractionInterpolationMode.
+typedef EnumPropertyI<TPolarizedDataExtractionInterpolationMode> PropertyIPolarizedDataExtractionInterpolationMode;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRequestResult.
 typedef EnumPropertyI<TRequestResult> PropertyIRequestResult;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIRequestResult, EnumPropertyI, mvIMPACT::acquire::TRequestResult ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRequestState
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRequestState.
 typedef EnumPropertyI<TRequestState> PropertyIRequestState;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIRequestState, EnumPropertyI, mvIMPACT::acquire::TRequestState ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScalerMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScalerMode.
 typedef EnumPropertyI<TScalerMode> PropertyIScalerMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIScalerMode, EnumPropertyI, mvIMPACT::acquire::TScalerMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScalerInterpolationMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScalerInterpolationMode.
 typedef EnumPropertyI<TScalerInterpolationMode> PropertyIScalerInterpolationMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIScalerInterpolationMode, EnumPropertyI, mvIMPACT::acquire::TScalerInterpolationMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TThreadPriority
-typedef EnumPropertyI<TThreadPriority> PropertyIThreadPriority;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIThreadPriority, EnumPropertyI, mvIMPACT::acquire::TThreadPriority ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TUserDataAccessRight
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TUserDataAccessRight.
 typedef EnumPropertyI<TUserDataAccessRight> PropertyIUserDataAccessRight;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIUserDataAccessRight, EnumPropertyI, mvIMPACT::acquire::TUserDataAccessRight ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TUserDataReconnectBehaviour
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TUserDataReconnectBehaviour.
 typedef EnumPropertyI<TUserDataReconnectBehaviour> PropertyIUserDataReconnectBehaviour;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIUserDataReconnectBehaviour, EnumPropertyI, mvIMPACT::acquire::TUserDataReconnectBehaviour ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TWhiteBalanceCalibrationMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TWhiteBalanceCalibrationMode.
 typedef EnumPropertyI<TWhiteBalanceCalibrationMode> PropertyIWhiteBalanceCalibrationMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIWhiteBalanceCalibrationMode, EnumPropertyI, mvIMPACT::acquire::TWhiteBalanceCalibrationMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TWhiteBalanceParameter
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TWhiteBalanceParameter.
 typedef EnumPropertyI<TWhiteBalanceParameter> PropertyIWhiteBalanceParameter;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIWhiteBalanceParameter, EnumPropertyI, mvIMPACT::acquire::TWhiteBalanceParameter ) )
+#endif // #if defined(WRAP_JAVA) || defined(BUILD_FOR_JAVA)
 
 /// \brief A type for integer properties.
 /**
  *  Provided for convenience only. This type represents a standard integer property type.
  */
 typedef EnumPropertyI<int> PropertyI;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyI, EnumPropertyI, int ) )
 
 //-----------------------------------------------------------------------------
-/// \brief A template class to represent 64 bit integer properties and enumerated 64 bit integer properties
+/// \brief A template class to represent 64 bit integer properties and enumerated 64 bit integer properties.
 /**
  *  The template parameter specifies the enum to use as the value type for this
  *  enumerated property. The class itself however is restricted for integer values.
@@ -3972,10 +4540,14 @@ public:
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, PROPHANDLING_INVALID_PROP_VALUE_TYPE, hProp );
         }
     }
+    /// \brief Constructs a new \b mvIMPACT::acquire::EnumPropertyI64 from an existing one.
+    EnumPropertyI64(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::EnumPropertyI64 object, this object shall be created from
+        const EnumPropertyI64& src ) : Property( src ) {}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     typedef ZYX value_type;
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-    /// \brief This function queries the property's translation table
+    /// \brief This function queries the property's translation table.
     /**
      *  If this property defines a translation table the strings and their corresponding
      *  translation values will be written into \a sequence. If the property does \b NOT
@@ -3992,18 +4564,16 @@ public:
         /// [out] A reference to a container which will receive the data from the properties translation dictionary.
         std::vector<std::pair<std::string, ZYX> >& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        unsigned int size = dictSize();
-
+        const unsigned int size = dictSize();
         int64_type* pVal = new int64_type[size];
         char** ppBuf = new char* [size];
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-
         for( size_t i = 0; i < size; i++ )
         {
             ppBuf[i] = new char[bufSize];
         }
 
+        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         while( ( result = OBJ_GetI64DictEntries( m_hObj, ppBuf, bufSize, pVal, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
@@ -4049,22 +4619,17 @@ public:
     {
         TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-        char* pTranslationString = new char[bufSize];
-        while( ( result = OBJ_GetI64DictEntry( m_hObj, pTranslationString, bufSize, 0, index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
+        auto_array_ptr<char> pTranslationString( bufSize );
+        while( ( result = OBJ_GetI64DictEntry( m_hObj, pTranslationString.get(), bufSize, 0, index ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
-            delete [] pTranslationString;
-            pTranslationString = new char[bufSize];
+            pTranslationString.realloc( bufSize );
         }
-
-        std::string translationString( pTranslationString );
-        delete [] pTranslationString;
-
         if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
-        return translationString;
+        return std::string( pTranslationString.get() );
     }
     /// \brief This function reads a single translation table value entry from a property.
     /**
@@ -4079,15 +4644,15 @@ public:
         /// [in] The index of the entry to read from the property.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         int64_type value;
-        if( ( result = OBJ_GetI64DictEntry( m_hObj, 0, 0, &value, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetI64DictEntry( m_hObj, 0, 0, &value, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
         return static_cast<ZYX>( value );
     }
-    /// \brief This function queries a list of valid strings for this property
+    /// \brief This function queries a list of valid strings for this property.
     /**
      *  If this property defines a translation table all valid strings will be written into \a sequence.
      *  If the property does \b NOT define a translation table \a sequence will be empty after this function call.
@@ -4103,17 +4668,15 @@ public:
         /// [out] A reference to a container to store the data read from the property into.
         std::vector<std::string>& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
-        unsigned int size = dictSize();
-
+        const unsigned int size = dictSize();
         char** ppBuf = new char* [size];
         size_t bufSize = DEFAULT_STRING_SIZE_LIMIT;
-
         for( size_t i = 0; i < size; i++ )
         {
             ppBuf[i] = new char[bufSize];
         }
 
+        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         while( ( result = OBJ_GetI64DictEntries( m_hObj, ppBuf, bufSize, 0, size ) ) == PROPHANDLING_INPUT_BUFFER_TOO_SMALL )
         {
             bufSize *= BUFFER_INCREMENT_FACTOR;
@@ -4146,7 +4709,7 @@ public:
         return *this;
     }
 
-    /// \brief This function queries a list of valid values for this property
+    /// \brief This function queries a list of valid values for this property.
     /**
      *  If this property defines a translation table all valid values will be written into \a sequence.
      *  If the property does \b NOT
@@ -4164,7 +4727,6 @@ public:
         /// [out] A reference to a container to store the data read from the property into.
         std::vector<ZYX>& sequence ) const
     {
-        TPROPHANDLING_ERROR result = PROPHANDLING_NO_ERROR;
         const unsigned int size = dictSize();
         if( size == 0 )
         {
@@ -4173,8 +4735,8 @@ public:
         }
 
         int64_type* pVal = new int64_type[size];
-
-        if( ( result = OBJ_GetI64DictEntries( m_hObj, 0, 0, pVal, size ) ) == PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetI64DictEntries( m_hObj, 0, 0, pVal, size );
+        if( result == PROPHANDLING_NO_ERROR )
         {
             sequence.resize( size );
             for( unsigned int i = 0; i < size; i++ )
@@ -4182,7 +4744,6 @@ public:
                 sequence[i] = static_cast<ZYX>( pVal[i] );
             }
         }
-
         delete [] pVal;
 
         if( result != PROPHANDLING_NO_ERROR )
@@ -4201,8 +4762,8 @@ public:
         int index = 0 ) const
     {
         int64_type val;
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_GetI64( m_hObj, &val, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetI64( m_hObj, &val, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -4299,10 +4860,10 @@ public:
     {
         if( boAtomic )
         {
-            unsigned int valCnt = valuesToRead( start, end );
+            const unsigned int valCnt = valuesToRead( start, end );
             sequence.resize( valCnt );
             int64_type* pValues = new int64_type[valCnt];
-            TPROPHANDLING_ERROR result = OBJ_GetI64Array( m_hObj, pValues, valCnt, start );
+            const TPROPHANDLING_ERROR result = OBJ_GetI64Array( m_hObj, pValues, valCnt, start );
             for( unsigned int i = 0; i < valCnt; i++ )
             {
                 sequence[i] = static_cast<ZYX>( pValues[i] );
@@ -4330,8 +4891,8 @@ public:
         /// [in] The index defining at which position to write the value.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_SetI64( m_hObj, static_cast<int64_type>( value ), index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_SetI64( m_hObj, static_cast<int64_type>( value ), index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -4349,7 +4910,7 @@ public:
         /// [in] The index where to write the first value to the property.
         int index = 0 ) const
     {
-        int vSize = static_cast<int>( sequence.size() );
+        const int vSize = static_cast<int>( sequence.size() );
         for( int i = 0; i < vSize; i++ )
         {
             write( sequence[i], index + i );
@@ -4379,7 +4940,7 @@ public:
             {
                 pValues[i] = static_cast<int64_type>( sequence[i] );
             }
-            TPROPHANDLING_ERROR result = OBJ_SetI64Array( m_hObj, pValues, valCnt, index );
+            const TPROPHANDLING_ERROR result = OBJ_SetI64Array( m_hObj, pValues, valCnt, index );
             delete [] pValues;
             if( result != PROPHANDLING_NO_ERROR )
             {
@@ -4396,13 +4957,17 @@ public:
 
 /// Provided for convenience only. This type represents a standard 64 bit integer property type.
 typedef EnumPropertyI64<int64_type> PropertyI64;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyI64, EnumPropertyI64, mvIMPACT::acquire::int64_type ) )
 
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceTriggerOverlap
+#if defined(WRAP_JAVA) || defined(BUILD_FOR_JAVA)
+typedef EnumPropertyI64<int64_type> PropertyI64BufferPartDataType;
+typedef EnumPropertyI64<int64_type> PropertyI64DeviceTriggerOverlap;
+#else
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TImageBufferPartType.
+typedef EnumPropertyI64<TBufferPartDataType> PropertyI64BufferPartDataType;
+
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceTriggerOverlap.
 typedef EnumPropertyI64<TDeviceTriggerOverlap> PropertyI64DeviceTriggerOverlap;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyI64DeviceTriggerOverlap, EnumPropertyI64, mvIMPACT::acquire::TDeviceTriggerOverlap ) )
-#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+#endif // #if defined(WRAP_JAVA) || defined(BUILD_FOR_JAVA)
 
 //-----------------------------------------------------------------------------
 /// \brief A class to represent pointer properties.
@@ -4422,6 +4987,10 @@ public:
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, PROPHANDLING_INVALID_PROP_VALUE_TYPE, hProp );
         }
     }
+    /// \brief Constructs a new \b mvIMPACT::acquire::PropertyPtr from an existing one.
+    PropertyPtr(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::PropertyPtr object, this object shall be created from
+        const PropertyPtr& src ) : Property( src ) {}
 #   if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     typedef void* value_type;
 #   endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
@@ -4435,8 +5004,8 @@ public:
         int index = 0 ) const
     {
         void* val;
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_GetP( m_hObj, &val, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetP( m_hObj, &val, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -4456,7 +5025,7 @@ public:
         /// [in] The index where to stop reading values from the property.
         int end = END_OF_LIST ) const
     {
-        unsigned int valCnt = valuesToRead( start, end );
+        const unsigned int valCnt = valuesToRead( start, end );
         sequence.resize( valCnt );
         for( unsigned int i = 0; i < valCnt; i++ )
         {
@@ -4474,11 +5043,10 @@ public:
         /// [in] The index defining at which position to write the value.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_SetP( m_hObj, value, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_SetP( m_hObj, value, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
-
         }
         return *this;
     }
@@ -4493,7 +5061,7 @@ public:
         /// [in] The index where to write the first value to the property.
         int index = 0 ) const
     {
-        unsigned int vSize = static_cast<unsigned int>( sequence.size() );
+        const unsigned int vSize = static_cast<unsigned int>( sequence.size() );
         for( unsigned int i = 0; i < vSize; i++ )
         {
             write( sequence[i], static_cast<int>( index + i ) );
@@ -4520,6 +5088,10 @@ public:
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, PROPHANDLING_INVALID_PROP_VALUE_TYPE, hProp );
         }
     }
+    /// \brief Constructs a new \b mvIMPACT::acquire::PropertyS from an existing one.
+    PropertyS(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::EnumPropertyS object, this object shall be created from
+        const PropertyS& src ) : Property( src ) {}
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     typedef std::string value_type;
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
@@ -4541,8 +5113,8 @@ public:
         int index = 0 ) const
     {
         unsigned int val;
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_GetBinaryBufferSize( m_hObj, &val, index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetBinaryBufferSize( m_hObj, &val, index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -4563,8 +5135,8 @@ public:
     unsigned int binaryDataBufferMaxSize( void ) const
     {
         unsigned int val;
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_GetBinaryBufferMaxSize( m_hObj, &val ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_GetBinaryBufferMaxSize( m_hObj, &val );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
@@ -4595,13 +5167,14 @@ public:
         /// [in] The index where to stop reading values from the property.
         int end = END_OF_LIST ) const
     {
-        unsigned int valCnt = valuesToRead( start, end );
+        const unsigned int valCnt = valuesToRead( start, end );
         sequence.resize( valCnt );
         for( unsigned int i = 0; i < valCnt; i++ )
         {
             sequence[i] = read( i + start );
         }
     }
+#if !defined(WRAP_JAVA)
     /// \brief Reads a value stored in the property as binary data.
     /**
      *  Binary data can only be stored in string properties. When writing binary data to a string
@@ -4622,28 +5195,27 @@ public:
      */
     std::string readBinary(
         /// [in] The index of the value to get(if this property holds more than one value).
-        int index = 0 ) const
+        int index = 0,
+        /// [in] If set to \a true this allows applications compiled with mvIMPACT Acquire 2.32.0 or greater using this function
+        /// to run on systems with mvIMPACT Acquire smaller than 2.32.0. The legacy version of this function runs slower!
+        bool boLegacyMode = false ) const
     {
-        TPROPHANDLING_ERROR result;
-        unsigned int bufSize = binaryDataBufferSize( index );
-        if( bufSize > 0 )
-        {
-            char* pBuf = new char[bufSize];
-            memset( pBuf, 0, bufSize );
-            result = OBJ_GetBinary( m_hObj, pBuf, bufSize, index );
-            std::string data( pBuf, bufSize );
-            delete [] pBuf;
-            if( result != PROPHANDLING_NO_ERROR )
-            {
-                ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
-            }
-            return data;
-        }
-        else
+        unsigned int bufSize = boLegacyMode ? binaryDataBufferSize( index ) : binaryDataBufferMaxSize();
+        if( bufSize == 0 )
         {
             return std::string( "" );
         }
+
+        auto_array_ptr<char> pBuf( bufSize );
+        memset( pBuf.get(), 0, bufSize );
+        const TPROPHANDLING_ERROR result = boLegacyMode ? OBJ_GetBinary( m_hObj, pBuf.get(), bufSize, index ) : OBJ_GetBinaryEx( m_hObj, pBuf.get(), &bufSize, index );
+        if( result != PROPHANDLING_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
+        }
+        return std::string( pBuf.get(), bufSize );
     }
+#endif // #if !defined(WRAP_JAVA)
     /// \brief Writes one value to the property.
     /**
      *  This function writes a single value under index \a index to the property.
@@ -4674,6 +5246,7 @@ public:
         writeS( sequence, index );
         return *this;
     }
+#if !defined(WRAP_JAVA)
     /// \brief Writes a block of binary data to one entry of the property.
     /**
      *  Binary data can only be stored in string properties. When writing binary data to a string
@@ -4685,24 +5258,57 @@ public:
      *  This can e.g. be interesting when certain data shall be stored in the
      *  user accessible part of the devices non-volatile memory.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  char binData [6] = { 'A', 'B', 0x00, -128, 'E', 'F' };
-     *  const string value(binData, sizeof(binData) / sizeof(binData[0] ));
-     *  PropertyS prop(getHandleFromSomewhere());
+     *  const string value( binData, sizeof( binData ) / sizeof( binData[0] ) );
+     *  PropertyS prop( getHandleFromSomewhere() );
      *  prop.writeBinary( value );
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  final int BUF_SIZE = 6;
+     *  byte[] data_bytes = new byte[BUF_SIZE];
+     *  data_bytes[0] = 0x00;
+     *  data_bytes[1] = -1;
+     *  data_bytes[2] = -128;
+     *  data_bytes[3] = 0x33;
+     *  ByteBuffer data = ByteBuffer.allocateDirect( BUF_SIZE );
+     *  data.put( data_bytes );
+     *  binaryProp = acquire.PropertyS( getHandleFromSomewhere() )
+     *  binaryProp.writeBinary( data );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  binData = '\x00\xFF\x80\x33'
+     *  binaryProp = acquire.PropertyS(getHandleFromSomewhere())
+     *  binaryProp.writeBinary(binData)
+     * \endcode
+     * \endif
      *
      *  To find out if a property contains binary data check if \b mvIMPACT::acquire::cfContainsBinaryData is set e.g. by calling
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
-     *  PropertyS prop(getHandleFromSomewhere());
+     *  PropertyS prop( getHandleFromSomewhere() );
      *  if( prop.flags() & cfContainsBinaryData )
      *  {
      *    // Yes!! Binary data
      *  }
+     * \endcode
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  PropertyS prop = new PropertyS( getHandleFromSomewhere() );
+     *  if( ( prop.flags() & TComponentFlag.cfContainsBinaryData ) == TComponentFlag.cfContainsBinaryData )
+     *  {
+     *    // Yes!! Binary data
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  binaryProp = acquire.PropertyS(getHandleFromSomewhere())
+     *  if pseudoBinaryProp.flags() & acquire.cfContainsBinaryData:
+     *      # Yes!! Binary data!
      * \endcode
      *  \endif
      *
@@ -4768,13 +5374,14 @@ public:
         /// [in] The index defining at which position to write the value.
         int index = 0 ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_SetBinary( m_hObj, value.c_str(), static_cast<unsigned int>( value.size() ), index ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_SetBinary( m_hObj, value.c_str(), static_cast<unsigned int>( value.size() ), index );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hObj );
         }
         return *this;
     }
+#endif // #if !defined(WRAP_JAVA)
 };
 
 //-----------------------------------------------------------------------------
@@ -4833,7 +5440,7 @@ public:
  *  important data that have been written to the memory during production. An attempt
  *  to delete this data will fail.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  //-----------------------------------------------------------------------------
  *  int storeUserData( Device* pDev, char* pData, size_t dataSize, const std::string& entryName )
@@ -4846,7 +5453,7 @@ public:
  *      return -1;
  *    }
  *
- *    cout << "Available user memory(bytes):" << userData.memoryAvailable_bytes.read() << endl;
+ *    cout << "Available user memory(bytes): " << userData.memoryAvailable_bytes.read() << endl;
  *    cout << "Memory consumed already(bytes): " << userData.memoryConsumed_bytes.read() << endl;
  *
  *    // create a new entry
@@ -4879,7 +5486,88 @@ public:
  *    return 0;
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  //-----------------------------------------------------------------------------
+ *  public static int storeUserData( Device pDev, byte[] data_bytes, final String entryName )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    UserData userData = pDev.getUserData();
+ *    if( !userData.isAvailable() )
+ *    {
+ *      System.out.println( "This device does not support user data" );
+ *      return -1;
+ *    }
+ *
+ *    System.out.println( String.format( "Available user memory(bytes): %d", userData.getMemoryAvailable_bytes().read() ) );
+ *    System.out.println( String.format( "Memory consumed already(bytes): %d", userData.getMemoryConsumed_bytes().read() ) );
+ *
+ *    // create a new entry
+ *    UserDataEntry entry = userData.createEntry();
+ *    if( !entry.isValid() )
+ *    {
+ *      System.out.println( "Failed to create new entry" );
+ *      return -2;
+ *    }
+ *
+ *    ByteBuffer data = ByteBuffer.allocateDirect( data_bytes.length );
+ *    data.put( data_bytes );
+ *    entry.getData().writeBinary( data );
+ *    entry.getName().write( entryName );
+ *
+ *    // write to non-volatile memory (therefore the device MUST be closed)
+ *    if( pDev.isOpen() )
+ *    {
+ *      System.out.println( "Can't store data as the device is already in use" );
+ *      return -3;
+ *    }
+ *
+ *    userData.writeToHardware();
+ *    if( pDev.getHWUpdateResult().read() != THWUpdateResult.urSetUserDataWriteOK )
+ *    {
+ *      System.out.println( "Failed to store data in device non-volatile memory" );
+ *      return -4;
+ *    }
+ *
+ *    // now this data is stored in the devices permanent memory
+ *    return 0;
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *
+ *  def storeUserData(pDev, pData, entryName):
+ *     userData = pDev.getUserData()
+ *     if not userData.isAvailable:
+ *       print("This device does not support user data")
+ *       return -1
+ *
+ *     print("Available user memory(bytes): " + str(userData.memoryAvailable_bytes.read()))
+ *     print("Memory consumed already(bytes): " + str(userData.memoryConsumed_bytes.read()))
+ *
+ *     # create a new entry
+ *     entry = userData.createEntry();
+ *     if not entry.isValid:
+ *       print("Failed to create new entry")
+ *       return -2;
+ *
+ *     entry.data.writeBinary(pData)
+ *     entry.name.write(entryName)
+ *
+ *     # write to non-volatile memory (therefore the device MUST be closed)
+ *     if pDev.isOpen:
+ *         print("Can't store data as the device is already in use")
+ *         return -3
+ *
+ *     userData.writeToHardware();
+ *     if pDev.HWUpdateResult.read() != acquire.urSetUserDataWriteOK:
+ *         print("Failed to store data in device non-volatile memory")
+ *         return -4
+ *
+ *     # now this data is stored in the devices permanent memory
+ *     return 0
+ * \endcode
+ * \endif
  *
  *  \note
  *  Instances of this class can only be created by the class \b UserData.
@@ -4890,8 +5578,7 @@ class UserDataEntry
     friend class UserData;
     HLIST m_hList;
     //-----------------------------------------------------------------------------
-    explicit UserDataEntry( HLIST hList ) : m_hList( hList ), name(), data(),
-        access(), password()
+    explicit UserDataEntry( HLIST hList ) : m_hList( hList ), name(), data(), access(), password()
         //-----------------------------------------------------------------------------
     {
         if( hList != INVALID_ID )
@@ -4915,7 +5602,7 @@ public:
         return ( ( m_hList != INVALID_ID ) && ( OBJ_CheckHandle( m_hList, hcmFull ) == PROPHANDLING_NO_ERROR ) );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief The name of the entry.
     /**
@@ -4950,7 +5637,7 @@ public:
      */
     PropertyS password;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-OFF*
 };
 
@@ -5014,11 +5701,11 @@ class UserData
     //-----------------------------------------------------------------------------
     explicit UserData( HDEV hDev ) : m_boAvailable( false ), m_hDev( hDev ), m_userDataEntryLocator( hDev ),
         reconnectBehaviour(), memoryAvailable_bytes(), memoryConsumed_bytes()
-        //-----------------------------------------------------------------------------
+    //-----------------------------------------------------------------------------
     {
         init();
     }
-    /// \brief Allows assignments of \b mvIMPACT::acquire::UserData objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::UserData objects.
     UserData& operator=( const UserData& rhs )
     {
         if( this != &rhs )
@@ -5132,7 +5819,7 @@ public:
         std::vector<int>& sequence ) const
     {
         sequence.clear();
-        ComponentIterator it( m_userDataEntryLocator.searchbase_id() );
+        Component it( m_userDataEntryLocator.searchbase_id() );
         if( !it.isValid() )
         {
             return;
@@ -5149,8 +5836,8 @@ public:
             ++it;
         }
     }
-    /// \brief This function should be called to check if this device offers non-volatile memory that can be accessed
-    /** by the user.
+    /// \brief This function should be called to check if this device offers non-volatile memory that can be accessed by the user.
+    /**
      *  \return
      *  - true if the device offers non-volatile memory that can be accessed by the user
      *  - false otherwise
@@ -5177,7 +5864,7 @@ public:
         }
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property that can be used to configure how the user data should be treated in case of a device that has been unplugged is plugged back in again.
     /**
@@ -5202,7 +5889,7 @@ public:
      */
     PropertyI memoryConsumed_bytes;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -5237,7 +5924,7 @@ public:
  *  before will become invalid and need to be reconstructed afterwards, so don't close a device needlessly.
  *
  *  \attention
- *  Whenever the last instance to a \b DeviceManager object get's
+ *  Whenever the last instance to a \b DeviceManager object gets
  *  destroyed within the current process every remaining device that was opened in this process before will
  *  be closed automatically!
  *  Thus every instance to \b mvIMPACT::acquire::Device objects or objects created with a pointer to a
@@ -5269,7 +5956,7 @@ class Device
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -5305,6 +5992,8 @@ class Device
         locator.bindComponent( manufacturerSpecificInformation, "ManufacturerSpecificInformation" );
         locator.bindComponent( desiredAccess, "DesiredAccess" );
         locator.bindComponent( grantedAccess, "GrantedAccess" );
+        locator.bindComponent( autoNegotiatePacketSize, "AutoNegotiatePacketSize" );
+        locator.bindComponent( autoNegotiatePacketSizeMode, "AutoNegotiatePacketSizeMode" );
     }
     //-----------------------------------------------------------------------------
     HDRV hDrvInternal( void ) const
@@ -5318,13 +6007,13 @@ class Device
         deviceClass(), family(), product(), capabilities(), serial(), state(), deviceID(), deviceVersion(),
         firmwareVersion(), loadSettings(), autoLoadSettingOrder(), interfaceLayout(),
         customDataDirectory(), defaultRequestCount(), resultQueueCount(), userControlledImageProcessingEnable(), allowUnrecommendedFeatures(),
-        acquisitionStartStopBehaviour(), HWUpdateResult(), manufacturer(), manufacturerSpecificInformation(), desiredAccess(), grantedAccess()
+        acquisitionStartStopBehaviour(), HWUpdateResult(), manufacturer(), manufacturerSpecificInformation(), desiredAccess(), grantedAccess(), autoNegotiatePacketSize(), autoNegotiatePacketSizeMode()
         //-----------------------------------------------------------------------------
     {
         bindPublicProperties( hDev );
     }
 public:
-    /// \brief Copy constructor
+    /// \brief Copy constructor.
     /**
      *  Creates a new object from an existing device object. Keep in mind that this new object
      *  will provide access to the very same hardware and therefore you might as well use the original
@@ -5341,11 +6030,11 @@ public:
         userControlledImageProcessingEnable( src.userControlledImageProcessingEnable ), allowUnrecommendedFeatures( src.allowUnrecommendedFeatures ),
         acquisitionStartStopBehaviour( src.acquisitionStartStopBehaviour ),
         HWUpdateResult( src.HWUpdateResult ), manufacturer( src.manufacturer ), manufacturerSpecificInformation( src.manufacturerSpecificInformation ),
-        desiredAccess( src.desiredAccess ), grantedAccess( src.grantedAccess )
+        desiredAccess( src.desiredAccess ), grantedAccess( src.grantedAccess ), autoNegotiatePacketSize( src.autoNegotiatePacketSize ), autoNegotiatePacketSizeMode( src.autoNegotiatePacketSizeMode )
     {
         ++( m_pRefData->m_refCnt );
     }
-    /// \brief Class destructor
+    /// \brief Class destructor.
     /**
      *  \note
      *  This destructor must only be called for objects that have been created directly by
@@ -5358,8 +6047,7 @@ public:
     {
         dealloc();
     }
-#ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::Device objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::Device objects.
     Device& operator=( const Device& rhs )
     {
         if( this != &rhs )
@@ -5373,7 +6061,6 @@ public:
         }
         return *this;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Closes an opened device.
     /**
      *  This function closes a device previously opened again.
@@ -5395,8 +6082,10 @@ public:
             m_pRefData->m_hDrv = INVALID_ID;
         }
     }
-    /// \brief Checks whether this device has a certain capability
+    /// \brief Checks whether this device has a certain capability.
     /**
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TDeviceCapability.
+     *
      *  \return
      *  - true if the device has the capability in question
      *  - false otherwise.
@@ -5557,13 +6246,12 @@ public:
     }
     /// \brief Updates the firmware of the device.
     /**
-     *  calling this function will cause the driver to download the firmware version compiled
-     *  into the driver library into the devices internal memory. This ID is <b>NOT</b>
-     *  volatile. It will remain stored even if the device is unplugged.
+     *  Calling this function will cause the driver to download a firmware version compiled
+     *  into the driver library into the devices non-volatile internal memory.
      *
      *  \note
      *  - This feature currently is only available for \b mvBlueFOX devices. To update the firmware of other devices please refer to the tool \c mvDeviceConfigure(this tool also offers a command line interface)
-     *  - Be sure what you are doing \b before calling this function. Under normal circumstances
+     *  - Be sure you know what you are doing \b before calling this function. Under normal circumstances
      *  it won't be necessary to update a devices firmware.
      *  - The download will take some time (depending on the device up to 30 seconds). During this time
      *  the device and the thread calling this function will \b NOT respond.
@@ -5608,7 +6296,7 @@ public:
         }
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property \b (read-only) defining the device class this device belongs to.
     /**
@@ -5647,6 +6335,9 @@ public:
      *  \b mvIMPACT::acquire::DeviceManager::updateDeviceList()
      *  must be called regardless of the value of \b mvIMPACT::acquire::Device::registerErrorEvent before a device
      *  that was lost can re-establish a connection to the capture driver.
+     *  Apart from that \b ALL \b GenICam/GenTL will only update this property automatically if the device is
+     *  currently in use \b BY \b THIS \b PROCESS, so when the device has been opened. This is also to save
+     *  bandwidth and resources!
      */
     PropertyIDeviceState state;
     /// \brief An integer property \b (read-only) containing the device ID associated with this device.
@@ -5721,10 +6412,8 @@ public:
      *  \endif
      */
     PropertyIDeviceInterfaceLayout interfaceLayout;
-    /// \brief A string property \b (read-only once the device is open) containing a path to a custom directory for the location of
+    /// \brief A string property \b (read-only once the device is open) containing a path to a custom directory for the location of camera description files, etc.
     /**
-     *  camera description files, etc.
-     *
      *  When a custom path is assigned to this property this path will be used to locate certain driver specific files
      *  and folders. Under this folder the following structure must be created:
      *
@@ -5736,7 +6425,7 @@ public:
      *
      *  If this property is left empty
      * \code
-     *  %ALL USERS%\Documents\MATRIX VISION\mvIMPACT acquire
+     *  %ALL USERS%/Documents/MATRIX VISION/mvIMPACT acquire
      * \endcode
      *  will be used by default on Windows&trade; platforms and
      * \code
@@ -5752,6 +6441,9 @@ public:
      *
      *  \note
      *  This property will become read-only while the device is open.
+     *
+     *  \sa
+     *  \b mvIMPACT::acquire::SystemSettings::requestCount to change the number of request objects later and to find out why this parameter is important
      */
     PropertyI defaultRequestCount;
     /// \brief An integer property that defines the number of result queues to be created when the device is opened.
@@ -5761,26 +6453,49 @@ public:
      *  end up by writing to the property \b mvIMPACT::acquire::ImageRequestControl::resultQueue. When waiting for a request to become ready by calling \b mvIMPACT::acquire::FunctionInterface::imageRequestWaitFor
      *  the application can specify on which queue to wait.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
-     *  EXAMPLE:
-     *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      * Device* pDev = getDevicePointerFromSomewhere();
      * pDev->resultQueueCount.write( 2 );
      * ImageRequestControl irc( pDev );
      * FunctionInterface fi( pDev );
      * irc.resultQueue.write( 0 );
-     * fi.imageRequestSingle( &irc ); // request a buffer that will be stored in queue 0
+     * fi.imageRequestSingle( &irc ); // request a buffer that will be stored in queue 0 when ready
      * irc.resultQueue.write( 1 );
-     * fi.imageRequestSingle( &irc ); // request a buffer that will be stored in queue 1
+     * fi.imageRequestSingle( &irc ); // request a buffer that will be stored in queue 1 when ready
      * fi.imageRequestWaitFor( 500, 0 ); // wait on queue 0
      * fi.imageRequestWaitFor( 500, 1 ); // wait on queue 1
      * \endcode
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     * Device pDev = getDevicePointerFromSomewhere();
+     * pDev.getResultQueueCount().write( 2 );
+     * ImageRequestControl irc = new ImageRequestControl( pDev );
+     * FunctionInterface fi = new FunctionInterface( pDev );
+     * irc.getResultQueue().write( 0 );
+     * fi.imageRequestSingle( irc ); // request a buffer that will be stored in queue 0 when ready
+     * irc.getResultQueue().write( 1 );
+     * fi.imageRequestSingle( irc ); // request a buffer that will be stored in queue 1 when ready
+     * fi.imageRequestWaitFor( 500, 0 ); // wait on queue 0
+     * fi.imageRequestWaitFor( 500, 1 ); // wait on queue 1
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     * pDev = getDeviceFromSomewhere()
+     * pDev.resultQueueCount.write(2)
+     * irc = ImageRequestControl(pDev)
+     * fi = FunctionInterface(pDev)
+     * irc.resultQueue.write(0)
+     * fi.imageRequestSingle(irc) # request a buffer that will be stored in queue 0 when ready
+     * irc.resultQueue.write(1)
+     * fi.imageRequestSingle(irc) # request a buffer that will be stored in queue 1 when ready
+     * fi.imageRequestWaitFor(500, 0) # wait on queue 0
+     * fi.imageRequestWaitFor(500, 1) # wait on queue 1
+     * \endcode
+     * \endif
      *
      * This can be useful e.g. when working with 2 different settings to sort all buffer capture with setting 0 into one queue
      * and all the others into another queue.
-     *  \endif
-     *
      *  \note
      *  This property will become read-only while the device is open.
      *
@@ -5890,8 +6605,35 @@ public:
      *  Therefore always call the function \b mvIMPACT::acquire::Component::isValid to check if this property is available or not.
      */
     PropertyIDeviceAccessMode grantedAccess;
+    /// \brief An enumerated integer property which can be used to enable or disable the MTU auto negotiation of a GigE Vision device when opening it.
+    /**
+     * If set to true, the driver will try to determine the max. possible packet size during init, which if successful will result in optimal performance.
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
+     *
+     *  \note Once the device is in use (has been initialized) this property will become \b (read-only). If this feature is disabled even before the device has been opened a
+     *  firmware update is needed to use it when accessed via the \c mvGenTLProducer-lib. When using a 3rd party GenTL producer to access the GigE Vision device this
+     *  feature will not be available.
+     *
+     *  \note This property might not supported by every device. Therefore always call the function
+     *  \b mvIMPACT::acquire::Component::isValid to check if this property is available or not.
+     */
+    PropertyIBoolean autoNegotiatePacketSize;
+    /// \brief An enumerated integer property \b (read-only) that can be used to define how the auto packet size negotiation for a GigE Vision device is handled.
+    /**
+     *  If set to \b mvIMPACT::acquire::danpsmHighToLow the MTU is automatically negotiated starting from the NICs current MTU down to a value supported by all components belonging to the network path
+     *  (device, network interface card, switches, ...), if set to \b mvIMPACT::acquire::danpsmLowToHigh the negotiation starts with the small value tries larger values with each iteration until the
+     *  optimal value has been found.
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TDeviceAutoNegotiatePacketSizeMode.
+     *
+     *  \note Once the device is in use (has been initialized) this property will become \b (read-only). When using a 3rd party GenTL producer to access the GigE Vision device this
+     *  feature will not be available.
+     *
+     *  \note This property might not supported by every device. Therefore always call the function
+     *  \b mvIMPACT::acquire::Component::isValid to check if this property is available or not.
+     */
+    PropertyIDeviceAutoNegotiatePacketSizeMode autoNegotiatePacketSizeMode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -5951,9 +6693,10 @@ public:
  *  example). Instead either attach your instance of the device manager to a singleton, declare a global pointer that gets
  *  initialised/destroyed by custom library init/close functions or use any other approach that suits your needs.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
  *  \b EXAMPLE CODE:
- * \code
+ *
+ *  \if DOXYGEN_CPP_DOCUMENTATION
+ *  \code
  *  //-----------------------------------------------------------------------------
  *  void obtainDevicePointers( void )
  *  //-----------------------------------------------------------------------------
@@ -6040,7 +6783,7 @@ public:
  *      // is already running in a different process!
  *      try
  *      {
- *        FunctionInterface func(pDev);
+ *        FunctionInterface func( pDev );
  *        // do some work
  *      }
  *      catch( const ImpactAcquireException& e )
@@ -6052,13 +6795,114 @@ public:
  *        // This will return the same device as pDev
  *        Device* pDev2 = devMgr2.getDeviceBySerial( "*" );
  *      } // here the device manager devMgr2 will be destroyed, but it will NOT close pDev2, as devMgr1 holds a reference to it
- *      Statistics s(pDev); // this will still work
+ *      Statistics s( pDev ); // this will still work
  *    } // here the last device manager will be destroyed, thus from here onwards pDev will be invalid!
- *    Info i(pDev); // this will chrash
+ *    Info i( pDev ); // this will crash
  *    DeviceManager devMgr3;
- *    Info i2(devMgr3.getDevice(0)); // this will work again
+ *    Info i2( devMgr3.getDevice( 0 ) ); // this will work again
  *  }
- * \endcode
+ *  \endcode
+ *  \elseif DOXYGEN_JAVA_DOCUMENTATION
+ *  \code
+ *  //-----------------------------------------------------------------------------
+ *  public static void showDeviceManagerOperation()
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    Device pDev = null;
+ *    {
+ *      DeviceManager devMgr = new DeviceManager();
+ *      // will return a pointer to the first device detected thus
+ *      // this call will work if there is at least one device in the
+ *      // current system that is supported by this interface
+ *      pDev = devMgr.getDeviceBySerial( "*" );
+ *      if( pDev == null )
+ *      {
+ *        System.out.print( "No valid device found!" );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *
+ *      // from here it will be save to work with the pointer returned
+ *      // by device manager.
+ *      // THE NEXT LINE WILL TRY TO OPEN THE DEVICE! This can fail if the device
+ *      // is already running in a different process!
+ *      try
+ *      {
+ *        FunctionInterface fi = new FunctionInterface( pDev );
+ *        // do some work
+ *      }
+ *      catch( ImpactAcquireException e )
+ *      {
+ *        // this e.g. might happen if the same device is already opened in another process...
+ *        System.out.println( "An error occurred while opening device " + pDev.getSerial().read() +
+ *                            "(error code: " + e.getMessage() + ")." );
+ *        System.exit( 1 );
+ *      }
+ *      {
+ *        DeviceManager devMgr2 = new DeviceManager();
+ *        // This will return the same device as pDev
+ *        Device pDev2 = devMgr.getDeviceBySerial( "*" );
+ *      }
+ *      // after the next line the device manager devMgr2 will be destroyed, but it will NOT close pDev2, as devMgr holds a reference to it
+ *      System.gc();
+ *      Statistics s = new Statistics( pDev ); // this will still work
+ *    }
+ *  }
+ *  \endcode
+ *  \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ *  \code
+ *  def obtainDeviceReferences():
+ *      # Create an instance of the device manager to get access
+ *      # to supported devices.
+ *      devMgr = acquire.DeviceManager()
+ *
+ *      # show all devices
+ *      for i in range(devMgr.deviceCount()):
+ *          print("Dev " + str(i) + ": " + str(devMgr[i]))
+ *
+ *      # try to find a device using a special criteria
+ *      # ( some of these calls will fail!!! )
+ *      # will fail as the string is not complete and does
+ *      # NOT terminate with a wildcard.
+ *      pDev = devMgr.getDeviceBySerial("SD0*0")
+ *      # might work if there are at least two devices with
+ *      # a matching serial number in the system.
+ *      pDev = devMgr.getDeviceByFamily("SD0*0*", 1)
+ *      # might work if there is at least one device whose type
+ *      # specifying string starts with 'SampleDevi'.
+ *      pDev = devMgr.getDeviceByProduct("SampleDevi*")
+ *      # will fail as the string is not complete and does NOT
+ *      # terminate with the user defined wildcard.
+ *      pDev = devMgr.getDeviceByProduct("SampleD*", 0, '$')
+ *      # will work if there is a device whose product name
+ *      # starts with 'SamplePro' and which has
+ *      # been assigned the specified device ID.
+ *      pDev = devMgr.getDeviceByProductAndID("SamplePro*", 66, '*')
+ *      # will work if there is a device whose product name
+ *      # starts with 'SamplePro' and which has
+ *      # been assigned the specified string device ID.
+ *      pDev = devMgr.getDeviceByProductAndID("SamplePro*","sampleID", '*')
+ *      # will work if there is at least one device with a serial
+ *      # number starting with 'SD00' in the system.
+ *      pDev = devMgr.getDeviceBySerial("SD00*")
+ *      # will return a pointer to the first device detected thus
+ *      # this call will work if there is at least one device in the
+ *      # current system that is supported by this interface
+ *      pDev = devMgr.getDeviceBySerial("*")
+ *      if not pDev:
+ *          print("Error! No valid device found")
+ *
+ *      # from here it will be save to work with the pointer returned
+ *      # by device manager.
+ *      # THE NEXT LINE WILL TRY TO OPEN THE DEVICE! This can fail if the device
+ *      # is already running in a different process!
+ *      try:
+ *          func = acquire.FunctionInterface(pDev);
+ *          # do some work
+ *      except Exception as e:
+ *          # failed to open the device...
+ *          print("failed to open the device...")
+ *  \endcode
  *  \endif
  */
 class DeviceManager
@@ -6073,16 +6917,20 @@ class DeviceManager
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        --( *m_pRefCnt );
-        for( unsigned int i = 0; i < m_devVector.size(); i++ )
+        if( m_pRefCnt )
         {
-            delete m_devVector[i];
-        }
-        // free reference count memory if no one uses it anymore
-        if( *m_pRefCnt == 0 )
-        {
-            delete m_pRefCnt;
-            m_pRefCnt = 0;
+            --( *m_pRefCnt );
+            for( unsigned int i = 0; i < m_devVector.size(); i++ )
+            {
+                delete m_devVector[i];
+            }
+            m_devVector.clear();
+            // free reference count memory if no one uses it anymore
+            if( *m_pRefCnt == 0 )
+            {
+                delete m_pRefCnt;
+                m_pRefCnt = 0;
+            }
         }
     }
     //-----------------------------------------------------------------------------
@@ -6131,7 +6979,7 @@ class DeviceManager
     bool updateInfoVector( void ) const
     //-----------------------------------------------------------------------------
     {
-        ComponentIterator iter( m_deviceBaseList );
+        Component iter( m_deviceBaseList );
         unsigned int changedCount = iter.changedCounter();
         if( m_lastChangedCounter == changedCount )
         {
@@ -6182,7 +7030,7 @@ public:
      *  might throw an exception of type \b mvIMPACT::acquire::ImpactAcquireException or a type
      *  derived from this class.
      */
-    explicit DeviceManager( const DeviceManager& src ) : m_deviceBaseList( INVALID_ID ), m_devVector(), m_lastChangedCounter( 0 ), m_pRefCnt( src.m_pRefCnt )
+    DeviceManager( const DeviceManager& src ) : m_deviceBaseList( INVALID_ID ), m_devVector(), m_lastChangedCounter( 0 ), m_pRefCnt( src.m_pRefCnt )
     {
         // we don't need to copy data as the necessary updates are done anyway.
         // But we have to call the underlying C-API to achieve correct reference counting.
@@ -6193,8 +7041,7 @@ public:
         }
         ++( *m_pRefCnt );
     }
-#ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::DeviceManager objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::DeviceManager objects.
     DeviceManager& operator=( const DeviceManager& rhs )
     {
         if( this != &rhs )
@@ -6210,7 +7057,6 @@ public:
         }
         return *this;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Class destructor.
     /**
      *  There always has to be at least one instance of the \b DeviceManager when
@@ -6237,14 +7083,13 @@ public:
     {
         return DMR_GetVersion( libraryQuery );
     }
-#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS)
     /// \brief Returns the internal handle to the device manager created via \b DMR_Init().
     HDMR getInternalHandle( void ) const
     {
         return m_deviceBaseList;
     }
-#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-#ifndef WRAP_PYTHON
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS)
     /// \brief Returns a pointer to a \b mvIMPACT::acquire::Device object.
     /**
      *  Returns a pointer to a \b mvIMPACT::acquire::Device object specifying the device found at the given
@@ -6269,7 +7114,6 @@ public:
     {
         return getDevice( index );
     }
-#endif // #ifndef WRAP_PYTHON (In Python, use public method getDevice)
     /// \brief Returns the current changed counter for the device list.
     /**
      *  This is a useful function to find out if the device list has been changed in any
@@ -6365,20 +7209,46 @@ public:
      *  The user can specify only parts of the serial number and a wildcard. The \b mvIMPACT::acquire::DeviceManager
      *  object will then try to find that matches these parameters in its current list.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
-     *  // EXAMPLE
+     *  DeviceManager devMgr;
      *  // this will return a pointer to the second device with
      *  // a serial number starting with 'SD' device found or 0
      *  // if there are no 2 sample devices in the system
-     *  getDeviceBySerial( "SD*******", 1, '*' );
+     *  devMgr.getDeviceBySerial( "SD*******", 1, '*' );
      *  // will return a pointer to the device with the serial
      *  // number SD000001 if present or 0
-     *  getDeviceBySerial( "SD0000001" );
+     *  devMgr.getDeviceBySerial( "SD0000001" );
      *  // will return a pointer to the first device in the system
-     *  getDeviceBySerial( "*", 0, '*' );
+     *  devMgr.getDeviceBySerial( "*", 0, '*' );
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  DeviceManager devMgr = new DeviceManager();
+     *  // this will return a pointer to the second device with
+     *  // a serial number starting with 'SD' device found or 0
+     *  // if there are no 2 sample devices in the system
+     *  devMgr.getDeviceBySerial( "SD*******", 1, '*' );
+     *  // will return a pointer to the device with the serial
+     *  // number SD000001 if present or 0
+     *  devMgr.getDeviceBySerial( "SD0000001" );
+     *  // will return a pointer to the first device in the system
+     *  devMgr.getDeviceBySerial( "*", 0, '*' );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  devMgr = acquire.DeviceManager()
+     *  # this will return a reference to the second device with
+     *  # a serial number starting with 'SD' device found or 0
+     *  # if there are no 2 sample devices in the system
+     *  devMgr.getDeviceBySerial("SD*******", 1, '*')
+     *  # will return a reference to the device with the serial
+     *  # number SD000001 if present or 0
+     *  devMgr.getDeviceBySerial("SD0000001")
+     *  # will return a reference to the first device in the system
+     *  devMgr.getDeviceBySerial("*", 0, '*')
+     * \endcode
+     * \endif
      *
      *  \sa
      *  \b DeviceManager::getDeviceByFamily, \n
@@ -6406,19 +7276,46 @@ public:
      *  The family is the most general method of searching for a device apart from 'any device'.
      *  E.g. for a device the family name might be 'SampleDevice'
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
+     *  DeviceManager devMgr;
      *  // this will return a pointer to the second 'SampleDevice'
      *  // device found or 0 if there are no 2 'SampleDevice'
      *  // devices in the system
-     *  getDeviceByFamily( "SampleD*", 1, '*' );
+     *  devMgr.getDeviceByFamily( "SampleD*", 1, '*' );
      *  // will return a pointer to the first device belonging
      *  // to the 'SampleDevice' family if present or 0.
-     *  getDeviceByFamily( "SampleDevice" );
+     *  devMgr.getDeviceByFamily( "SampleDevice" );
      *  // will return the first recognized device in the system
-     *  getDeviceByFamily( "*", 0, '*' );
+     *  devMgr.getDeviceByFamily( "*", 0, '*' );
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  DeviceManager devMgr = new DeviceManager();
+     *  // this will return a pointer to the second 'SampleDevice'
+     *  // device found or 0 if there are no 2 'SampleDevice'
+     *  // devices in the system
+     *  devMgr.getDeviceByFamily( "SampleD*", 1, '*' );
+     *  // will return a pointer to the first device belonging
+     *  // to the 'SampleDevice' family if present or 0.
+     *  devMgr.getDeviceByFamily( "SampleDevice" );
+     *  // will return the first recognized device in the system
+     *  devMgr.getDeviceByFamily( "*", 0, '*' );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  devMgr = acquire.DeviceManager()
+     *  # this will return a reference to the second 'SampleDevice'
+     *  # device found or 0 if there are no 2 'SampleDevice'
+     *  # devices in the system
+     *  devMgr.getDeviceByFamily("SampleD*", 1, '*')
+     *  # will return a reference to the first device belonging
+     *  # to the 'SampleDevice' family if present or 0.
+     *  devMgr.getDeviceByFamily("SampleDevice")
+     *  # will return the first recognized device in the system
+     *  devMgr.getDeviceByFamily("*", 0, '*')
+     * \endcode
+     * \endif
      *
      *  \sa
      *  \b mvIMPACT::acquire::DeviceManager::getDeviceBySerial, \n
@@ -6448,20 +7345,49 @@ public:
      *  device types. This might e.g. be 'SampleDevice-G' for a grey version of the sample device and
      *  'SampleDevice-C' for the color version of the sample device.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
+     *  DeviceManager devMgr;
      *  // this will return a pointer to the second sample
      *  // device of type 'G' found or 0 if there aren't
      *  // two devices of this type in the system
-     *  getDeviceByProduct( "SampleDevice-G", 1 );
+     *  devMgr.getDeviceByProduct( "SampleDevice-G", 1 );
      *  // will return a pointer to the first device whose
      *  // product string starts with 'SampleDev' or 0 if
      *  // no such device can be found.
-     *  getDeviceByProduct( "SampleDev*", 0, '*' );
+     *  devMgr.getDeviceByProduct( "SampleDev*", 0, '*' );
      *  // will return the first recognized device in the system
-     *  getDeviceByProduct( "*", 0, '*' );
+     *  devMgr.getDeviceByProduct( "*", 0, '*' );
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     *  DeviceManager devMgr = new DeviceManager();
+     *  // this will return a pointer to the second sample
+     *  // device of type 'G' found or 0 if there aren't
+     *  // two devices of this type in the system
+     *  devMgr.getDeviceByProduct( "SampleDevice-G", 1 );
+     *  // will return a pointer to the first device whose
+     *  // product string starts with 'SampleDev' or 0 if
+     *  // no such device can be found.
+     *  devMgr.getDeviceByProduct( "SampleDev*", 0, '*' );
+     *  // will return the first recognized device in the system
+     *  devMgr.getDeviceByProduct( "*", 0, '*' );
+     * \code
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  devMgr = acquire.DeviceManager()
+     *  # this will return a reference to the second sample
+     *  # device of type 'G' found or 0 if there aren't
+     *  # two devices of this type in the system
+     *  devMgr.getDeviceByProduct("SampleDevice-G", 1)
+     *  # will return a reference to the first device whose
+     *  # product string starts with 'SampleDev' or 0 if
+     *  # no such device can be found.
+     *  devMgr.getDeviceByProduct("SampleDev*", 0, '*')
+     *  # will return the first recognized device in the system
+     *  devMgr.getDeviceByProduct("*", 0, '*')
+     * \endcode
+     * \endif
      *
      *  \sa
      *  \b DeviceManager::getDeviceBySerial, \n
@@ -6487,21 +7413,52 @@ public:
      *  \b mvIMPACT::acquire::DeviceManager::getDeviceByProduct
      *  except that the second parameter now is interpreted as the device ID.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
+     *  DeviceManager devMgr;
      *  // this will return a pointer to the sample device of
      *  // type 'G' which has been assigned a device ID of '1'
      *  // or 0 if there is no sample device with this ID in the system.
-     *  getDeviceByProductAndID( "SampleDevice-G", 1 );
+     *  devMgr.getDeviceByProductAndID( "SampleDevice-G", 1 );
      *  // will return a pointer to the device whose product string
      *  // starts with 'SampleDev' and whose device ID has been set
      *  // to '0' or 0 if no such device can be found.
-     *  getDeviceByProductAndID( "SampleDev*", 0, '*' );
+     *  devMgr.getDeviceByProductAndID( "SampleDev*", 0, '*' );
      *  // will return the first recognized device with an assigned
      *  // device ID of '0' in the system.
-     *  getDeviceByProductAndID( "*", 0 );
+     *  devMgr.getDeviceByProductAndID( "*", 0 );
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  DeviceManager devMgr = new DeviceManager();
+     *  // this will return a pointer to the sample device of
+     *  // type 'G' which has been assigned a device ID of '1'
+     *  // or 0 if there is no sample device with this ID in the system.
+     *  devMgr.getDeviceByProductAndID( "SampleDevice-G", 1 );
+     *  // will return a pointer to the device whose product string
+     *  // starts with 'SampleDev' and whose device ID has been set
+     *  // to '0' or 0 if no such device can be found.
+     *  devMgr.getDeviceByProductAndID( "SampleDev*", 0, '*' );
+     *  // will return the first recognized device with an assigned
+     *  // device ID of '0' in the system.
+     *  devMgr.getDeviceByProductAndID( "*", 0 );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  devMgr = acquire.DeviceManager()
+     *  # this will return a reference to the sample device of
+     *  # type 'G' which has been assigned a device ID of '1'
+     *  # or 0 if there is no sample device with this ID in the system.
+     *  devMgr.getDeviceByProductAndID("SampleDevice-G", 1)
+     *  # will return a reference to the device whose product string
+     *  # starts with 'SampleDev' and whose device ID has been set
+     *  # to '0' or 0 if no such device can be found.
+     *  devMgr.getDeviceByProductAndID("SampleDev*", 0, '*')
+     *  # will return the first recognized device with an assigned
+     *  # device ID of '0' in the system.
+     *  devMgr.getDeviceByProductAndID("*", 0)
+     * \endcode
+     * \endif
      *
      *  \sa
      *  \b Device::deviceID, \n
@@ -6525,25 +7482,59 @@ public:
     }
     /// \brief Tries to locate a device via the product name and the device ID.
     /**
-    *  This function behaves like
-    *  \b mvIMPACT::acquire::DeviceManager::getDeviceByProduct
+    *  This function can be used to locate devices with a certain string identifier that has previously been written into a devices non-volatile
+    *  memory. E.g. GenICam devices may support the \c DeviceUserID feature to assign a certain user defined name. A user defined
+    *  name might be useful e.g. to access a device with a certain function without the need to worry about which device is it. You could
+    *  e.g. have a \c barcodeReadingDevice and a \c monitorCamera.
+    *  This function behaves like \b mvIMPACT::acquire::DeviceManager::getDeviceByProduct
     *  except that the second parameter now is interpreted as the device ID.
     *
-    *  \if DOXYGEN_CPP_DOCUMENTATION
+    * \if DOXYGEN_CPP_DOCUMENTATION
     * \code
+    *  DeviceManager devMgr;
     *  // this will return a pointer to the sample device of
     *  // type 'G' which has been assigned a device ID of 'abc'
     *  // or 0 if there is no sample device with this ID in the system.
-    *  getDeviceByProductAndID( "SampleDevice-G", "abc" );
+    *  devMgr.getDeviceByProductAndID( "SampleDevice-G", "abc" );
     *  // will return a pointer to the device whose product string
     *  // starts with 'SampleDev' and whose device ID has been set
     *  // to 'def' or 0 if no such device can be found.
-    *  getDeviceByProductAndID( "SampleDev*", "def", '*' );
+    *  devMgr.getDeviceByProductAndID( "SampleDev*", "def", '*' );
     *  // will return the first recognized device with an assigned
     *  // device ID of 'anyString' in the system.
-    *  getDeviceByProductAndID( "*", "anyString" );
+    *  devMgr.getDeviceByProductAndID( "*", "anyString" );
     * \endcode
-    *  \endif
+    * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+    *  DeviceManager devMgr = new DeviceManager();
+    *  // this will return a pointer to the sample device of
+    *  // type 'G' which has been assigned a device ID of 'abc'
+    *  // or 0 if there is no sample device with this ID in the system.
+    *  devMgr.getDeviceByProductAndID( "SampleDevice-G", "abc" );
+    *  // will return a pointer to the device whose product string
+    *  // starts with 'SampleDev' and whose device ID has been set
+    *  // to 'def' or 0 if no such device can be found.
+    *  devMgr.getDeviceByProductAndID( "SampleDev*", "def", '*' );
+    *  // will return the first recognized device with an assigned
+    *  // device ID of 'anyString' in the system.
+    *  devMgr.getDeviceByProductAndID( "*", "anyString" );
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+    * \code
+    *  devMgr = acquire.DeviceManager()
+    *  # this will return a reference to the sample device of
+    *  # type 'G' which has been assigned a device ID of 'abc'
+    *  # or 0 if there is no sample device with this ID in the system.
+    *  devMgr.getDeviceByProductAndID("SampleDevice-G", "abc")
+    *  # will return a reference to the device whose product string
+    *  # starts with 'SampleDev' and whose device ID has been set
+    *  # to 'def' or 0 if no such device can be found.
+    *  devMgr.getDeviceByProductAndID("SampleDev*", "def", '*')
+    *  # will return the first recognized device with an assigned
+    *  # device ID of 'anyString' in the system.
+    *  devMgr.getDeviceByProductAndID("*", "anyString")
+    * \endcode
+    * \endif
     *
     *  \sa
     *  \b Device::deviceID, \n
@@ -6572,7 +7563,7 @@ public:
 enum TDeviceListType
 //-----------------------------------------------------------------------------
 {
-    /// \brief A placeholder for an undefined list type
+    /// \brief A placeholder for an undefined list type.
     dltUndefined = dmltUndefined,
     /// \brief Specifies a certain setting.
     /**
@@ -6630,6 +7621,7 @@ enum TDeviceListType
      *  \note This feature currently is only available for frame grabber devices.
      */
     dltDeviceSpecificData = dmltDeviceSpecificData,
+#if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
     /// \brief Specifies the driver interface list providing access to the device specific event type settings lists(<b>deprecated</b>).
     /**
      *  \note Every device will support a different set of events that can be waited for by the user.
@@ -6658,6 +7650,7 @@ enum TDeviceListType
      *  is \ref Callback.cpp.
      */
     dltEventSubSystemResults = dmltEventSubSystemResults,
+#endif // #if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
     /// \brief Specifies the driver interface list providing access to the devices memory manager list.
     /**
      *  \note This feature currently is only available for frame grabber devices.
@@ -6696,7 +7689,7 @@ enum TDeviceListType
  *  classes offered by this interface, but when a special property is needed or a
  *  new property that hasn't been embedded into the C++ interface, this class offers
  *  a way to get hold of its handle.
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  // assuming a new property 'MyProp' has been added to the setting of a
  *  // device driver whose product string is 'MyDevice' and it has not been
@@ -6722,14 +7715,14 @@ enum TDeviceListType
  *    if( pDev )
  *    {
  *      // get access to the base setting
- *      DeviceComponentLocator locator(pDev, dltSetting, "Base");
+ *      DeviceComponentLocator locator( pDev, dltSetting, "Base" );
  *      Property prop;
  *      locator.bindComponent( prop, "MyProp" );
  *      // set the value by string
  *      prop.writeS( "MyVal" );
  *      if( prop.type() == ctPropInt )
  *      {
- *        PropertyI iProp(prop.hObj());
+ *        PropertyI iProp( prop.hObj() );
  *        int myVal = 666;
  *        iProp.write( myVal );
  *      }
@@ -6739,14 +7732,73 @@ enum TDeviceListType
  *      fProp.write( 3.14 );
  *
  *      // When it's an enumerated property this is legal as well:
- *      typedef EnumPropertyI<TMyEnumType> PropertyIMyEnumType;
  *      PropertyIMyEnumType eProp;
  *      locator.bindComponent( eProp, "MyEnumeratedProperty" );
- *      prop.write( metOne );
+ *      eProp.write( metOne );
  *    }
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  //-----------------------------------------------------------------------------
+ *  public static void fn( void )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    DeviceManager devMgr = new DeviceManager();
+ *    Device pDev = devMgr.getDeviceByProduct( "MyDev*" );
+ *    if( pDev != null )
+ *    {
+ *      DeviceComponentLocator locator = new DeviceComponentLocator( pDev, TDeviceListType.dltSetting, "Base" );
+ *      Property prop = new Property();
+ *      locator.bindComponent( prop, "MyProp" );
+ *      // set the value by string
+ *      prop.writeS( "MyVal" );
+ *      if( prop.type() == TComponentType.ctPropInt )
+ *      {
+ *        PropertyI iProp = new PropertyI( prop.hObj() );
+ *        int myVal = 666;
+ *        iProp.write( myVal );
+ *      }
+ *      // if the type is known this test can be omitted:
+ *      PropertyF fProp = new PropertyF();
+ *      locator.bindComponent( fProp, "MyFloatProperty" );
+ *      fProp.write( 3.14 );
+ *
+ *      // When it's an enumerated property this is legal as well:
+ *      PropertyI eProp = new PropertyI();
+ *      locator.bindComponent( eProp, "MyBooleanProperty" );
+ *      eProp.write( TBoolean.bTrue );
+ *    }
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  devMgr = acquire.DeviceManager()
+ *  pDev = devMgr.getDeviceByProduct("MyDev*")
+ *  if pDev:
+ *    # get access to the base setting
+ *    locator = acquire.DeviceComponentLocator(pDev, dltSetting, "Base")
+ *    prop = None
+ *    locator.bindComponent(prop, "MyProp")
+ *    # set the value by string
+ *    prop.writeS("MyVal")
+ *    if prop.type == ctPropInt:
+ *      iProp = PropertyI(prop.hObj())
+ *      myVal = 666
+ *      iProp.write(myVal)
+ *
+ *    # if the type is known this test can be omitted:
+ *    fProp = None
+ *    locator.bindComponent(fProp, "MyFloatProperty")
+ *    fProp.write(3.14)
+ *
+ *    # When it's an enumerated property this is legal as well:
+ *    eProp = acquire.EnumPropertyI()
+ *    locator.bindComponent(eProp, "MyEnumeratedProperty")
+ *    # e.g. writing the devices interfaceLayout property using the TDeviceInterfaceLayout enum value
+ *    eProp.write(acquire.dilGenICam)
+ * \endcode
+ * \endif
  *
  */
 class DeviceComponentLocator : public ComponentLocatorBase
@@ -6857,7 +7909,7 @@ class ImageBufferDesc
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -6885,13 +7937,20 @@ public:
     /**
      *  This constructor does \b NOT allocate memory for the actual pixel data but only for the
      *  a structure describing an image.
+     *
+     *  When passing invalid values to this constructor (e.g. a negative value for \c channelCount) an
+     *  exception will be thrown.
      */
     explicit ImageBufferDesc(
         /// [in] The number of channel specific data elements to allocate
         /// memory for.
         int channelCount ) : m_pRefData( new ImageBufferDesc::ReferenceCountedData() )
     {
-        DMR_AllocImageRequestBufferDesc( &( m_pRefData->m_pBuffer ), channelCount );
+        const TDMR_ERROR result = DMR_AllocImageRequestBufferDesc( &( m_pRefData->m_pBuffer ), channelCount );
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
+        }
     }
     /// \brief Constructs a new \b mvIMPACT::acquire::ImageBufferDesc object and allocates all memory needed.
     /**
@@ -6901,6 +7960,9 @@ public:
      *  The size(in bytes) of allocated pixel memory will depend on the \a pixelFormat as well as on the
      *  parameters \a width and \a height. \b mvIMPACT::acquire::ImageBuffer::iSize will return the
      *  amount of memory allocated for the buffer.
+     *
+     *  When passing invalid values to this constructor (e.g. a negative value for \c height) an
+     *  exception will be thrown.
      */
     explicit ImageBufferDesc(
         /// [in] The desired pixel format for the new \b mvIMPACT::acquire::ImageBuffer
@@ -6913,7 +7975,11 @@ public:
         /// by this descriptor.
         int height ) : m_pRefData( new ImageBufferDesc::ReferenceCountedData( true ) )
     {
-        DMR_AllocImageBuffer( &( m_pRefData->m_pBuffer ), pixelFormat, width, height );
+        const TDMR_ERROR result = DMR_AllocImageBuffer( &( m_pRefData->m_pBuffer ), pixelFormat, width, height );
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
+        }
     }
     /// \brief Constructs a new \b mvIMPACT::acquire::ImageBufferDesc object from a file and allocates all memory needed.
     /**
@@ -6923,8 +7989,8 @@ public:
      *
      *  \note
      *  Internally The FreeImage library (see 'legal notice' section) is used for this operation. If the library
-     *  cannot be located in version 3.16.0 on the host system calling this constructor will fail and the internal
-     *  buffer will therefore not contain valid data.
+     *  cannot be located in version 3.16.0 on the host system calling this constructor will fail and an
+     *  exception will be thrown.
      *
      * \since 2.23.0
      */
@@ -6934,15 +8000,18 @@ public:
         /// [in] The format of the file to load.
         TImageFileFormat fileFormat = iffAuto ) : m_pRefData( new ImageBufferDesc::ReferenceCountedData( true ) )
     {
-        DMR_LoadImageBuffer( &( m_pRefData->m_pBuffer ), fileName.c_str(), fileFormat );
+        const TDMR_ERROR result = DMR_LoadImageBuffer( &( m_pRefData->m_pBuffer ), fileName.c_str(), fileFormat );
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
+        }
     }
     /// \brief De-allocates all managed memory again when this is the last object referencing the image.
     ~ImageBufferDesc()
     {
         dealloc();
     }
-#ifndef WRAP_PYTHON
-    /// \brief Allows assignments of two different \b mvIMPACT::acquire::ImageBufferDesc
+    /// \brief Allows assignments of two different \b mvIMPACT::acquire::ImageBufferDesc.
     /**
      *  The image buffer associated with this descriptor will not be copied! The internal
      *  data will be reference counted and changing this new object will also affect the
@@ -6959,7 +8028,6 @@ public:
         }
         return *this;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Returns a deep copy of the \b mvIMPACT::acquire::ImageBuffer object referenced by this descriptor.
     /**
      *  This function will create a deep copy of the \b mvIMPACT::acquire::ImageBuffer object referenced by this
@@ -6973,13 +8041,40 @@ public:
         DMR_CopyImageBuffer( m_pRefData->m_pBuffer, &pDst, 0 );
         return ImageBufferDesc( true, pDst );
     }
+#ifdef PYTHON_OR_JAVA_ONLY // This function is only needed e.g. to copy into managed Java memory
+    /// \brief Returns a deep copy of the data buffer of the underlying \b mvIMPACT::acquire::ImageBuffer object referenced by this descriptor.
+    /**
+     *  This function will create a deep copy of the data buffer of the \b mvIMPACT::acquire::ImageBuffer object referenced by this
+     *  descriptor. Afterwards modifying one of the buffers will \b NOT influence the other one.
+     *
+     * \since 2.36.0
+     *  \return The buffer size needed for \c pDst if \c dstSize was too small or the size used if the operation was successful.
+     */
+    int copy(
+        /// A pointer to the buffer to copy the data into. Can be 0 if just the size needed shall be queried.
+        char* pDst,
+        /// The size of the buffer pointed to by \c pDst. Is 'don't care' if just the size needed shall be queried.
+        const int dstSize ) const
+    {
+        const int sizeNeeded = getBuffer()->iSize;
+        if( dstSize < sizeNeeded )
+        {
+            return sizeNeeded;
+        }
+        if( pDst )
+        {
+            memcpy( pDst, static_cast<char*>( getBuffer()->vpData ), sizeNeeded );
+        }
+        return sizeNeeded;
+    }
+#endif // #ifdef PYTHON_OR_JAVA_ONLY
     /// \brief Grants access to the underlying \b mvIMPACT::acquire::ImageBuffer structure managed by this object.
     /**
      *  \return A pointer to the \b mvIMPACT::acquire::ImageBuffer object referenced by this descriptor.
      */
     ImageBuffer* getBuffer( void ) const
     {
-        return m_pRefData->m_pBuffer;
+        return m_pRefData ? m_pRefData->m_pBuffer : 0;
     }
     /// \brief Stores the complete data of one <b>ImageBuffer</b> structure into a file.
     /**
@@ -6996,12 +8091,12 @@ public:
      *  - <b>mvIMPACT::acquire::DMR_LIBRARY_NOT_FOUND</b> if the required version of the FreeImage library could not be located on the host system.
      *  - <b>mvIMPACT::acquire::DEV_UNSUPPORTED_PARAMETER</b> if a pixel format has been passed to the function that is not supported by the internal algorithms.
      *  - <b>mvIMPACT::acquire::DEV_INPUT_PARAM_INVALID</b> if a pixel format has been passed to the function that is not supported by the FreeImage library.
-     *  - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+     *  - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR otherwise.
      */
     int save(
         /// [in] The full path of the file to create.
         const std::string& fileName,
-        /// [in] The format of the file to be created. If this parameter is set to <b>::iffAuto</b> make sure to specify a proper file extension.
+        /// [in] The format of the file to be created. If this parameter is set to <b>mvIMPACT::acquire::iffAuto</b> make sure to specify a proper file extension.
         TImageFileFormat format = iffAuto ) const
     {
         return DMR_SaveImageBuffer( m_pRefData->m_pBuffer, fileName.c_str(), format );
@@ -7047,8 +8142,8 @@ public:
      */
     const ComponentCollection& restoreDefault( void ) const
     {
-        TPROPHANDLING_ERROR result;
-        if( ( result = OBJ_RestoreDefault( m_hRoot ) ) != PROPHANDLING_NO_ERROR )
+        const TPROPHANDLING_ERROR result = OBJ_RestoreDefault( m_hRoot );
+        if( result != PROPHANDLING_NO_ERROR )
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, m_hRoot );
         }
@@ -7065,7 +8160,7 @@ public:
  *  \b mvIMPACT::acquire::Request::getBufferPart.
  *
  * \sa
- * \ref ImageAcquisition_section_MultiPart
+ * \ref ImageAcquisition_MultiPart
  * \since 2.20.0
  */
 class BufferPart : public ComponentCollection
@@ -7114,7 +8209,7 @@ public:
      *  This function returns a const reference to the \b mvIMPACT::acquire::ImageBufferDesc associated
      *  with this \b mvIMPACT::acquire::BufferPart.
      *
-     *  \warning
+     *  \attention
      *  Please do \b NEVER work with old references to this structure. So do \b NOT store this reference in
      *  some variable to use it for the evaluation of the next \b mvIMPACT::acquire::BufferPart object as well,
      *  as this will not work. Whenever \b mvIMPACT::acquire::BufferPart::getImageBufferDesc is called the function
@@ -7125,13 +8220,13 @@ public:
      */
     const ImageBufferDesc& getImageBufferDesc( void ) const
     {
-        m_imageBufferDesc = ImageBufferDesc( static_cast<int>( channelCount.read() ) );
-        ImageBuffer* p = m_imageBufferDesc.getBuffer();
+        ImageBufferDesc tmp( static_cast<int>( channelCount.read() ) );
+        ImageBuffer* p = tmp.getBuffer();
         p->iBytesPerPixel = static_cast<int>( bytesPerPixel.read() );
         p->iHeight = static_cast<int>( height.read() );
         p->iSize = static_cast<int>( dataSize.read() );
         p->iWidth = static_cast<int>( width.read() );
-        p->pixelFormat = pixelFormat.read();
+        p->pixelFormat = static_cast<TImageBufferPixelFormat>( pixelFormat.read() );
         p->vpData = address.read();
         std::vector<int64_type> channelOffsets;
         channelOffset.read( channelOffsets );
@@ -7146,12 +8241,14 @@ public:
             p->pChannels[i].iChannelOffset = static_cast<int>( channelOffsets[i] );
             p->pChannels[i].iLinePitch = static_cast<int>( linePitches[i] );
             p->pChannels[i].iPixelPitch = static_cast<int>( pixelPitches[i] );
-            mv_strncpy_s( p->pChannels[i].szChannelDesc, channelDescriptors[i].c_str(), DEFAULT_STRING_SIZE_LIMIT );
+            mv_strncpy_s( p->pChannels[i].szChannelDesc, channelDescriptors[i].c_str(), DEFAULT_STRING_SIZE_LIMIT - 1 );
+            p->pChannels[i].szChannelDesc[DEFAULT_STRING_SIZE_LIMIT - 1] = '\0';
         }
+        m_imageBufferDesc = tmp;
         return m_imageBufferDesc;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A pointer property \b (read-only) containing the start address of this buffer part.
     /**
@@ -7237,14 +8334,13 @@ public:
      *  vector.
      */
     PropertyI64 channelBitDepth;
-    ///  \brief A 64-bit integer property \b (read-only) containing the offset (in bytes) to each channel belonging to the current buffer part relative to the address
-    /**  contained in \b mvIMPACT::acquire::BufferPart::address.
-    *
-    *  \note
-    *  This property will store \a channelCount values. These can be queried one by one using the \a index parameter of the function
-    *  \b mvIMPACT::acquire::PropertyI64::read() or in a single call by using the overloaded \a read function accepting a reference to a
-    *  vector.
-    */
+    /// \brief A 64-bit integer property \b (read-only) containing the offset (in bytes) to each channel belonging to the current buffer part relative to the address contained in \b mvIMPACT::acquire::BufferPart::address.
+    /**
+     * \note
+     * This property will store \a channelCount values. These can be queried one by one using the \a index parameter of the function
+     * \b mvIMPACT::acquire::PropertyI64::read() or in a single call by using the overloaded \a read function accepting a reference to a
+     * vector.
+     */
     PropertyI64 channelOffset;
     /// \brief Identifier allowing to group data parts belonging to the same source (usually corresponding with the SourceSelector/ChunkSourceID features from SFNC).
     /**
@@ -7256,7 +8352,7 @@ public:
      */
     PropertyI64 sourceID;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -7294,27 +8390,29 @@ protected:
     struct ReferenceCountedData
     //-----------------------------------------------------------------------------
     {
-        int                       m_requestNr;
-        mutable ImageBufferDesc   m_imageBufferDesc;
-        Device*                   m_pDev;
-        DeviceComponentLocator    m_locator;
-        ComponentIterator         m_bufferPartIterator;
-        ComponentIterator         m_infoIterator;
-        ComponentIterator         m_info_imageProcessingResultsIterator;
+        std::string                 m_requestName;
+        int                         m_requestNr;
+        mutable ImageBufferDesc     m_imageBufferDesc;
+        Device*                     m_pDev;
+        DeviceComponentLocator      m_locator;
+        Component                   m_bufferPartIterator;
+        Component                   m_infoIterator;
+        Component                   m_info_imageProcessingResultsIterator;
         mutable BufferPartContainer m_bufferParts;
-        std::vector<PropertyI64*> m_chunkCounterValues;
-        std::vector<PropertyF*>   m_chunkTimerValues;
-        std::vector<PropertyF*>   m_chunkGains;
+        std::vector<PropertyI64*>   m_chunkCounterValues;
+        std::vector<PropertyF*>     m_chunkTimerValues;
+        std::vector<PropertyF*>     m_chunkGains;
         std::map<std::string, unsigned int> m_chunkGainString2IndexMap;
-        unsigned int              m_refCnt;
-        explicit ReferenceCountedData( Device* pDev, int requestNr ) : m_requestNr( requestNr ), m_imageBufferDesc( 1 ), m_pDev( pDev ),
+        unsigned int                m_refCnt;
+        explicit ReferenceCountedData( Device* pDev, int requestNr ) : m_requestName(), m_requestNr( requestNr ), m_imageBufferDesc( 1 ), m_pDev( pDev ),
             m_locator(), m_bufferPartIterator(), m_infoIterator(), m_info_imageProcessingResultsIterator(), m_bufferParts(), m_chunkCounterValues(), m_chunkTimerValues(), m_chunkGains(), m_chunkGainString2IndexMap(), m_refCnt( 1 )
         {
             if( m_requestNr >= 0 )
             {
                 std::ostringstream oss;
                 oss << "Entry " << m_requestNr;
-                m_locator = DeviceComponentLocator( m_pDev, dltRequest, oss.str() );
+                m_requestName = oss.str();
+                m_locator = DeviceComponentLocator( m_pDev, dltRequest, m_requestName );
             }
             else
             {
@@ -7324,7 +8422,7 @@ protected:
             if( hList != INVALID_ID )
             {
                 // this driver offers multi-part buffer support
-                m_bufferPartIterator = ComponentIterator( hList );
+                m_bufferPartIterator = Component( hList );
             }
         }
         ~ReferenceCountedData()
@@ -7353,7 +8451,7 @@ protected:
         // make sure there are NO assignments or copy constructions by accident!
         ReferenceCountedData( const ReferenceCountedData& src );
         ReferenceCountedData& operator=( const ReferenceCountedData& rhs );
-        void collectChunkFeatures( ComponentIterator it )
+        void collectChunkFeatures( Component it )
         {
             while( it.isValid() )
             {
@@ -7397,7 +8495,7 @@ protected:
                 ++it;
             }
         }
-        void collectSelectedChunkFeatures( ComponentIterator it )
+        void collectSelectedChunkFeatures( Component it )
         {
             if( m_chunkCounterValues.empty() && m_chunkTimerValues.empty() && m_chunkGains.empty() )
             {
@@ -7415,7 +8513,7 @@ private:
         locator.bindComponent( requestResult, "Result" );
         locator.bindComponent( requestState, "State" );
         locator.bindSearchBase( locator.searchbase_id(), "Info" );
-        m_pRefData->m_infoIterator = ComponentIterator( locator.searchbase_id() );
+        m_pRefData->m_infoIterator = Component( locator.searchbase_id() );
         m_pRefData->m_infoIterator = m_pRefData->m_infoIterator.firstChild();
         locator.bindComponent( infoFrameID, "FrameID" );
         locator.bindComponent( infoFrameNr, "FrameNr" );
@@ -7448,12 +8546,12 @@ private:
             chunkFeatureLocator.bindComponent( chunkLineStatusAll, "ChunkLineStatusAll" );
             chunkFeatureLocator.bindComponent( chunkSequencerSetActive, "ChunkSequencerSetActive" );
             chunkFeatureLocator.bindComponent( chunkmvCustomIdentifier, "ChunkmvCustomIdentifier" );
-            m_pRefData->collectSelectedChunkFeatures( ComponentIterator( hList ).firstChild() );
+            m_pRefData->collectSelectedChunkFeatures( Component( hList ).firstChild() );
         }
         hList = locator.findComponent( "ImageProcessingResults" );
         if( hList != INVALID_ID )
         {
-            m_pRefData->m_info_imageProcessingResultsIterator = ComponentIterator( hList ).firstChild();
+            m_pRefData->m_info_imageProcessingResultsIterator = Component( hList ).firstChild();
         }
         locator.bindSearchBase( locator.hObj(), "Image" );
         locator.bindComponent( imageMemoryMode, "MemoryMode" );
@@ -7481,7 +8579,7 @@ private:
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -7496,7 +8594,7 @@ private:
         if( m_pRefData->m_bufferPartIterator.isValid() )
         {
             unsigned int bufferPartCount = 0;
-            ComponentIterator it( m_pRefData->m_bufferPartIterator.firstChild() );
+            Component it( m_pRefData->m_bufferPartIterator.firstChild() );
             while( it.isValid() )
             {
                 if( bufferPartCount >= m_pRefData->m_bufferParts.size() )
@@ -7552,8 +8650,8 @@ protected:
         bindPublicProperties();
     }
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::Request from and existing one.
-    explicit Request(
+    /// \brief Constructs a new \b mvIMPACT::acquire::Request from an existing one.
+    Request(
         /// [in] A constant reference to the \b mvIMPACT::acquire::Request object, this object shall be created from
         const Request& src ) : m_pRefData( src.m_pRefData ),
         requestResult( src.requestResult ), requestState( src.requestState ),
@@ -7580,8 +8678,7 @@ public:
     {
         dealloc();
     }
-#ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::Request objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::Request objects.
     Request& operator=( const Request& rhs )
     {
         if( this != &rhs )
@@ -7594,7 +8691,6 @@ public:
         }
         return *this;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Returns a component locator for this request.
     /**
      * This will allow to write custom feature bind operations.
@@ -7610,7 +8706,7 @@ public:
     /**
      * Certain device drivers are able to deliver multiple buffer part within a single request object.
      * \sa
-     * \ref ImageAcquisition_section_MultiPart
+     * \ref ImageAcquisition_MultiPart
      * \since 2.20.0
      * \return The number of buffer parts currently associated with this request. This might be zero in case the device
      * driver delivers a \c standard data stream. It might also be 1 for special data formats such as JPEG, which must be handled
@@ -7626,7 +8722,7 @@ public:
      *  This function returns a reference to a \b mvIMPACT::acquire::BufferPart at index \c index associated
      *  with this \b mvIMPACT::acquire::Request.
      *
-     *  \warning
+     *  \attention
      *  Please do \b NEVER work with old references to this class. So do \b NOT store this reference in
      *  some variable to use it for the evaluation of the next \b mvIMPACT::acquire::Request object as well,
      *  as this might not work because the buffer layout might have changed. Whenever \b mvIMPACT::acquire::Request::getBufferPart
@@ -7637,7 +8733,7 @@ public:
      *
      * \sa
      * \b mvIMPACT::acquire::Request::getBufferPartCount \n
-     * \ref ImageAcquisition_section_MultiPart
+     * \ref ImageAcquisition_MultiPart
      *
      * \since 2.20.0
      * \return A reference to the buffer part defined by \c index
@@ -7649,6 +8745,14 @@ public:
         updateBufferParts();
         return *( m_pRefData->m_bufferParts.at( index ) );
     }
+    /// \brief Returns the name associated with this request.
+    /**
+     * \since 2.32.0
+     */
+    const std::string& getName( void ) const
+    {
+        return m_pRefData->m_requestName;
+    }
     /// \brief Returns the number associated with this request.
     int getNumber( void ) const
     {
@@ -7659,7 +8763,7 @@ public:
      *  This function returns a const reference to the \b mvIMPACT::acquire::ImageBufferDesc associated
      *  with this \b mvIMPACT::acquire::Request.
      *
-     *  \warning
+     *  \attention
      *  Please do \b NEVER work with old references to this structure. So do \b NOT store this reference in
      *  some variable to use it for the evaluation of the next \b mvIMPACT::acquire::Request object as well,
      *  as this will not work. Whenever \b mvIMPACT::acquire::Request::getImageBufferDesc is called the function
@@ -7672,7 +8776,7 @@ public:
         const TDMR_ERROR result = DMR_GetImageRequestBuffer( m_pRefData->m_pDev->hDrv(), m_pRefData->m_requestNr, &( m_pRefData->m_imageBufferDesc.m_pRefData->m_pBuffer ) );
         if( result != DMR_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
         return m_pRefData->m_imageBufferDesc;
     }
@@ -7703,7 +8807,7 @@ public:
         const TDMR_ERROR result = DMR_GetImpactRequestBufferEx( m_pRefData->m_pDev->hDrv(), m_pRefData->m_requestNr, &hBuf, TImpactBufferFlag( 0 ), 0 );
         if( result != DMR_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
         return mvIMPACT::Image::imageFactory( hBuf );
     }
@@ -7733,14 +8837,13 @@ public:
         return mvIMPACT::Image::imageFactory( hBuf );
     }
 #endif // #if defined(MVIMPACT_H_) || defined(DOXYGEN_CPP_DOCUMENTATION)
-    /// \brief Returns an iterator to for iterating inside the info list of the request.
+    /// \brief Returns an iterator for iterating inside the info list of the request.
     /**
      *  This can be useful when custom or device specific information has been attached to the request
      *  object that wasn't known at compile time.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
-     *  It makes it possible to write code like this:
-     *
+     * It allows to write code like this:
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
      *  // 'nr' is assumed to be a valid request number returned from a previous call to
@@ -7748,30 +8851,66 @@ public:
      *  const Request* pRequest = fi.getRequest( nr );
      *  if( pRequest )
      *  {
-     *    ComponentIterator it(pRequest->getInfoIterator());
+     *    Component it(pRequest->getInfoIterator());
      *    std::map<std::string, std::string> m;
      *    while( it.isValid() )
      *    {
      *      // collect all entries that are properties and store their current name and value in a map
      *      if( it.isProp() && it.isVisible() )
      *      {
-     *        Property prop(it);
-     *        m.insert( std::make_pair( prop.name(), prop.readS() );
+     *        Property prop( it );
+     *        m.insert( std::make_pair( prop.name(), prop.readS() ) );
      *      }
      *      ++it;
      *    }
      *    // Here you can work with the information you just obtained
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  import java.util.Hashtable;
+     *
+     *  // ...
+     *
+     *  Component it = pRequest.getInfoIterator();
+     *  Hashtable<String, String> m = new Hashtable<String, String>();
+     *  while( it.isValid() )
+     *  {
+     *    // collect all entries that are properties and store their current name and value in a hash table
+     *    if( it.isProp() && it.isVisible() )
+     *    {
+     *      Property prop = new Property( it.hObj() );
+     *      m.put( prop.name(), prop.readS() );
+     *    }
+     *    it = it.nextSibling();
+     *  }
+     *  // Here you can work with the information you just obtained
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  # 'fi' is assumed to be a valid instance of acquire.FunctionInterface,
+     *  # 'nr' is assumed to be a valid request number returned from a previous call to
+     *  # acquire.FunctionInterface.imageRequestWaitFor()
+     *  pRequest = fi.getRequest(requestNr)
+     *  if pRequest:
+     *      it = pRequest.getInfoIterator()
+     *      props = {None:None}
+     *      while it.isValid:
+     *          if it.isProp and it.isVisible:
+     *              prop = acquire.Property(it.hObj())
+     *              props[prop.name()] = prop.readS()
+     *          it = it.nextSibling()
+     *      # Here you can work with the information you just obtained
+     * \endcode
+     * \endif
      * \return
-     * An iterator to for iterating inside the info list of the request.
+     * An iterator for iterating inside the info list of the request.
      */
-    ComponentIterator getInfoIterator( void ) const
+    Component getInfoIterator( void ) const
     {
         return m_pRefData->m_infoIterator;
     }
-    /// \brief Returns an iterator to for iterating inside the info/imageProcessingResults list of the request.
+    /// \brief Returns an iterator for iterating inside the info/imageProcessingResults list of the request.
     /**
      *  This can be useful when custom or device specific algorithms have been applied to the request
      *  object that weren't known at compile time.
@@ -7783,9 +8922,9 @@ public:
      * \since 2.14.0
      *
      * \return
-     * An iterator to for iterating inside the info/imageProcessingResults list of the request.
+     * An iterator for iterating inside the info/imageProcessingResults list of the request.
      */
-    ComponentIterator getImageProcessingResultsIterator( void ) const
+    Component getImageProcessingResultsIterator( void ) const
     {
         return m_pRefData->m_info_imageProcessingResultsIterator;
     }
@@ -7811,7 +8950,7 @@ public:
             return false;
         }
 
-        ComponentIterator it( m_pRefData->m_info_imageProcessingResultsIterator );
+        Component it( m_pRefData->m_info_imageProcessingResultsIterator );
         while( it.isValid() )
         {
             if( PropertyIImageProcessingResult( it.hObj() ).read() == iprSkipped )
@@ -7831,7 +8970,7 @@ public:
      *  by this function but then the data in these counters of course will be meaningless.
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.0.15
      *  \return
@@ -7841,7 +8980,6 @@ public:
     {
         return static_cast<unsigned int>( m_pRefData->m_chunkCounterValues.size() );
     }
-#ifndef WRAP_PYTHON // this is currently not available under Python as it would require some work on the SWIG typemaps which will only be done if someone desperately asks for it
     /// \brief Returns a 64 bit integer property \b (read-only) defining the selected counter value at the time of the internal frame start event for this request.
     /**
      *  \if DOXYGEN_CPP_DOCUMENTATION
@@ -7850,7 +8988,7 @@ public:
      *  \endif
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.0.15
      */
@@ -7860,7 +8998,6 @@ public:
     {
         return PropertyI64( m_pRefData->m_chunkCounterValues.at( index )->hObj() );
     }
-#endif // #ifndef WRAP_PYTHON
     /// \brief Returns the number of timer values that can be returned as part of the additional data of the buffer containing the request data.
     /**
      *  A device may support a large number of timers even though just a few of them or none is configured
@@ -7869,7 +9006,7 @@ public:
      *  by this function but then the data in these timers of course will be meaningless.
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.0.15
      */
@@ -7885,7 +9022,7 @@ public:
      *  \endif
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.0.15
      */
@@ -7903,7 +9040,7 @@ public:
      *  by this function but then the data in these gains of course will be meaningless.
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.17.3
      */
@@ -7919,7 +9056,7 @@ public:
      *  \endif
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.17.3
      */
@@ -7937,7 +9074,7 @@ public:
      *  \endif
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.17.3
      */
@@ -7954,11 +9091,10 @@ public:
     }
     /// \brief Convenience function to check if a request has been processed successfully.
     /**
-     *  This is just a nicer way of checking the value of the \a requestResult property:
+     * This is just a nicer way of checking the value of the \a requestResult property.
+     * It allows to write code like this:
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
-     *  It makes it possible it possible to write code like this:
-     *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
      *  // 'nr' is assumed to be a valid request number returned from a previous call to
@@ -7969,9 +9105,31 @@ public:
      *    // do something
      *  }
      * \endcode
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
+     *  // 'nr' is assumed to be a valid request number returned from a previous call to
+     *  // mvIMPACT.acquire.FunctionInterface.imageRequestWaitFor()
+     *  Request pRequest = fi.getRequest( nr );
+     *  if( pRequest.isOK() )
+     *  {
+     *    // do something
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  # 'fi' is assumed to be a valid instance of acquire.FunctionInterface,
+     *  # 'nr' is assumed to be a valid request number returned from a previous call to
+     *  # acquire.FunctionInterface.imageRequestWaitFor()
+     *  pRequest = fi.getRequest(nr)
+     *  if pRequest.isOK:
+     *    # do something
+     * \endcode
+     * \endif
      *
-     *  Instead if this:
+     * Instead if this:
      *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
      *  // 'nr' is assumed to be a valid request number returned from a previous call to
@@ -7982,7 +9140,27 @@ public:
      *    // do something
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
+     *  // 'nr' is assumed to be a valid request number returned from a previous call to
+     *  // mvIMPACT.acquire.FunctionInterface.imageRequestWaitFor()
+     *  Request pRequest = fi.getRequest( nr );
+     *  if( pRequest.getRequestResult().read() == TRequestResult.rrOK )
+     *  {
+     *    // do something
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  # 'fi' is assumed to be a valid instance of acquire.FunctionInterface,
+     *  # 'nr' is assumed to be a valid request number returned from a previous call to
+     *  # acquire.FunctionInterface.imageRequestWaitFor()
+     *  pRequest = fi.getRequest(nr)
+     *  if(pRequest.requestResult.read() == acquire.rrOK):
+     *    # do something
+     * \endcode
+     * \endif
      *
      *  \since 1.12.63
      *
@@ -8020,7 +9198,7 @@ public:
      *  When allocating memory on the heap, the complete buffer size is needed which is calculated like
      *  this:
      *
-     *  \b size + alignment
+     *  <b>size + alignment</b>
      *
      *  \note
      *  The address passed to the request object must be aligned already!
@@ -8092,7 +9270,7 @@ public:
      *  - <b>mvIMPACT::acquire::DMR_LIBRARY_NOT_FOUND</b> if the required version of the FreeImage library could not be located on the host system.
      *  - <b>mvIMPACT::acquire::DEV_UNSUPPORTED_PARAMETER</b> if a pixel format has been passed to the function that is not supported by the internal algorithms.
      *  - <b>mvIMPACT::acquire::DEV_INPUT_PARAM_INVALID</b> if a pixel format has been passed to the function that is not supported by the FreeImage library.
-     *  - A negative error code of type <b>mvIMPACT::acquire::TDMR_ERROR</b> otherwise.
+     *  - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR otherwise.
      */
     int save(
         /// [in] The full path of the file to create.
@@ -8134,7 +9312,7 @@ public:
     {
         return DMR_ImageRequestUnlock( m_pRefData->m_pDev->hDrv(), m_pRefData->m_requestNr );
     }
-    /// \brief Convenience function to attach a user supplied buffer to a \b mvIMPACT::acquire::Request object
+    /// \brief Convenience function to attach a user supplied buffer to a \b mvIMPACT::acquire::Request object.
     /**
      *  This function just provides a nicer way to attach a user supplied buffer to a \b mvIMPACT::acquire::Request.
      *
@@ -8195,23 +9373,36 @@ public:
         }
         return result;
     }
-    /// \brief Convenience function to detach a user supplied buffer from a \b mvIMPACT::acquire::Request object
+    /// \brief Convenience function to detach a user supplied buffer from a \b mvIMPACT::acquire::Request object.
     /**
      *  This function just provides a nicer way to detach a user supplied buffer from a \b mvIMPACT::acquire::Request.
-     *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
      *  It e.g. allows to write code like this:
      *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
-     *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
+     *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface
      *  const Request* pRequest = fi.getRequest( 0 ); // get access to request 0
      *  pRequest->detachUserBuffer();
      * \endcode
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  // 'fi' is assumed to be a valid instance of mvIMPACT.acquire.FunctionInterface
+     *  Request pRequest = fi.getRequest( 0 ); // get access to request 0
+     *  pRequest.detachUserBuffer();
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  # 'fi' is assumed to be a valid instance of acquire.FunctionInterface
+     *  pRequest = fi.getRequest(0) # get access to request 0
+     *  pRequest.detachUserBuffer()
+     * \endcode
+     * \endif
      *
      *  Instead if this:
      *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
-     *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface,
+     *  // 'fi' is assumed to be a valid instance of mvIMPACT::acquire::FunctionInterface
      *  const Request* pRequest = fi.getRequest( 0 ); // get access to request 0
      *  if( pRequest->configure() == DMR_NO_ERROR )
      *  {
@@ -8219,7 +9410,25 @@ public:
      *    pRequest->unlock();
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  // 'fi' is assumed to be a valid instance of mvIMPACT.acquire.FunctionInterface
+     *  Request pRequest = fi.getRequest( 0 ); // get access to request 0
+     *  if( pRequest.configure() == TDMR_ERROR.DMR_NO_ERROR )
+     *  {
+     *    pRequest.getImageMemoryMode().write( TRequestImageMemoryMode.rimmAuto );
+     *    pRequest.unlock();
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  # 'fi' is assumed to be a valid instance of acquire.FunctionInterface
+     *  pRequest = fi.getRequest(0) # get access to request 0
+     *  if pRequest.configure() == acquire.DMR_NO_ERROR:
+     *    pRequest.imageMemoryMode.write(acquire.rimmAuto)
+     *    pRequest.unlock()
+     * \endcode
+     * \endif
      *
      *  To find out more about capturing to user supplied buffers please refer to the example
      *  \ref CaptureToUserMemory.cpp and have a look at the
@@ -8249,7 +9458,7 @@ public:
         return result;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property \b (read-only) defining the result of this request.
     /**
@@ -8271,20 +9480,19 @@ public:
     PropertyIRequestState requestState;
     /// \brief A 64 bit integer property \b (read-only) containing a frame identifier.
     /**
-     *  This parameter is returned as part of the \b mv.impact.acquire.Request. It is
+     *  This parameter is returned as part of the \b mvIMPACT::acquire::Request. It is
      *  used to associate a certain image with a unique identifier.
      *
-     *  When an \b mv.impact.acquire.RTCtrProgramStep instruction of the type \b mv.impact.acquire.TRTProgOpCodes.rtctrlProgTriggerSet
-     *  is executed, the \a frameID is set to the value of the property \a FrameID of a corresponding \b mv.impact.acquire.RTCtrProgramStep if the
+     *  When an \b mvIMPACT::acquire::RTCtrProgramStep instruction of the type \b mvIMPACT::acquire::rtctrlProgTriggerSet
+     *  is executed, the \a frameID is set to the value of the property \a FrameID of a corresponding \b mvIMPACT::acquire::RTCtrProgramStep if the
      *  HRTC is used and any program step executes the setting of the ID.
      *
      *  If a device (e.g. a digital camera) supports the transmission of a unique identifier for an image, this property will reflect
      *  the identifier as transmitted by the device.
      *
-     *  \note \b mvBlueFOX, \b mvBlueCOUGAR-P, \b mvBlueLYNX-M7 and \b mvHYPERION specific:
+     *  \note \b mvBlueFOX and \b mvHYPERION specific:
      *  This property will only contain meaningful data if the device supports at least one \b HRTC and a program is running and writing data to
-     *  the property OR if a device supports the transmission of a unique identifier for an image. Currently HRTC programs are supported by \b mvBlueFOX, \b mvBlueCOUGAR-P, \b mvBlueLYNX-M7
-     *  and \b mvHYPERION devices.
+     *  the property OR if a device supports the transmission of a unique identifier for an image. Currently HRTC programs are supported by \b mvBlueFOX and \b mvHYPERION devices.
      *
      *  \note \b GigE \b Vision and \b USB3 \b Vision specific:
      *  This is the property where the so called block ID will be stored which is a unique identifier for each frame that will be transferred by the device as part of each frame as defined by the standard.
@@ -8298,11 +9506,16 @@ public:
      *  by the device, thus values like this will be transmitted in a round robin scheme:
      *  0, 1, 2, ..., ((2^64)-1), 0, 1, ...
      *
-     *  Please note that due to the nature of \b mv.impact.acquire.TAcquisitionMode.amContinuous there might be gaps between the
+     *  Please note that due to the nature of \b mvIMPACT::acquire::amContinuous there might be gaps between the
      *  last image of a continuous stream and the first image of the next continuous stream if the device is stopped or re-programmed in between.
      */
     PropertyI64 infoFrameID;
-    /// \brief A 64 bit integer property \b (read-only) containing the number of images captured since the driver has been initialized including the current image.
+    /// \brief A 64 bit integer property \b (read-only, zero-based) containing the number of image requests processed since this driver instance has been opened.
+    /**
+     *  This counter is incremented regardless of the result this request is returned with thus also e.g. if a request did time out, was aborted(e.g. due to a call to \b mvIMPACT::acquire::FunctionInterface::imageRequestReset or \b mvIMPACT::acquire::FunctionInterface::acquisitionStop) or the data was not completely captured.
+     *  So if a \b mvIMPACT::acquire::Request object contains the value \a 6 here, 6 requests have been processed before this one(the first request would contain the value \a 0)
+     *  This value is reset to 0 only if the current driver instance is closed.
+     */
     PropertyI64 infoFrameNr;
     /// \brief An integer property \b (read-only) containing a timestamp (in us) defining the time the device started the exposure of the image associated with this \b mvIMPACT::acquire::Request object.
     /**
@@ -8330,9 +9543,10 @@ public:
     PropertyF infoGain_dB;
     /// \brief A 64 bit integer property \b (read-only) containing a timestamp to define the exact time this image has been captured
     /// (usually either at exposure start or exposure end, depending on the device).
-    ///
-    /// \b mvBlueFOX specific:
-    /// The counter of the timestamp starts when the camera gets initialized. It is measured in us.
+    /**
+     * \b mvBlueFOX specific:
+     * The counter of the timestamp starts when the camera gets initialized. It is measured in us.
+     */
     PropertyI64 infoTimeStamp_us;
     /// \brief A enumerated integer property \b (read-only) containing the setting that was used for processing this request.
     /**
@@ -8375,35 +9589,6 @@ public:
     PropertyF infoMissingData_pc;
     /// \brief An integer property \b (read-only) containing the state of all the IO lines at the beginning of the frame exposure as a device specific bit field.
     /**
-     *  The following table documents which bit in this property represents the state of which digital I/O for \b mvBlueLYNX-M7 devices:
-     *
-     *  <table>
-     *  <tr><td class="header">bit</td><td class="header">IO</td></tr>
-     *  <tr><td class="indexvalue">0</td><td class="indexvalue">out 0</td></tr>
-     *  <tr><td class="indexvalue">1</td><td class="indexvalue">out 1</td></tr>
-     *  <tr><td class="indexvalue">2</td><td class="indexvalue">in 0</td></tr>
-     *  <tr><td class="indexvalue">3</td><td class="indexvalue">in 1</td></tr>
-     *  <tr><td class="indexvalue">4</td><td class="indexvalue">out 2</td></tr>
-     *  <tr><td class="indexvalue">5</td><td class="indexvalue">out 3</td></tr>
-     *  <tr><td class="indexvalue">6</td><td class="indexvalue">in 2</td></tr>
-     *  <tr><td class="indexvalue">7</td><td class="indexvalue">in 3</td></tr>
-     *  <tr><td class="indexvalue">8</td><td class="indexvalue">in 4</td></tr>
-     *  <tr><td class="indexvalue">9</td><td class="indexvalue">out 4</td></tr>
-     *  <tr><td class="indexvalue">10</td><td class="indexvalue">out 5</td></tr>
-     *  </table>
-     *
-     *  The following table documents which bit in this property represents the state of which digital I/O for \b mvBlueCOUGAR-P devices:
-     *
-     *  <table>
-     *  <tr><td class="header">bit</td><td class="header">IO</td></tr>
-     *  <tr><td class="indexvalue">0</td><td class="indexvalue">out 0</td></tr>
-     *  <tr><td class="indexvalue">1</td><td class="indexvalue">out 1</td></tr>
-     *  <tr><td class="indexvalue">2</td><td class="indexvalue">in 0</td></tr>
-     *  <tr><td class="indexvalue">3</td><td class="indexvalue">in 1</td></tr>
-     *  <tr><td class="indexvalue">4</td><td class="indexvalue">out 2</td></tr>
-     *  <tr><td class="indexvalue">5</td><td class="indexvalue">out 3</td></tr>
-     *  </table>
-     *
      *  The following table documents which bit in this property represents the state of which digital I/O for \b mvBlueFOX devices:
      *
      *  <table>
@@ -8418,9 +9603,9 @@ public:
      *  <tr><td class="indexvalue">7</td><td class="indexvalue">out 3(if available)</td></tr>
      *  </table>
      *
-     *  \attention This feature is currently only available for \b mvBlueFOX-MLC devices!
+     * \attention This feature is currently only available for \b mvBlueFOX-MLC devices!
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  #include <sstream>
      *  #include <mvIMPACT/mvIMPACT_acquire.h>
@@ -8452,7 +9637,25 @@ public:
      *    }
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  //-----------------------------------------------------------------------------
+     *  public static void printIOStateOfAValidRequest( Request pRequest )
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    if( pRequest.getInfoIOStatesAtExposureStart().isValid() )
+     *    {
+     *       System.out.println( pRequest.getInfoIOStatesAtExposureStart().name() + ": " + Integer.toBinaryString( pRequest.getInfoIOStatesAtExposureStart().read() ) );
+     *    }
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  def printIOStateOfAValidRequest(pRequest):
+     *    if pRequest.infoIOStatesAtExposureStart.isValid:
+     *      print(pRequest.infoIOStatesAtExposureStart.name() + ": " + format(pRequest.infoIOStatesAtExposureStart.read(), '32b'))
+     * \endcode
+     * \endif
      *  \note This property is not supported by every device. Therefore always call the function \b mvIMPACT::acquire::Component::isValid
      *  to check if this property is available or not.
      */
@@ -8468,50 +9671,50 @@ public:
     /// \brief A 64 bit integer property \b (read-only) containing the X-offset of the image in pixels as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkOffsetX;
     /// \brief A 64 bit integer property \b (read-only) containing the Y-offset of the image in pixels as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkOffsetY;
     /// \brief A 64 bit integer property \b (read-only) containing the width of the image in pixels as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkWidth;
     /// \brief A 64 bit integer property \b (read-only) containing the height of the image in pixels as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkHeight;
     /// \brief A 64 bit integer property \b (read-only) containing the pixel format of the image as returned in the chunk data attached to the image.
     /**
      *  This will \b NOT be a valid mvIMPACT acquire pixel format but e.g. a GigE Vision, USB3 Vision of PFNC compliant pixel format or something else.
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkPixelFormat;
     /// \brief A 64 bit integer property \b (read-only) containing the minimum value of dynamic range of the image as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkDynamicRangeMin;
     /// \brief A 64 bit integer property \b (read-only) containing the maximum value of dynamic range of the image as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkDynamicRangeMax;
     /// \brief A floating point property \b (read-only) containing the exposure time used to capture the image as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      * \since 2.5.16
      */
@@ -8519,19 +9722,19 @@ public:
     /// \brief A 64 bit integer property \b (read-only) containing the timestamp value of the internal frame start signal of the image as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkTimestamp;
     /// \brief A 64 bit integer property \b (read-only) containing the status of all I/O lines at the time of the internal frame start signal of the image as returned in the chunk data attached to the image.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      */
     PropertyI64 chunkLineStatusAll;
     /// \brief A 64-bit integer property \b (read-only) containing the index of the active set of the running sequencer use during the creation of this block of data.
     /**
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.12.3
      */
@@ -8541,7 +9744,7 @@ public:
      *  This identifier can be specified by some other functions belonging to this SDK. If not specified this value will be 0.
      *
      *  \note
-     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_section_chunk.
+     *  For additional information about the chunk data format please refer to \ref ImageAcquisition_chunk.
      *
      *  \since 2.17.3
      */
@@ -8569,16 +9772,30 @@ public:
      *  This address in connection with \b mvIMPACT::acquire::Request::imageSize is sufficient
      *  to copy the complete image without having any additional information about it.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  FunctionInterface& fi = getFunctionInterfaceFromSomewhere();
      *  int currentRequestNr = getCurrentRequestNumberFromSomewhere();
-     *  const Request* pRequest = fi.getRequest( currentRequestNr )
+     *  const Request* pRequest = fi.getRequest( currentRequestNr );
      *  char* pTempBuf = new char[pRequest->imageSize.read()];
      *  memcpy( pTempBuf, pRequest->imageData.read(), pRequest->imageSize.read() );
      *  // free the memory once no longer needed...
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     *  FunctionInterface fi = getFunctionInterfaceFromSomewhere();
+     *  int currentRequestNr = getCurrentRequestNumberFromSomewhere();
+     *  Request pRequest = fi.getRequest( currentRequestNr );
+     *  byte[] data = new byte[pRequest.getImageSize().read()];
+     *  pRequest.getImageBufferDesc().copy( data );
+     * \code
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  currentRequestNr = getCurrentRequestNumberFromSomewhere()
+     *  pRequest = fi.getRequest(currentRequestNr)
+     *  cbuf = (ctypes.c_char * pRequest.imageSize.read()).from_address(int(pRequest.imageData.read()))
+     * \endcode
+     * \endif
      *
      *  \note
      *  It's not always necessary to copy the image data! Each image buffer is an
@@ -8652,14 +9869,13 @@ public:
      *  channel 3 (as calls to the read functions of properties are '0' based).
      */
     PropertyI imageChannelCount;
-    ///  \brief An integer property \b (read-only) containing the offset (in bytes) to each channel belonging to the current image relative to the address
-    /**  contained in \b mvIMPACT::acquire::Request::imageData.
-    *
-    *  \note
-    *  This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
-    *  \b mvIMPACT::acquire::PropertyI::read() or in a single call by using the overloaded \a read function accepting a reference to a
-    *  vector.
-    */
+    /// \brief An integer property \b (read-only) containing the offset (in bytes) to each channel belonging to the current image relative to the address contained in \b mvIMPACT::acquire::Request::imageData.
+    /**
+     * \note
+     * This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
+     * \b mvIMPACT::acquire::PropertyI::read() or in a single call by using the overloaded \a read function accepting a reference to a
+     * vector.
+     */
     PropertyI imageChannelOffset;
     /// \brief An integer property \b (read-only) containing the number of effective bits stored in each channel belonging to the current image.
     /**
@@ -8679,24 +9895,44 @@ public:
     PropertyI imageLinePitch;
     /// \brief A string property \b (read-only) containing the string descriptors of each channel belonging to the current image.
     /**
-     *  \note
+     * \note
      *  This property will store \a imageChannelCount values. These can be queried one by one using the \a index parameter of the function
      *  \b mvIMPACT::acquire::PropertyS::read() or in a single call by using the overloaded \a read function accepting a reference to a
      *  vector.
      *
      *  For an RGB image this property e.g. might contain three values "R", "G" and "B".
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  FunctionInterface& fi = getFunctionInterfaceFromSomewhere();
      *  int currentRequestNr = getCurrentRequestNumberFromSomewhere();
-     *  const Request* pRequest = fi.getRequest( currentRequestNr )
+     *  const Request* pRequest = fi.getRequest( currentRequestNr );
      *  int channelCount = pRequest->imageChannelCount.read();
      *  for( int i=0; i<channelCount; i++ )
      *  {
      *    cout << "channel[" << i << "]: " << pRequest->imageChannelDesc.read( i ) << endl;
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  FunctionInterface fi = getFunctionInterfaceFromSomewhere();
+     *  int currentRequestNr = getCurrentRequestNumberFromSomewhere();
+     *  Request pRequest = fi.getRequest( currentRequestNr );
+     *  int channelCount = pRequest.getImageChannelCount().read();
+     *  for( int i=0; i<channelCount; i++ )
+     *  {
+     *    System.out.println( String.format( "channel[%d]: %s", i, pRequest.getImageChannelDesc().read( i ) ) );
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  fi = getFunctionInterfaceFromSomewhere()
+     *  currentRequestNr = getCurrentRequestNumberFromSomewhere()
+     *  pRequest = fi.getRequest(currentRequestNr)
+     *  channelCount = pRequest.imageChannelCount.read()
+     *  for i in range(channelCount):
+     *    print("channel[", i, "]: ", pRequest.imageChannelDesc.read(i))
+     * \endcode
+     * \endif
      */
     PropertyS imageChannelDesc;
     /// \brief An integer property \b (read-only) containing the number of bytes per pixel in this image.
@@ -8743,7 +9979,7 @@ public:
      */
     PropertyIBayerMosaicParity imageBayerMosaicParity;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -8775,22 +10011,21 @@ public:
         locator.bindComponent( requestToUse, "RequestToUse" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief The mode this object shall be operated in.
     /**
-     *  Valid values for this property are defined by the enumeration
-     *  \b mvIMPACT::acquire::TImageRequestControlMode.
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TImageRequestControlMode.
      *
      *  This property can e.g. be used to prepare internal data structures without requesting a
      *  'real' image from the hardware. This can be useful when the image dimensions must be known
      *  before the first image is captured.
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  Device* pDev = getDevicePointerFromSomewhere();
-     *  ImageRequestControl irc(pDev);
+     *  ImageRequestControl irc( pDev );
      *  irc.mode.write( ircmTrial ); // set to prepare mode
-     *  FunctionInterface fi(pDev);
+     *  FunctionInterface fi( pDev );
      *  fi.imageRequestSingle( &irc ); // request dummy image
      *  int reqNr = fi.imageRequestWaitFor( 500 );
      *  // waitFor will return as fast as possible. No 'real' image will be taken
@@ -8798,7 +10033,33 @@ public:
      *  // and other information will be returned that is (apart from the pixel data)
      *  // similar to any 'real' image that would be captured with the current settings
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  Device pDev = getDevicePointerFromSomewhere();
+     *  ImageRequestControl irc = new ImageRequestControl( pDev );
+     *  irc.getMode().write( TImageRequestControlMode.ircmTrial ); // set to prepare mode
+     *  FunctionInterface fi = new FunctionInterface( pDev );
+     *  fi.imageRequestSingle( irc ); // request dummy image
+     *  int reqNr = fi.imageRequestWaitFor( 500 );
+     *  // waitFor will return as fast as possible. No 'real' image will be taken
+     *  // but a request object that contains a dummy image with the format, dimensions
+     *  // and other information will be returned that is (apart from the pixel data)
+     *  // similar to any 'real' image that would be captured with the current settings
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  pDev = getDeviceFromSomewhere()
+     *  irc = ImageRequestControl(pDev)
+     *  irc.mode.write(acquire.ircmTrial) # set to prepare mode
+     *  fi = FunctionInterface(pDev)
+     *  fi.imageRequestSingle(irc) # request dummy image
+     *  reqNr = fi.imageRequestWaitFor(500)
+     *  # waitFor will return as fast as possible. No 'real' image will be taken
+     *  # but a request object that contains a dummy image with the format, dimensions
+     *  # and other information will be returned that is (apart from the pixel data)
+     *  # similar to any 'real' image that would be captured with the current settings
+     * \endcode
+     * \endif
      */
     PropertyIImageRequestControlMode mode;
     /// \brief An integer property defining the number of images to capture with each request.
@@ -8827,7 +10088,7 @@ public:
      */
     PropertyI requestToUse;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -8843,9 +10104,7 @@ public:
  *  the request object that can not be accessed using the \b mvIMPACT::acquire::Request
  *  class offered by this interface.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
- *  \b EXAMPLE
- *
+ * \if DOXYGEN_CPP_DOCUMENTATION
  *  This shows how a request factory could be used to create custom request objects
  *  from within a \b mvIMPACT::acquire::FunctionInterface instance.
  *
@@ -8890,7 +10149,7 @@ public:
  *  //-----------------------------------------------------------------------------
  *  {
  *  public:
- *    virtual mvIMPACT::acquire::Request* createRequest( Device* pDev, int requestNr ) { return new MyRequest(pDev, requestNr); }
+ *    virtual mvIMPACT::acquire::Request* createRequest( Device* pDev, int requestNr ) { return new MyRequest( pDev, requestNr ); }
  *  };
  *
  * \endcode
@@ -8912,11 +10171,161 @@ public:
  *    {
  *      const MyRequest* pMyRequest(dynamic_cast<const MyRequest*>(pRequest));
  *      cout << pMyRequest->myRequestResult.name() << ": " << pMyRequest->myRequestResult.readS() << endl;
+ *      // do what you want to do with your derived request instance here!
  *    }
  *    // ... probably even more additional code
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ *  This shows how a request factory could be used to create custom request objects
+ *  from within a \b mvIMPACT::acquire::FunctionInterface instance.
+ *
+ * MyRequest.java:
+ *
+ * \code
+ * import mvIMPACT.acquire.*;
+ *
+ * //-----------------------------------------------------------------------------
+ * // Example for a derived request object. It doesn't introduce new functionality
+ * // but rebinds an existing property. Custom properties could bound in a similar
+ * // way.
+ * class MyRequest extends Request
+ * //-----------------------------------------------------------------------------
+ * {
+ *   private PropertyI myRequestResult_ = new PropertyI();
+ *
+ *   private void init()
+ *   {
+ *     DeviceComponentLocator locator = new DeviceComponentLocator( getComponentLocator().hObj() );
+ *     locator.bindComponent( myRequestResult_, "Result" );
+ *   }
+ *
+ *   protected MyRequest( Device pDev, int requestNr )
+ *   {
+ *     super( pDev, requestNr );
+ *     init();
+ *   }
+ *
+ *   // Without this constructor this whole 'RequestFactory' concept will not work
+ *   // at the moment as in 'FunctionInterface.getRequest' the internal correctly
+ *   // constructed 'MyRequest' generated via the director class and 'MyRequestFactory'
+ *   // will be used to create a new 'Request' instance from it. We now use this to
+ *   // re-create yet another 'MyRequest' instance from that which is kind of silly
+ *   // but in Python we have a very similar effect(see corresponding snippet in the Python manual).
+ *   //
+ *   // Maybe there is a better way to do this! Suggestions welcome!
+ *   public MyRequest( Request pRequest )
+ *   {
+ *     super( Request.getCPtr( pRequest ), false );
+ *     init();
+ *   }
+ *
+ *   public PropertyI getMyRequestResult()
+ *   {
+ *     return myRequestResult_;
+ *   }
+ * }
+ * \endcode
+ *
+ * MyRequestFactory.java:
+ *
+ * \code
+ * import mvIMPACT.acquire.*;
+ *
+ * //-----------------------------------------------------------------------------
+ * // Example for a factory that creates 'MyRequest' instances
+ * class MyRequestFactory extends RequestFactory
+ * //-----------------------------------------------------------------------------
+ * {
+ *   @Override
+ *   public Request createRequest( Device pDev, int requestNr )
+ *   {
+ *     return new MyRequest( pDev, requestNr );
+ *   }
+ * }
+ *
+ * \endcode
+ *
+ *  Now the request factory must be passed to the constructor of the function interface!
+ *  This might happen in some other source file or class within the application.
+ *
+ * \code
+ *  //-----------------------------------------------------------------------------
+ *  void fn( Device pDev )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    // ... some code ...
+ *    MyRequestFactory mrf = new MyRequestFactory();
+ *    FunctionInterface fi = new FunctionInterface( pDev, mrf );
+ *    // ... more additional code
+ *    // assuming we got back a request from the driver at this point:
+ *    Request pRequest = fi.getRequest( getRequestNrFromSomewhere() );
+ *    if( pRequest->isOK() )
+ *    {
+ *      System.out.println( String.format( "%s: %s", ( ( MyRequest )pRequest ).getMyRequestResult().name(), ( ( MyRequest )pRequest ).getMyRequestResult().readS() );
+ *      // do what you want to do with your derived request instance here!
+ *    }
+ *    // ... probably even more additional code
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ *  This shows how a request factory could be used to create custom request objects
+ *  from within a \b mvIMPACT::acquire::FunctionInterface instance.
+ *
+ * \code
+ * # Example for a derived request object. It doesn't introduce new functionality
+ * # but rebinds an existing property. Custom properties could bound in a similar
+ * # way.
+ * class MyRequest(acquire.Request):
+ *   def __init__(self, *args):
+ *     acquire.Request.__init__(self, *args)
+ *     self.myRequestResult = acquire.PropertyIRequestResult()
+ *     locator = acquire.DeviceComponentLocator(self.getComponentLocator().hObj())
+ *     locator.bindComponent(self.myRequestResult, "Result")
+ *
+ * class MyRequestFactory(acquire.RequestFactory):
+ *   def __init__(self):
+ *     acquire.RequestFactory.__init__(self)
+ *     self.__instances = []
+ *
+ *   def createRequest(self, pDev, requestNr):
+ *     try:
+ *       instance = MyRequest(pDev, requestNr)
+ *       # We MUST keep a reference to this request object here as otherwise the instance gets cleaned up
+ *       # by the garbage collector when leaving this function. We therefore add an artificial reference
+ *       # by adding this MyRequest instance to the array which is kind of silly but in Java we have a
+ *       # very similar effect (see corresponding snippet in the Java manual).
+ *       #
+ *       # Maybe there is a better way to do this! Suggestions welcome!
+ *       self.__instances.append(instance)
+ *         return instance
+ *       except Exception as e:
+ *         print("An exception has been raised by code that is not supposed to raise one: '" + str(e) + "'! If this is NOT handled here the application will crash as this Python exception instance will be returned back into the native code that fired this function callS!")
+ *         return None
+ * \endcode
+ *
+ *  Now the request factory must be passed to the constructor of the function interface
+ *
+ * \code
+ *  def fn(pDev):
+ *    # ... some code ...
+ *    mrf = MyRequestFactory()
+ *    fi = acquire.FunctionInterface(pDev, mrf)
+ *    # ... more additional code
+ *    # assuming we got back a request from the driver at this point:
+ *    pRequest = fi.getRequest(getRequestNrFromSomewhere())
+ *    if pRequest.isOK:
+ *      # The paranoid could do this additional check, but it is not neccessary:
+ *      if type(pRequest) is MyRequest:
+ *        print(pMyRequest.myRequestResult.name() + ": " + pMyRequest.myRequestResult.readS())
+ *      else:
+ *        print("ERROR! We should have an instance of our derived 'MyRequest' class here!")
+ *        sys.exit(-1)
+ *      # do what you want to do with your derived request instance here!
+ *    # ... probably even more additional code
+ *  }
+ * \endcode
+ * \endif
  *
  *  \since 1.12.56
  *
@@ -8939,7 +10348,7 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-/// \brief The function interface to devices supported by this interface
+/// \brief The function interface to devices supported by this interface.
 /**
  *  This class contains all the basic functions needed when working with a device.
  *  There are not too many functions as most data will be represented by 'properties'
@@ -8950,98 +10359,16 @@ public:
  *  if the \b mvIMPACT::acquire::Device object pointed to by \a pDev in the constructors parameter list
  *  hasn't been opened already the constructor will try to do that.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
- *  \b EXAMPLE
+ * Please refer to one of the examples listed below to get an idea on how to use this class for data acquisition:
  *
- *  This sample assumes a valid pointer to a \b mvIMPACT::acquire::Device object has been obtained.
- *  To find out how to do that see the detailed description of the class \b mvIMPACT::acquire::DeviceManager.
- *
- * \code
- *  #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
- *
- *  using namespace std;
- *  using namespace mvIMPACT::acquire;
- *
- *  static volatile bool s_boTerminated = false;
- *
- *  //-----------------------------------------------------------------------------
- *  void showPropVal( const Property& prop )
- *  //-----------------------------------------------------------------------------
- *  {
- *    cout << prop.name() << ": " << prop.readS() << endl;
- *  }
- *
- *  //-----------------------------------------------------------------------------
- *  void captureThread( Device* pDev )
- *  //-----------------------------------------------------------------------------
- *  {
- *    if( !pDev )
- *    {
- *      return; // error! Invalid pointer!
- *    }
- *    FunctionInterface fi(pDev);
- *    SettingsBlueFOX setting(pDev);
- *
- *    int maxExposureTime = setting.cameraSetting.expose_us.read( Property::maxValue );
- *    // make sure enough requests are available:
- *    SystemSettings ss(pDev);
- *    const int REQUEST_COUNT = ss.requestCount.read();
- *    // pre-fill the default capture queue
- *    for( unsigned int i=0; i<REQUEST_COUNT; i++ )
- *    {
- *      int result = fi.imageRequestSingle();
- *      if( result != DMR_NO_ERROR )
- *      {
- *        cout << "Error while filling the request queue: " << ImpactAcquireException::getErrorCodeAsString( result ) << endl;
- *      }
- *    }
- *
- *    // run thread loop
- *    const Request* pRequest = 0;
- *    int requestNr = INVALID_ID;
- *    while( !s_boTerminated )
- *    {
- *      // wait for results from the default capture queue
- *      requestNr = fi.imageRequestWaitFor( 500 );
- *      if( fi.isRequestNrValid( requestNr ) )
- *      {
- *        pRequest = fi.getRequest( requestNr );
- *        if( pRequest->isOK() )
- *        {
- *          ++cnt;
- *          if( cnt%100 == 0 )
- *          {
- *            // modify the exposure time to see how modifying
- *            // properties affects the capture results
- *            setting.cameraSetting.expose_us.write( ( cnt * 100 ) % maxExposureTime );
- *            // display some statistics
- *            showPropVal( setting.cameraSetting.expose_us );
- *            showPropVal( statistics.framesPerSecond );
- *            showPropVal( statistics.captureTime_s );
- *          }
- *          // do whatever is necessary to display/store or process the image
- *        }
- *        else
- *        {
- *          cout << "Error: " << pRequest->getParamS( irpResult ) << endl;
- *        }
- *        fi.imageRequestUnlock( requestNr );
- *        fi.imageRequestSingle();
- *      }
- *      else
- *      {
- *        // If the error code is -2119(DEV_WAIT_FOR_REQUEST_FAILED), the documentation will provide
- *        // additional information under TDMR_ERROR in the interface reference
- *        cout << "imageRequestWaitFor failed (" << requestNr << ")"
- *             << ", timeout value too small?" << endl;
- *      }
- *    }
- *
- *    // free resources
- *    fi.imageRequestReset( 0, 0 );
- *  }
- * \endcode
- *  \endif
+ * \if DOXYGEN_CPP_DOCUMENTATION
+ * - \ref SingleCapture.cpp
+ * - \ref ContinuousCapture.cpp
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * - \ref ContinuousCapture.java
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * - \ref ContinuousCapture.py
+ * \endif
  */
 class FunctionInterface
 //-----------------------------------------------------------------------------
@@ -9100,12 +10427,13 @@ class FunctionInterface
             return result;
         }
         //-----------------------------------------------------------------------------
-        int saveCurrentSettingOnStack( void )
+        int saveCurrentSettingOnStack( TStorageFlag storageFlags )
         //-----------------------------------------------------------------------------
         {
             std::ostringstream oss;
             oss << m_pDevice->serial.read() << "_" << this << "_" << m_settingsInRAM.size();
-            const int result = DMR_SaveSetting( m_pDevice->hDrv(), oss.str().c_str(), sfRAM, sUser );
+            storageFlags = static_cast<TStorageFlag>( ( storageFlags & ( ~( sfFile | sfNative ) ) ) | sfRAM );
+            const int result = DMR_SaveSetting( m_pDevice->hDrv(), oss.str().c_str(), storageFlags, sUser );
             if( result == DMR_NO_ERROR )
             {
                 m_settingsInRAM.push( oss.str() );
@@ -9128,7 +10456,7 @@ class FunctionInterface
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -9154,7 +10482,7 @@ class FunctionInterface
         else if( rListSize > vSize )
         {
             // there are new requests
-            ComponentIterator it( m_pRefData->m_requestList );
+            Component it( m_pRefData->m_requestList );
             it = it.firstChild();
             for( RequestVector::size_type i = 0; ( i < vSize ) && it.isValid(); i++ )
             {
@@ -9181,7 +10509,7 @@ class FunctionInterface
             // the string array must be filled from scratch each time because settings might have been
             // deleted as well...
             m_pRefData->m_settings.clear();
-            ComponentIterator it( m_pRefData->m_settingsList );
+            Component it( m_pRefData->m_settingsList );
             it = it.firstChild();
             while( it.isValid() )
             {
@@ -9205,7 +10533,7 @@ class FunctionInterface
             // the string array must be filled from scratch each time because objects might have been
             // deleted as well...
             m_pRefData->m_imageRequestControls.clear();
-            ComponentIterator it( m_pRefData->m_imageRequestControlList );
+            Component it( m_pRefData->m_imageRequestControlList );
             it = it.firstChild();
             while( it.isValid() )
             {
@@ -9262,8 +10590,8 @@ public:
             m_pRefData->m_pCurrentCaptureBufferLayout = createRequest( -1 );
         }
     }
-    /// \brief Constructs a new \b mvIMPACT::acquire::FunctionInterface from and existing one.
-    explicit FunctionInterface(
+    /// \brief Constructs a new \b mvIMPACT::acquire::FunctionInterface from an existing one.
+    FunctionInterface(
         /// [in] A constant reference to the \b mvIMPACT::acquire::FunctionInterface object, this object shall be created from
         const FunctionInterface& src ) : m_pRefData( src.m_pRefData )
     {
@@ -9274,8 +10602,7 @@ public:
     {
         dealloc();
     }
-#ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::FunctionInterface objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::FunctionInterface objects.
     FunctionInterface& operator=( const FunctionInterface& rhs )
     {
         if( this != &rhs )
@@ -9287,7 +10614,6 @@ public:
         }
         return *this;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Manually starts the acquisition engine of this device driver instance.
     /**
      *  Calling this function will manually start this device driver's acquisition engine. This will only
@@ -9347,7 +10673,7 @@ public:
     /// \brief Creates a new \b mvIMPACT::acquire::ImageRequestControl object.
     /**
      *  This function creates a new \b mvIMPACT::acquire::ImageRequestControl based on an existing one. New \b mvIMPACT::acquire::ImageRequestControl instances can only be derived
-     *  from \b mvIMPACT::acquire::ImageRequestControl instances that already exist. When the driver has been initialized there will at least be
+     *  from \b mvIMPACT::acquire::ImageRequestControl instances that already exist. When the driver has been initialized there will be at least
      *  one base \b mvIMPACT::acquire::ImageRequestControl called 'Base', which acts as the base for all other request controls.
      *
      *  All \b mvIMPACT::acquire::ImageRequestControl constructed by the application must be derived either from this base or any of its children using this function.
@@ -9382,7 +10708,7 @@ public:
     /// \brief Creates a new setting.
     /**
      *  This function creates a new setting base on an existing one. New settings can only be derived
-     *  from settings that already exist. When the driver has been initialized there will at least be
+     *  from settings that already exist. When the driver has been initialized there will be at least
      *  one base setting called 'Base', which acts as the base for all other settings.
      *
      *  When a new setting is created it derives all the properties from the parent setting. That means
@@ -9516,7 +10842,17 @@ public:
         int nr ) const
     {
         updateRequests();
-        return m_pRefData->m_requests.at( nr );
+        Request* pRequest = m_pRefData->m_requests.at( nr );
+        if( !pRequest->imageWidth.isValid() || pRequest->imageWidth.parent().parent().name() != pRequest->getName() )
+        {
+            // This could happen because someone changed the request count back and forth to the same value as the
+            // last time 'getRequest' got called. In that case 'updateRequests' will do nothing and we need to update
+            // this object here!
+            delete m_pRefData->m_requests[nr];
+            pRequest = createRequest( nr );
+            m_pRefData->m_requests[nr] = pRequest;
+        }
+        return pRequest;
     }
     /// \brief Returns a \b mvIMPACT::acquire::ComponentList object to a setting with a specified name.
     /**
@@ -9531,7 +10867,7 @@ public:
         /// [in] The name of the setting to locate
         const std::string& name ) const
     {
-        ComponentIterator it( m_pRefData->m_settingsList );
+        Component it( m_pRefData->m_settingsList );
         it = it.firstChild();
         while( it.isValid() )
         {
@@ -9580,17 +10916,20 @@ public:
      *  \note
      *  The address passed to the request object must be aligned already!
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  Device* pDev = getDevicePointerFromSomewhere()
-     *  FunctionInterface fi(pDev);
+     *  FunctionInterface fi( pDev );
+     *  ImageRequestControl irc( pDev );
+     *  int bufferSize = 0;
+     *  int bufferAlignment = 0;
+     *  const TDMR_ERROR result = static_cast<TDMR_ERROR>( fi.getCurrentCaptureBufferLayout( irc, bufferSize, bufferAlignment ) );
      *  Request* pRequest = fi.getRequest( 0 );
      *  // the buffer assigned to the request object must be aligned accordingly
      *  // the size of the user supplied buffer MUST NOT include the additional size
      *  // caused by the alignment
-     *  if( pRequest->attachUserBuffer( getAlignedMemoryPtr(), getAlignedMemorySize() ) ) == DMR_NO_ERROR )
+     *  if( pRequest->attachUserBuffer( getAlignedMemoryPtr( bufferSize, bufferAlignment ), bufferSize ) == DMR_NO_ERROR )
      *  {
-     *    ImageRequestControl irc(pDev);
      *    irc.requestToUse.write( 0 ); // use the buffer just configured for the next image request
      *    // now the next image will be captured into the user supplied memory
      *    fi.imageRequestSingle( &irc ); // this will send request '0' to the driver
@@ -9607,7 +10946,76 @@ public:
      *     // handle error
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \attention There is currently no way to deal with alignment in Java when capturing into user supplied(thus managed) memory! Suggestions welcome!
+     *
+     * \code
+     *  import java.nio.ByteBuffer;
+     *
+     * // ...
+     *
+     *  Device pDev = getDevicePointerFromSomewhere()
+     *  FunctionInterface fi = new FunctionInterface( pDev );
+     *  ImageRequestControl irc = new ImageRequestControl( pDev );
+     *  int[] bufferSize = {0};
+     *  int[] bufferAlignment = {0};
+     *  if( fi.getCurrentCaptureBufferLayout( irc, bufferSize, bufferAlignment ) == TDMR_ERROR.DMR_NO_ERROR )
+     *  {
+     *    Request pRequest = fi.getRequest( 0 );
+     *    // the buffer assigned to the request object must be aligned accordingly
+     *    // the size of the user supplied buffer MUST NOT include the additional size
+     *    // caused by the alignment
+     *    ByteBuffer pBuffer = ByteBuffer.allocateDirect( bufferSize[0] + bufferAlignment[0] ); // todo: There is currently no way to deal with alignment in Java! Suggestions welcome!
+     *    if( pRequest.attachUserBuffer( pBuffer ) == TDMR_ERROR.DMR_NO_ERROR )
+     *    {
+     *      irc.getRequestToUse().write( 0 ); // use the buffer just configured for the next image request
+     *      // now the next image will be captured into the user supplied memory
+     *      fi.imageRequestSingle( irc ); // this will send request '0' to the driver
+     *      // wait for the buffer. Once it has been returned by the driver AND the user buffer shall no
+     *      // longer be used call
+     *      if( pRequest.detachUserBuffer() != TDMR_ERROR.DMR_NO_ERROR )
+     *      {
+     *        // handle error
+     *      }
+     *      // now this request will use internal memory again.
+     *    }
+     *    else
+     *    {
+     *       // handle error
+     *    }
+     *  }
+     *  else
+     *  {
+     *     // handle error
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  pDev = getDevicePointerFromSomewhere()
+     *  fi = acquire.FunctionInterface(pDev)
+     *  irc = acquire.ImageRequestControl(pDev)
+     *  # this function returns a list containing [result, size, alignment]
+     *  results = fi.getCurrentCaptureBufferLayout(irc)
+     *  if results[0] == int(acquire.DMR_NO_ERROR):
+     *    pRequest = fi.getRequest(0)
+     *    # the buffer assigned to the request object must be aligned accordingly
+     *    # the size of the user supplied buffer MUST NOT include the additional size
+     *    # caused by the alignment
+     *    if pRequest.attachUserBuffer(getAlignedMemoryPtr(results[1], results[2] ), results[2]) == int(acquire.DMR_NO_ERROR):
+     *      irc.requestToUse.write(0) # use the buffer just configured for the next image request
+     *      # now the next image will be captured into the user supplied memory
+     *      fi.imageRequestSingle(irc) # this will send request '0' to the driver
+     *      # wait for the buffer. Once it has been returned by the driver AND the user buffer shall no
+     *      # longer be used call
+     *      if pRequest.detachUserBuffer() != TDMR_ERROR.DMR_NO_ERROR:
+     *        # handle error
+     *      # now this request will use internal memory again.
+     *    else:
+     *       # handle error
+     *  else:
+     *     # handle error
+     * \endcode
+     * \endif
      *  \note
      *  A request that is in configuration mode can't be sent to the driver for acquisition until
      *  \b mvIMPACT::acquire::Request::unlock or \b mvIMPACT::acquire::FunctionInterface::imageRequestUnlock has been called again.
@@ -9638,7 +11046,9 @@ public:
     }
     /// \brief Returns the number of \b mvIMPACT::acquire::Request objects in the result queue .
     /**
-     *  This functions queries the number of \b mvIMPACT::acquire::Request objects currently in the result queue
+     *  This functions queries the number of \b mvIMPACT::acquire::Request objects currently in the result queue that are available for pickup. This number reflects the number of
+     *  \b mvIMPACT::acquire::FunctionInterface::imageRequestWaitFor calls that could be executed afterwards the would return with a valid \b mvIMPACT::acquire::Request
+     *  object immediately without waiting!
      *
      *  \sa
      *  \b mvIMPACT::acquire::FunctionInterface::acquisitionStart, \n
@@ -9666,7 +11076,7 @@ public:
         TDMR_ERROR result = DMR_ImageRequestResultQueueElementCount( m_pRefData->m_pDevice->hDrv(), queueNr, &resultQueueElements );
         return ( result != DMR_NO_ERROR ) ? static_cast<int>( result ) : resultQueueElements;
     }
-    /// \brief Deletes all requests currently queued for the specified \b mvIMPACT::acquire::ImageRequestControl
+    /// \brief Deletes all requests currently queued for the specified \b mvIMPACT::acquire::ImageRequestControl.
     /**
      *  This function will terminate all running image acquisitions associated with the queue
      *  bound to the specified image request control and in addition to that
@@ -9697,6 +11107,7 @@ public:
     {
         return DMR_ImageRequestReset( m_pRefData->m_pDevice->hDrv(), requestCtrlNr, mode );
     }
+#ifndef WRAP_ANY
     /// \brief Sends an image request to the \b mvIMPACT::acquire::Device driver.
     /**
      *  This functions sends a single image request to the capture device. To wait for the image
@@ -9754,24 +11165,43 @@ public:
     {
         return DMR_ImageRequestSingle( m_pRefData->m_pDevice->hDrv(), pImageRequestControl ? pImageRequestControl->hObj() & 0xFFFF : 0, pRequestUsed );
     }
+#endif // #ifndef WRAP_ANY
     /// \brief Unlocks the request for the driver again.
     /**
-     *  \note
+     * \note
      *  Another version of this function is available that might be nicer to use depending on personal
      *  preferences and use case: \b mvIMPACT::acquire::Request::unlock. Unlocking a certain request
      *  might be nicer by using this function, e.g. unlocking \b ALL requests in a loop is probably easier
      *  done by writing
-     *  \if DOXYGEN_CPP_DOCUMENTATION
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  Device* pDev = getDevicePointerFromSomewhere()
-     *  FunctionInterface fi(pDev);
-     *  const int rc(static_cast<int>(fi.requestCount()));
+     *  FunctionInterface fi( pDev );
+     *  const int rc = static_cast< int >( fi.requestCount() );
      *  for( int i=0; i<rc; i++ )
      *  {
      *    fi.imageRequestUnlock( i );
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  Device pDev = getDevicePointerFromSomewhere()
+     *  FunctionInterface fi = new FunctionInterface( pDev );
+     *  final long rc = fi.requestCount();
+     *  for( long i=0; i<rc; i++ )
+     *  {
+     *    fi.imageRequestUnlock( ( int )i );
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  pDev = getDevicePointerFromSomewhere()
+     *  fi = acquire.FunctionInterface(pDev)
+     *  rc = fi.requestCount()
+     *  for i in range(rc):
+     *    fi.imageRequestUnlock(i)
+     * \endcode
+     * \endif
      *
      *  To ensure that no image data is overwritten by another image request while the user still
      *  deals with the image from a previous acquisition each image buffer will be locked by the driver when
@@ -9809,10 +11239,13 @@ public:
     {
         return DMR_ImageRequestUnlock( m_pRefData->m_pDevice->hDrv(), nr );
     }
-    /// \brief Waits for an image request to become ready.
+    /// \brief Waits for a request object to become ready.
     /**
-     *  This function waits for an image request previously sent to the capture device by calling
-     *  \b mvIMPACT::acquire::FunctionInterface::imageRequestSingle.
+     *  This function waits for a request object previously sent to the capture device by calling
+     *  \b mvIMPACT::acquire::FunctionInterface::imageRequestSingle. When a new request became ready during
+     *  the period of time specified by the \a timeout_ms parameter this request is extracted from the
+     *  result queue and is returned to the user so the same request can not be returned twice until
+     *  it has been processed and unlocked by the application.
      *
      *  \note Whenever a \b mvIMPACT::acquire::Request is returned to the user the image data
      *  described by the \b mvIMPACT::acquire::Request remains valid until the user unlocks
@@ -9833,23 +11266,26 @@ public:
     int imageRequestWaitFor(
         /// [in] The maximum wait time in milliseconds (ms) for
         /// this request to become ready. If \a timeout_ms
-        /// is '-1', the function's time-out interval never
-        /// elapses. Please note that each request has its own timeout that is independent from
+        /// is '-1', the function's timeout interval never
+        /// elapses. If the result queue specified by the \a queueNr parameter already contains
+        /// a request when calling this function the function will return immediately. Please note
+        /// that each request has its own timeout that is independent from
         /// this wait timeout, thus this function will return with a valid request after the timeout
         /// for this request has elapsed even if e.g. a trigger has not been detected. For detailed
         /// information on the interaction of the timeout of this function and the timeout of a
-        /// request please refer to the chapter \ref ImageAcquisition_section_capture in the C++ section.
+        /// request please refer to the chapter \ref ImageAcquisition_capture_AcquiringData in the C++ section.
         int timeout_ms,
         /// [in] The queue where to wait for the request.
         /// The number of request queues available depends on the number of video channels offered by the
-        /// device. The queue a processed request ends up in can be defined using the property
-        /// \b mvIMPACT::acquire::ImageRequestControl::resultQueue.
+        /// device. The queue a processed request ends up in can be defined by setting the property
+        /// \b mvIMPACT::acquire::ImageRequestControl::resultQueue \b BEFORE calling \b mvIMPACT::acquire::FunctionInterface::imageRequestSingle.
         int queueNr = 0 ) const
     {
         int requestNr;
         TDMR_ERROR result = DMR_ImageRequestWaitFor( m_pRefData->m_pDevice->hDrv(), timeout_ms, queueNr, &requestNr );
         return ( result != DMR_NO_ERROR ) ? static_cast<int>( result ) : requestNr;
     }
+#ifndef WRAP_ANY
     /// \brief Returns information about the current capture buffer requirements.
     /**
      *  When an application wants to provide capture buffers, this function will be needed in order to
@@ -9858,6 +11294,7 @@ public:
      *  of this function will probably be enough.
      *
      *  To find out more about capturing to user memory please refer to the application
+     *  \ref CaptureToUserMemory.cpp
      *
      *  \sa mvIMPACT::acquire::Request::configure
      *
@@ -9891,7 +11328,7 @@ public:
                 // update might be required.
                 return DMR_NEWER_LIBRARY_REQUIRED;
             }
-            const TImageRequestControlMode previousMode( imageRequestControl.mode.read() );
+            const TImageRequestControlMode previousMode( static_cast<TImageRequestControlMode>( imageRequestControl.mode.read() ) );
             if( previousMode != ircmUpdateBufferLayout )
             {
                 imageRequestControl.mode.write( ircmUpdateBufferLayout );
@@ -9909,6 +11346,7 @@ public:
         }
         return result;
     }
+#endif // #ifndef WRAP_ANY
     /// \brief Returns information about the current capture buffer requirements.
     /**
      *  When an application wants to provide capture buffers, this function will be needed in order to
@@ -9942,18 +11380,15 @@ public:
         int& alignment ) const
     {
         Request* pRequest = 0;
-        int result = getCurrentCaptureBufferLayout( imageRequestControl, &pRequest, &alignment );
+        size = 0;
+        const int result = getCurrentCaptureBufferLayout( imageRequestControl, &pRequest, &alignment );
         if( m_pRefData->m_pCurrentCaptureBufferLayout )
         {
             size = m_pRefData->m_pCurrentCaptureBufferLayout->imageSize.read() + m_pRefData->m_pCurrentCaptureBufferLayout->imageFooterSize.read();
         }
-        else
-        {
-            size = 0;
-        }
         return result;
     }
-    /// \brief Check if \a nr specifies a valid \b mvIMPACT::acquire::Request
+    /// \brief Check if \a nr specifies a valid \b mvIMPACT::acquire::Request.
     /**
      *  \return \n
      *  - true if \a nr specifies a valid request.
@@ -9992,19 +11427,6 @@ public:
     {
         return DMR_IsSettingAvailable( name.c_str(), storageLocation, scope );
     }
-    /// \brief Checks if a request has been processed successfully(\b deprecated).
-    /**
-     *  \deprecated
-     *  This function has been declared <b>deprecated</b> and will be removed in future versions of this interface.
-     *  Use \b mvIMPACT::acquire::Request::isOK() instead and see the corresponding 'Porting existing code'
-     *  section in the documentation.
-     *  \return
-     *  - true if the request has been processed successfully.
-     *  - false otherwise.
-     */
-    MVIMPACT_DEPRECATED_CPP( bool isRequestOK(
-                                 /// [in] The request to check
-                                 const Request* p ) const );
     /// \brief Loads a previously stored setting.
     /**
      *  This function can be used to restore a previously stored setting again.
@@ -10015,11 +11437,11 @@ public:
      *  specified. It's not allowed to combine \b mvIMPACT::acquire::sfFile and
      *  \b mvIMPACT::acquire::sfNative for this operation.
      *
-     *  \warning Since mvIMPACT Acquire 2.9.0 GenICam devices will be able to save their properties in a XML File, only if the properties have the \b streamable attribute set (for more information refer to the <a href="http://www.emva.org/standards-technology/genicam/genicam-downloads/">GenICam standard specification</a>). Properties with no \b streamable attribute set, will be silently ignored when saving, which means they will \b not be saved in the XML file. For MATRIX VISION GenICam cameras, starting with firmware version 1.6.414 the \b streamable attribute is set for all the necessary properties.
+     *  \attention Since mvIMPACT Acquire 2.9.0 GenICam devices will be able to save their properties in a XML File, only if the properties have the \b streamable attribute set (for more information refer to the <a href="http://www.emva.org/standards-technology/genicam/genicam-downloads/">GenICam standard specification</a>). Properties with no \b streamable attribute set, will be silently ignored when saving, which means they will \b not be saved in the XML file. For MATRIX VISION GenICam cameras, starting with firmware version 1.6.414 the \b streamable attribute is set for all the necessary properties.
      *
      *  <BR>
      *
-     *  \warning Since mvIMPACT Acquire 2.9.0 and again in version 2.11.0 storing and loading of camera settings in a XML file for the \b mvIMPACT::acquire::dilGenICam
+     *  \attention Since mvIMPACT Acquire 2.9.0 and again in version 2.11.0 storing and loading of camera settings in a XML file for the \b mvIMPACT::acquire::dilGenICam
      *  interface layout has been updated. As a result XML files created with newer versions of mvIMPACT Acquire might \b not
      *  be readable on systems with older version of mvIMPACT Acquire installed. XML files created on systems
      *  with earlier versions of mvIMPACT Acquire will always be readable this or newer versions. See the following table for details.
@@ -10029,6 +11451,10 @@ public:
      *    <TR><TH> 2.9.0 - 2.10.1 <TD> YES <TD> YES <TD> NO
      *    <TR><TH> &gt;= 2.11.0 <TD> YES <TD> YES <TD> YES
      *  </TABLE>
+     *
+     *  \attention Since mvIMPACT Acquire 2.28.0 it is possible for devices operated in the \b ::dilGenICam interface layout to store settings including
+     *  sequencer sets and user sets (see SFNC for details) data by specifying the \b ::sfProcessGenICamSequencerData and/or \b ::sfProcessGenICamUserSetData
+     *  during the storage operation. Settings stored like this cannot be loaded by previous mvIMPACT Acquire versions.
      *
      *  \note For devices operated in the \b mvIMPACT::acquire::dilGenICam interface layout further restriction apply: Settings created with a certain product type can only
      *  be used with other devices belonging to the exact same type as defined by the property mvIMPACT::acquire::Device::product inside the device list (the one device specific property list that
@@ -10107,13 +11533,13 @@ public:
         }
         return result;
     }
-    /// \brief Loads the default settings
+    /// \brief Loads the default settings.
     /**
      *  This function will try to load the settings from a default location. This function
      *  can only succeed if a setting has been stored previously by a call to
      *  \b mvIMPACT::acquire::FunctionInterface::saveSettingToDefault.
      *
-     *  \warning There has been an incompatible change when loading settings in version 2.9.0 and 2.11.0 of mvIMPACT Acquire. See <b>mvIMPACT::acquire::FunctionInterface::loadSetting</b> for details.
+     *  \attention There has been an incompatible change when loading settings in version 2.9.0 and 2.11.0 of mvIMPACT Acquire as well as in version 2.28.0. See <b>mvIMPACT::acquire::FunctionInterface::loadSetting</b> for details.
      *
      *  \return
      *  - \b mvIMPACT::acquire::DMR_NO_ERROR if successful.
@@ -10127,6 +11553,9 @@ public:
     }
     /// \brief Returns the number of available request objects.
     /**
+     *  \sa
+     *  \b mvIMPACT::acquire::SystemSettings::requestCount to change the number of request objects
+     *
      *  \return Returns the number of available request objects.
      */
     unsigned int requestCount( void ) const
@@ -10142,8 +11571,7 @@ public:
      *  in various ways and depending on the result these modifications shall either be kept or
      *  discarded at the end of the operation.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
-     *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
      *  // ...
      *  enum TResult
@@ -10164,7 +11592,35 @@ public:
      *      break;
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  // ...
+     *  final int Apply = 1;
+     *  final int Discard = 2;
+     *  // ...
+     *  FunctionInterface fi = getFunctionInterfaceFromSomewhere();
+     *  fi.saveCurrentSettingOnStack();
+     *  final int option = enterSectionThatModifiesDeviceSettings();
+     *  if( option == Discard )
+     *  {
+     *    fi.loadAndDeleteSettingFromStack(); // revert all changes just applied without worrying about what these changes actually are
+     *  }
+     *  else if( option == Apply )
+     *  {
+     *    fi.deleteSettingFromStack(); // remove the setting from the stack, but keep changes
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * DISCARD_SETTING = 1
+     * APPLY_SETTING = 2
+     * fi = getFunctionInterfaceFromSomewhere()
+     * fi.saveCurrentSettingOnStack()
+     * option = enterSectionThatModifiesDeviceSettings()
+     * if option == DISCARD_SETTING: # discard
+     *    fi.loadAndDeleteSettingFromStack() # revert all changes just applied without worrying about what these changes actually are
+     * elif option == APPLY_SETTING: # apply
+     *    fi.deleteSettingFromStack() # remove the setting from the stack, but keep changes
+     * \endif
      *
      *  The stack makes use of mvIMPACT Acquires ability to store capture settings in the memory of
      *  the current process. Once the last instance of this <b>mvIMPACT::acquire::FunctionInterface</b>
@@ -10180,9 +11636,12 @@ public:
      *  - \b mvIMPACT::acquire::DMR_NO_ERROR if the setting is available.
      *  - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR or \b mvIMPACT::acquire::TPROPHANDLING_ERROR otherwise.
      */
-    int saveCurrentSettingOnStack( void )
+    int saveCurrentSettingOnStack(
+        /// [in] The flags which define which information shall be stored and how this
+        /// information shall be stored.
+        TStorageFlag storageFlags = sfRAM )
     {
-        return m_pRefData->saveCurrentSettingOnStack();
+        return m_pRefData->saveCurrentSettingOnStack( storageFlags );
     }
     /// \brief Stores the current settings.
     /**
@@ -10196,7 +11655,7 @@ public:
      *  specified. Both flags can be combined. In that case the same setting will be stored in a
      *  file \b AND in a platform specific location if these location differ (platform dependent!).
      *
-     *  \warning There has been an incompatible change when loading settings in version 2.9.0 and 2.11.0 of mvIMPACT Acquire. See <b>mvIMPACT::acquire::FunctionInterface::loadSetting</b> for details.
+     *  \attention There has been an incompatible change when loading settings in version 2.9.0 and 2.11.0 of mvIMPACT Acquire as well as in version 2.28.0. See <b>mvIMPACT::acquire::FunctionInterface::loadSetting</b> for details.
      *
      *  \return
      *  - \b mvIMPACT::acquire::DMR_NO_ERROR if successful.
@@ -10218,7 +11677,7 @@ public:
      *  Under Windows&copy; this will be in the Registry. A setting contains all the values set
      *  for properties that control the overall way an image is acquired( e.g. the exposure time, etc.).
      *
-     *  \warning There has been an incompatible change when loading settings in version 2.9.0 and 2.11.0 of mvIMPACT Acquire. See <b>mvIMPACT::acquire::FunctionInterface::loadSetting</b> for details.
+     *  \attention There has been an incompatible change when loading settings in version 2.9.0 and 2.11.0 of mvIMPACT Acquire as well as in version 2.28.0. See <b>mvIMPACT::acquire::FunctionInterface::loadSetting</b> for details.
      *
      *  \return
      *  - \b mvIMPACT::acquire::DMR_NO_ERROR if successful.
@@ -10230,60 +11689,10 @@ public:
     {
         return DMR_SaveSettingToDefault( m_pRefData->m_pDevice->hDrv(), scope );
     }
-#   ifndef WRAP_PYTHON
-    /// \deprecated
-    /// \brief Stores the current system settings under a default location (\b deprecated).
-    /**
-     *  \note
-     *  This function has been declared <b>deprecated</b> and will be removed in version 2.0.0 of this interface.
-     *  All features that have been stored using this method will now also be
-     *  handled by the functions that load and save settings.
-     *  Please see the corresponding 'Porting existing code' section in the documentation.
-     *
-     *  These are the settings which can be altered by creating an instance of the class
-     *  \b mvIMPACT::acquire::SystemSettings. Under Windows&copy; this function will store the current settings
-     *  in the Registry.
-     *
-     *  Modifying data in this section of properties will affect every device belonging to the same
-     *  family (e.g. every USB 2.0 camera device) when the data is saved. When the modified data is
-     *  stored it will be restored by each device belonging to the same family during the next
-     *  initialisation. So at runtime changing and saving the settings of one device will not affect
-     *  the behaviour of another until the data has been stored and the other device has been closed
-     *  and reopened again.
-     *  \return
-     *  - \b mvIMPACT::acquire::DMR_NO_ERROR if successful.
-     *  - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR or \b mvIMPACT::acquire::TPROPHANDLING_ERROR otherwise.
-     */
-    MVIMPACT_DEPRECATED_CPP( int saveSystemToDefault(
-                                 /// [in] Specifies where the information shall be stored.
-                                 TScope scope = sUser ) const );
-#   endif // #  ifndef WRAP_PYTHON
 };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-#   if !defined(WRAP_PYTHON) // This was already deprecated when the Python wrapper was published
 //-----------------------------------------------------------------------------
-inline int FunctionInterface::saveSystemToDefault( TScope scope /* = sUser */ ) const
-//-----------------------------------------------------------------------------
-{
-    return DMR_SaveSystemToDefault( m_pRefData->m_pDevice->hDrv(), scope );
-}
-
-//-----------------------------------------------------------------------------
-inline bool FunctionInterface::isRequestOK( const Request* p ) const
-//-----------------------------------------------------------------------------
-{
-    if( p )
-    {
-        return ( p->requestResult.read() == rrOK );
-    }
-    return false;
-}
-#   endif // #if !defined(WRAP_PYTHON)
-#endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-
-//-----------------------------------------------------------------------------
-/// \brief A base class to access various general information about the device and its driver
+/// \brief A base class to access various general information about the device and its driver.
 /**
  *  This class contains a collection of properties providing various information about
  *  the device and its driver.
@@ -10298,7 +11707,7 @@ public:
     explicit Info( /// A pointer to a \b mvIMPACT::acquire::Device object obtained from
         /// a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev ) : ComponentCollection( pDev ), deviceDriverVersion(), driverDate(),
-        driverVersion(), state(), loadedSettings(), logFile(), captureBufferAlignment(),
+        driverVersion(), state(), loadedSettings(), logFile(), systemPhysicalProcessorCount(), systemLogicalProcessorCount(), captureBufferAlignment(),
         recommendedListsForUIs()
     {
         DeviceComponentLocator locator( pDev, dltInfo );
@@ -10309,11 +11718,13 @@ public:
         locator.bindComponent( state, "State" );
         locator.bindComponent( loadedSettings, "LoadedSettings" );
         locator.bindComponent( logFile, "LogFile" );
+        locator.bindComponent( systemPhysicalProcessorCount, "SystemPhysicalProcessorCount" );
+        locator.bindComponent( systemLogicalProcessorCount, "SystemLogicalProcessorCount" );
         locator.bindComponent( captureBufferAlignment, "CaptureBufferAlignment" );
         locator.bindComponent( recommendedListsForUIs, "RecommendedListsForUIs" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property \b (read-only) containing the device driver version used by this device.
     /**
@@ -10348,25 +11759,35 @@ public:
     PropertyS loadedSettings;
     /// \brief A string property \b (read-only) containing the name and the full path of the current log-file for this device.
     PropertyS logFile;
+    /// \brief An integer property \b (read-only) containing the number of physical processors detected in the current system.
+    /**
+     * \since 2.44.0
+     */
+    PropertyI systemPhysicalProcessorCount;
+    /// \brief An integer property \b (read-only) containing the number of logical processors detected in the current system.
+    /**
+     * \since 2.44.0
+     */
+    PropertyI systemLogicalProcessorCount;
     /// \brief An integer property \b (read-only) containing the capture buffer alignment in bytes needed by this device driver.
     PropertyI captureBufferAlignment;
     /// \brief A string property \b (read-only) containing an array of full search paths to lists which are recommended to be displayed in a user interface that is created dynamically.
     PropertyS recommendedListsForUIs;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
-/// \brief \b deprecated. Use the class \b mvIMPACT::acquire::Info instead
+#ifndef WRAP_ANY
+/// \brief \b deprecated. Use the class \b mvIMPACT::acquire::Info instead.
 /**
  *  \deprecated
  *  This class has been declared \b deprecated and might not be available in future releases.
  *  All features of this class are available in \b mvIMPACT::acquire::Info as well, so please use
  *  this class instead.
  */
-#ifndef WRAP_PYTHON
 typedef Info MVIMPACT_DEPRECATED_CPP( InfoBase );
-#endif // #ifndef WRAP_PYTHON
+#endif // #ifndef WRAP_ANY
 
 //-----------------------------------------------------------------------------
 /// \brief A base class for essential device related settings.
@@ -10399,7 +11820,7 @@ public:
         locator.bindComponent( imageRequestTimeout_ms, "ImageRequestTimeout_ms" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property \b (read-only) containing the name of the setting this setting is based on.
     /**
@@ -10414,15 +11835,23 @@ public:
      *  case. Also this should be considered as an error from the users point of view in which case he
      *  should clean up the acquisition queue by calling \b mvIMPACT::acquire::FunctionInterface::imageRequestReset.
      *  Afterwards the capture loop can be restarted.
+     *
+     *  \note
+     *  It is crucial to understand that this is a timeout <b>PER REQUEST</b>! The timespan taken into account for the measurement
+     *  starts when the driver begins to capture data into <b>this particular buffer</b>! So when queuing 4 buffers with a timeout of 3000
+     *  ms each and no data being transmitted by the device for any reason will cause the last buffer to time out 3000*4 = 12000 ms AFTER
+     *  the buffer has been queued and the acquisition has been started as the driver will wait for up to 3 seconds for each buffer that is
+     *  being processed. When the device sends data this timeout does not affect the runtime behaviour at all. No additional delay is introduced
+     *  by it when everything runs as planned.
      */
     PropertyI imageRequestTimeout_ms;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
 //-----------------------------------------------------------------------------
-/// \brief A class to configure the behaviour of trigger signals
+/// \brief A class to configure the behaviour of trigger signals.
 /**
  *  Features in this class will open up a more flexible way to configure certain
  *  trigger events for devices then the previous features('triggerInterface',
@@ -10482,7 +11911,7 @@ public:
         return m_triggerSoftware.call();
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief Defines if the selected trigger is active.
     PropertyI64 triggerMode;
@@ -10515,7 +11944,7 @@ public:
      */
     PropertyI64DeviceTriggerOverlap triggerOverlap;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -10563,7 +11992,7 @@ public:
         locator.bindComponent( imageHeight, "ImageHeight" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the pixel format of the resulting image.
     /**
@@ -10652,12 +12081,12 @@ public:
      */
     PropertyI imageHeight;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Properties to configure which informations shall be attached to the resulting images.
+/// \brief Properties to configure which information shall be attached to the resulting images.
 /**
  *  This class provides properties allowing the user to define which additional information
  *  shall be attached to the resulting images. For example some devices can transmit the state
@@ -10678,25 +12107,51 @@ public:
  *  //-----------------------------------------------------------------------------
  *  {
  *     RequestInfoConfiguration ric( pDev );
- *     if( ric.lineStatusAll.isValid() == false )
+ *     if( !ric.lineStatusAll.isValid() )
  *     {
  *        // feature not supported
  *        return;
  *     }
  *     ric.lineStatusAll.write( bTrue );
  *     Request* pRequest = captureAnImage( pDev );
- *     printf( "%s: 0x%08x\n", pRequest->chunkLineStatusAll.name.c_str(), static_cast<int>(pRequest->chunkLineStatusAll.read()) );
+ *     printf( "%s: 0x%08x\n", pRequest->chunkLineStatusAll.name().c_str(), static_cast< int >( pRequest->chunkLineStatusAll.read() ) );
  *  }
  * \endcode
- *
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  //-----------------------------------------------------------------------------
+ *  public void fn( Device pDev )
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *     RequestInfoConfiguration ric = new RequestInfoConfiguration( pDev );
+ *     if( !ric.lineStatusAll.isValid() )
+ *     {
+ *        // feature not supported
+ *        return;
+ *     }
+ *     ric.getLineStatusAll().write( TBoolean.bTrue );
+ *     Request pRequest = captureAnImage( pDev );
+ *     System.out.println( String.format( "%s: 0x%08x\n", pRequest.getChunkLineStatusAll().name(), ( int )( pRequest.getChunkLineStatusAll().read() ) ) );
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  def fn(pdev, pRequest):
+ *    ric = acquire.RequestInfoConfiguration(pDev)
+ *    if ric.lineStatusAll.isValid == False:
+ *      # feature not supported
+ *      return
+ *    else:
+ *      ric.lineStatusAll.write(acquire.bTrue)
+ *      print(pRequest.chunkLineStatusAll.name() + ": 0x%x" %(pRequest.chunkLineStatusAll.read()))
+ * \endcode
+ * \endif
  *  E.g. for the \b mvBlueCOUGAR-X/XD series possible \c LineStatusAll values are
  *
  *  - \b 0x11, Out0 and In0 on (Out0 needs to be connected with In0 for this to work)
  *  - \b 0x33, Out0, Out1, In0 and In1 on (Out0 and Out1 need to be connected with In0 and In1 for this to work)
  *  - \b 0x37, Out0, Out1, Out2, In0 and In1 on (Out0 and Out1 need to be connected with In0 and In1 for this to work)
  *  - \b 0x3f, Out0, Out1, Out2, Out3, In0 and In1 on (Out0 and Out1 need to be connected with in0 and in1 for this to work)
- *
- *  \endif
  *
  *  \since 2.10.0
  */
@@ -10740,7 +12195,7 @@ public:
         locator.bindComponent( lineStatusAll, "LineStatusAll" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property which can be used to configure whether the frame number information shall be attached to the resulting \b mvIMPACT::acquire::Request objects.
     /**
@@ -10805,7 +12260,7 @@ public:
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
      *  \note
-     *  - This feature currently is only available for \b mvBlueLYNX-M7, \b mvBlueCOUGAR-P and \b mvBlueFOX-MLC devices
+     *  This feature currently is only available for \b mvBlueFOX-MLC devices.
      */
     PropertyIBoolean IOStatesAtExposureStart;
     /// \brief An enumerated integer property which can be used to configure whether the trigger counter at acquisition start information shall be attached to the resulting \b mvIMPACT::acquire::Request objects.
@@ -10833,7 +12288,7 @@ public:
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
      *  \note
-     *  - This feature currently is only available for \b mvVirtual, \b mvBlueCOUGAR-P and \b mvBlueLYNX-M7 devices
+     *  This feature currently is only available for \b mvVirtual devices.
      */
     PropertyIBoolean userData;
     /// \brief An enumerated integer property which can be used to configure whether the line status all information shall be attached to the resulting \b mvIMPACT::acquire::Request objects.
@@ -10844,7 +12299,7 @@ public:
      */
     PropertyIBoolean lineStatusAll;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -10882,7 +12337,7 @@ class WhiteBalanceSettings : public ComponentCollection
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the which area of the image is used
     /** for the calculation of the parameters.
@@ -10935,7 +12390,7 @@ public:
      */
     PropertyIBayerWhiteBalanceResult WBResult;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -10966,7 +12421,7 @@ class GainOffsetKneeChannelParameters : public ComponentCollection
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A float property that contains the channel specific gain to be applied to the selected channel of the image.
     /**
@@ -10979,7 +12434,7 @@ public:
      */
     PropertyF offset_pc;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -10997,6 +12452,7 @@ class LUTParameters : public ComponentCollection
     // fixed parts of that class.
     friend class ImageProcessing;
     explicit LUTParameters( HOBJ hObj ): ComponentCollection( hObj ), gamma(),
+        gammaAlpha(), gammaMode(), gammaStartThreshold(), gammaInverter(),
         valueCount(), inputValues(), outputValues(), directValues()
     {
         ComponentLocator locator( hObj );
@@ -11004,6 +12460,7 @@ class LUTParameters : public ComponentCollection
         locator.bindComponent( gammaAlpha, "GammaAlpha" );
         locator.bindComponent( gammaMode, "GammaMode" );
         locator.bindComponent( gammaStartThreshold, "GammaStartThreshold" );
+        locator.bindComponent( gammaInverter, "GammaInverter" );
         locator.bindComponent( valueCount, "ValueCount" );
         locator.bindComponent( inputValues, "InputValues" );
         locator.bindComponent( outputValues, "OutputValues" );
@@ -11011,7 +12468,7 @@ class LUTParameters : public ComponentCollection
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A float property which can be used to set the gamma value.
     /**
@@ -11058,6 +12515,27 @@ public:
      *  \b mvIMPACT::acquire::LUTgmLinearStart.
      */
     PropertyI gammaStartThreshold;
+    /// \brief An enumerated integer property defining whether the calculated gamma correction function shall be inverted or not
+    /**
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
+     *
+     *  \note This property will be invisible when \b mvIMPACT::acquire::ImageProcessing::LUTEnable is set to
+     *  \b mvIMPACT::acquire::bFalse or if \b mvIMPACT::acquire::ImageProcessing::LUTMode is \b NOT set to
+     *  \b mvIMPACT::acquire::LUTmGamma.
+     *
+     *  \attention This property is mainly provided for compatibility reasons since the original implementation of
+     *  the mvIMPACT Acquire framework and the implementation inside MATRIX VISION GmbH GenICam devices introduced later
+     *  differ. The default behaviour of the mvIMPACT Acquire results in the reverse function of the gamma function
+     *  inside the device firmware thus the gamma value specified here results in the same response as if applying
+     *  (1/gamma value) to a device. So a gamma value of 2.2 with the inverter switched off this would result in the same
+     *  response as a gamma value of 0.45 with the inverter switched on. In order not to change the default behaviour of this filter
+     *  the default value for this property will be \b mvIMPACT::acquire::bTrue and can be set to
+     *  \b mvIMPACT::acquire::bFalse to achieve the same behaviour as implemented for GenICam devices and specified in
+     *  the SFNC (GenICam Standard Features Naming Convention).
+     *
+     *  \since 2.38.0
+     */
+    PropertyIBoolean gammaInverter;
     /// \brief An integer property to define the number of sampling points for interpolated LUT transformations.
     /**
      *  \note This property will be invisible when \b mvIMPACT::acquire::ImageProcessing::LUTEnable is set to
@@ -11122,7 +12600,73 @@ public:
      *     LUTAccess.outputValues.write( v );
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  //-----------------------------------------------------------------------------
+     *  public void fn( ImageProcessing ip, final int LUTImplementation )
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    ip.getLUTEnable().write( TBoolean.bTrue );
+     *    ip.getLUTMode().write( TLUTMode.LUTmInterpolated );
+     *    ip.getLUTImplementation().write( LUTImplementation );
+     *    ip.getLUTInterpolationMode().write( TLUTInterpolationMode.LUTimThreshold );
+     *    if( LUTImplementation == TLUTImplementation.LUTiHardware )
+     *    {
+     *      ip.getLUTMappingHardware().write( TLUTMapping.LUTm8To8 );
+     *    }
+     *    else if( LUTImplementation == TLUTImplementation.LUTiSoftware )
+     *    {
+     *      ip.getLUTMappingSoftware().write( TLUTMapping.LUTm8To8 );
+     *    }
+     *    LUTParameters LUTAccess = ip.getLUTParameter( 0 );
+     *    LUTAccess.getValueCount().write( 4 );
+     *    {
+     *      IntVector v = new IntVector();
+     *      v.add( 0 );
+     *      v.add( 128 );
+     *      v.add( 192 );
+     *      v.add( 255 );
+     *      LUTAccess.getInputValues().write( v );
+     *    }
+     *    {
+     *      IntVector v = new IntVector();
+     *      v.add( 64 );
+     *      v.add( 255 );
+     *      v.add( 0 );
+     *      v.add( 0 );
+     *      LUTAccess.getOutputValues().write( v );
+     *    }
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *  This sample assumes a valid reference to a \b mvIMPACT::acquire::ImageProcessing object has been obtained.
+     *  def fn(ip, LUTImplementation):
+     *    ip.LUTEnable.write(acquire.bTrue)
+     *    ip.LUTMode.write(acquire.LUTmInterpolated)
+     *    ip.LUTImplementation.write(LUTImplementation)
+     *    ip.LUTInterpolationMode.write(LUTimThreshold)
+     *    if LUTImplementation == LUTiHardware:
+     *        ip.LUTMappingHardware.write(acquire.LUTm8To8)
+     *    elif LUTImplementation == LUTiSoftware:
+     *        ip.LUTMappingSoftware.write(acquire.LUTm8To8)
+     *
+     *    LUTAccess = ip.getLUTParameter(0)
+     *    LUTAccess.valueCount.write(4)
+     *    v = []
+     *    v[0] = 0
+     *    v[1] = 128
+     *    v[2] = 192
+     *    v[3] = 255
+     *    LUTAccess.inputValues.write(v)
+     *
+     *    v[0] = 64
+     *    v[1] = 255
+     *    v[2] = 0
+     *    v[3] = 0
+     *    LUTAccess.outputValues.write(v)
+     * \endcode
+     * \endif
      *  Assuming 3 sampling points in \b mvIMPACT::acquire::LUTimLinear mode for an 8 to 8 bit transformation where the following
      *  values are used:
      *
@@ -11184,7 +12728,7 @@ public:
      */
     PropertyI directValues;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -11211,7 +12755,7 @@ class MirrorParameters : public ComponentCollection
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the mirror mode to be applied to this channel of the image.
     /**
@@ -11219,7 +12763,7 @@ public:
      */
     PropertyIMirrorMode mirrorMode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 
 };
@@ -11294,12 +12838,24 @@ class ImageProcessing : public ComponentCollection
             locator.bindComponent( mirrorModeGlobal, "MirrorModeGlobal" );
         }
         locator.bindSearchBase( m_hRoot );
+        if( locator.findComponent( "PolarizedDataExtraction" ) != INVALID_ID )
+        {
+            locator.bindSearchBase( m_hRoot, "PolarizedDataExtraction" );
+            locator.bindComponent( polarizedDataExtractionEnable, "PolarizedDataExtractionEnable" );
+            locator.bindComponent( polarizedDataExtractionMode, "PolarizedDataExtractionMode" );
+            locator.bindComponent( polarizedDataExtractionInterpolationMode, "PolarizedDataExtractionInterpolationMode" );
+            locator.bindComponent( polarizedDataExtractionChannelIndex, "PolarizedDataExtractionChannelIndex" );
+            locator.bindComponent( polarizedDataExtractionLowerLimit, "PolarizedDataExtractionLowerLimit" );
+            locator.bindComponent( polarizedDataExtractionUpperLimit, "PolarizedDataExtractionUpperLimit" );
+        }
+        locator.bindSearchBase( m_hRoot );
         if( locator.findComponent( "DefectivePixelsFilter" ) != INVALID_ID )
         {
             locator.bindSearchBase( m_hRoot, "DefectivePixelsFilter" );
             locator.bindComponent( defectivePixelsFilterMode, "Mode" );
             locator.bindComponent( defectivePixelsFilterLeakyPixelDeviation_ADCLimit, "LeakyPixelDeviation_ADCLimit" );
             locator.bindComponent( defectivePixelsFilterColdPixelDeviation_pc, "ColdPixelDeviation_pc" );
+            locator.bindComponent( defectivePixelsMaxDetectionCount, "DefectivePixelsMaxDetectionCount" );
             locator.bindComponent( defectivePixelsFound, "DefectivePixelsFound" );
             locator.bindComponent( defectivePixelOffsetX, "DefectivePixelOffsetX" );
             locator.bindComponent( defectivePixelOffsetY, "DefectivePixelOffsetY" );
@@ -11312,7 +12868,29 @@ class ImageProcessing : public ComponentCollection
             locator.bindSearchBase( m_hRoot, "FlatFieldFilter" );
             locator.bindComponent( flatFieldFilterMode, "Mode" );
             locator.bindComponent( flatFieldFilterCorrectionMode, "CorrectionMode" );
+            locator.bindComponent( flatFieldFilterCorrectionModeReverseX, "CorrectionModeReverseX" );
+            locator.bindComponent( flatFieldFilterCorrectionModeReverseY, "CorrectionModeReverseY" );
+            locator.bindComponent( flatFieldFilterCorrectionAoiMode, "CorrectionAoiMode" );
             locator.bindComponent( flatFieldFilterCalibrationImageCount, "CalibrationImageCount" );
+            locator.bindComponent( flatFieldFilterCalibrationAoiMode, "CalibrationAoiMode" );
+            HOBJ hObj = locator.findComponent( "CorrectionAOI" );
+            if( hObj != INVALID_ID )
+            {
+                ComponentLocator l( hObj );
+                l.bindComponent( flatFieldFilterCorrectionAoiOffsetX, "X" );
+                l.bindComponent( flatFieldFilterCorrectionAoiOffsetY, "Y" );
+                l.bindComponent( flatFieldFilterCorrectionAoiWidth, "W" );
+                l.bindComponent( flatFieldFilterCorrectionAoiHeight, "H" );
+            }
+            hObj = locator.findComponent( "CalibrationAOI" );
+            if( hObj != INVALID_ID )
+            {
+                ComponentLocator l( hObj );
+                l.bindComponent( flatFieldFilterCalibrationAoiOffsetX, "X" );
+                l.bindComponent( flatFieldFilterCalibrationAoiOffsetY, "Y" );
+                l.bindComponent( flatFieldFilterCalibrationAoiWidth, "W" );
+                l.bindComponent( flatFieldFilterCalibrationAoiHeight, "H" );
+            }
         }
         locator.bindSearchBase( m_hRoot );
         if( locator.findComponent( "DarkCurrentFilter" ) != INVALID_ID )
@@ -11382,6 +12960,7 @@ class ImageProcessing : public ComponentCollection
             locator.bindSearchBase( m_hRoot, "FormatReinterpreter" );
             locator.bindComponent( formatReinterpreterEnable, "FormatReinterpreterEnable" );
             locator.bindComponent( formatReinterpreterMode, "FormatReinterpreterMode" );
+            locator.bindComponent( formatReinterpreterBayerMosaicParity, "FormatReinterpreterBayerMosaicParity" );
         }
         locator.bindSearchBase( m_hRoot );
         if( locator.findComponent( "Rotation" ) != INVALID_ID )
@@ -11395,7 +12974,7 @@ class ImageProcessing : public ComponentCollection
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -11404,7 +12983,7 @@ class ImageProcessing : public ComponentCollection
         }
     }
 public:
-    /// brief Constructs a new \b mvIMPACT::acquire::ImageProcessing object.
+    /// \brief Constructs a new \b mvIMPACT::acquire::ImageProcessing object.
     explicit ImageProcessing(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -11416,11 +12995,19 @@ public:
         const std::string& settingName = "Base" ) : ComponentCollection( pDev ), m_pRefData( 0 ),
         colorProcessing(), bayerConversionMode(), adaptiveEdgeSensingPlusSharpenThreshold(),
         adaptiveEdgeSensingPlusSharpenGain(), whiteBalance(), whiteBalanceCalibration(), filter(),
-        mirrorOperationMode(), mirrorModeGlobal(), defectivePixelsFilterMode(), defectivePixelsFilterLeakyPixelDeviation_ADCLimit(),
-        defectivePixelsFilterColdPixelDeviation_pc(), defectivePixelsFound(),
+        mirrorOperationMode(), mirrorModeGlobal(), polarizedDataExtractionEnable(),
+        polarizedDataExtractionMode(), polarizedDataExtractionInterpolationMode(),
+        polarizedDataExtractionChannelIndex(),
+        polarizedDataExtractionLowerLimit(), polarizedDataExtractionUpperLimit(),
+        defectivePixelsFilterMode(), defectivePixelsFilterLeakyPixelDeviation_ADCLimit(),
+        defectivePixelsFilterColdPixelDeviation_pc(), defectivePixelsMaxDetectionCount(), defectivePixelsFound(),
         defectivePixelOffsetX(), defectivePixelOffsetY(), defectivePixelReadFromDevice(), defectivePixelWriteToDevice(),
-        flatFieldFilterCorrectionMode(), flatFieldFilterMode(), flatFieldFilterCalibrationImageCount(), darkCurrentFilterMode(),
-        darkCurrentFilterCalibrationImageCount(),
+        flatFieldFilterMode(), flatFieldFilterCorrectionMode(), flatFieldFilterCorrectionModeReverseX(), flatFieldFilterCorrectionModeReverseY(),
+        flatFieldFilterCorrectionAoiMode(), flatFieldFilterCorrectionAoiOffsetX(), flatFieldFilterCorrectionAoiOffsetY(),
+        flatFieldFilterCorrectionAoiWidth(), flatFieldFilterCorrectionAoiHeight(), flatFieldFilterCalibrationImageCount(),
+        flatFieldFilterCalibrationAoiMode(), flatFieldFilterCalibrationAoiOffsetX(), flatFieldFilterCalibrationAoiOffsetY(),
+        flatFieldFilterCalibrationAoiWidth(), flatFieldFilterCalibrationAoiHeight(),
+        darkCurrentFilterMode(), darkCurrentFilterCalibrationImageCount(),
         gainOffsetKneeEnable(), gainOffsetKneeMasterOffset_pc(),
         LUTEnable(), LUTMode(), LUTInterpolationMode(),
         LUTImplementation(), LUTMappingHardware(), LUTMappingSoftware(),
@@ -11431,7 +13018,7 @@ public:
         colorTwistOutputCorrectionMatrixEnable(), colorTwistOutputCorrectionMatrixMode(),
         colorTwistOutputCorrectionMatrixRow0(), colorTwistOutputCorrectionMatrixRow1(), colorTwistOutputCorrectionMatrixRow2(),
         colorTwistResultingMatrixRow0(), colorTwistResultingMatrixRow1(), colorTwistResultingMatrixRow2(),
-        formatReinterpreterEnable(), formatReinterpreterMode(), rotationEnable(), rotationAngle()
+        formatReinterpreterEnable(), formatReinterpreterMode(), formatReinterpreterBayerMosaicParity(), rotationEnable(), rotationAngle()
     {
         DeviceComponentLocator locator( pDev, dltSetting, settingName );
         m_pRefData = new ReferenceCountedData();
@@ -11511,16 +13098,22 @@ public:
             while( hList != INVALID_ID );
         }
     }
-    /// \brief Constructs a new \b mvIMPACT::acquire::ImageProcessing from and existing one.
-    explicit ImageProcessing(
+    /// \brief Constructs a new \b mvIMPACT::acquire::ImageProcessing from an existing one.
+    ImageProcessing(
         /// [in] A constant reference to the \b mvIMPACT::acquire::ImageProcessing object, this object shall be created from
-        const ImageProcessing& src ) : ComponentCollection( src ), m_pRefData( src.m_pRefData ),
+        const ImageProcessing& src ) : ComponentCollection( src.hObj() ), m_pRefData( src.m_pRefData ),
         colorProcessing( src.colorProcessing ), bayerConversionMode( src.bayerConversionMode ),
         adaptiveEdgeSensingPlusSharpenThreshold( src.adaptiveEdgeSensingPlusSharpenThreshold ),
         adaptiveEdgeSensingPlusSharpenGain( src.adaptiveEdgeSensingPlusSharpenGain ), whiteBalance( src.whiteBalance ),
         whiteBalanceCalibration( src.whiteBalanceCalibration ), filter( src.filter ),
         mirrorOperationMode( src.mirrorOperationMode ),
-        mirrorModeGlobal( src.mirrorModeGlobal ), defectivePixelsFilterMode( src.defectivePixelsFilterMode ),
+        mirrorModeGlobal( src.mirrorModeGlobal ), polarizedDataExtractionEnable( src.polarizedDataExtractionEnable ),
+        polarizedDataExtractionMode( src.polarizedDataExtractionMode ),
+        polarizedDataExtractionInterpolationMode( src.polarizedDataExtractionInterpolationMode ),
+        polarizedDataExtractionChannelIndex( src.polarizedDataExtractionChannelIndex ),
+        polarizedDataExtractionLowerLimit( src.polarizedDataExtractionLowerLimit ),
+        polarizedDataExtractionUpperLimit( src.polarizedDataExtractionUpperLimit ),
+        defectivePixelsFilterMode( src.defectivePixelsFilterMode ),
         defectivePixelsFilterLeakyPixelDeviation_ADCLimit( src.defectivePixelsFilterLeakyPixelDeviation_ADCLimit ),
         defectivePixelsFilterColdPixelDeviation_pc( src.defectivePixelsFilterColdPixelDeviation_pc ),
         defectivePixelsFound( src.defectivePixelsFound ),
@@ -11528,9 +13121,21 @@ public:
         defectivePixelOffsetY( src.defectivePixelOffsetY ),
         defectivePixelReadFromDevice( src.defectivePixelReadFromDevice ),
         defectivePixelWriteToDevice( src.defectivePixelWriteToDevice ),
-        flatFieldFilterCorrectionMode( src.flatFieldFilterCorrectionMode ),
         flatFieldFilterMode( src.flatFieldFilterMode ),
+        flatFieldFilterCorrectionMode( src.flatFieldFilterCorrectionMode ),
+        flatFieldFilterCorrectionModeReverseX( src.flatFieldFilterCorrectionModeReverseX ),
+        flatFieldFilterCorrectionModeReverseY( src.flatFieldFilterCorrectionModeReverseY ),
+        flatFieldFilterCorrectionAoiMode( src.flatFieldFilterCorrectionAoiMode ),
+        flatFieldFilterCorrectionAoiOffsetX( src.flatFieldFilterCorrectionAoiOffsetX ),
+        flatFieldFilterCorrectionAoiOffsetY( src.flatFieldFilterCorrectionAoiOffsetY ),
+        flatFieldFilterCorrectionAoiWidth( src.flatFieldFilterCorrectionAoiWidth ),
+        flatFieldFilterCorrectionAoiHeight( src.flatFieldFilterCorrectionAoiHeight ),
         flatFieldFilterCalibrationImageCount( src.flatFieldFilterCalibrationImageCount ),
+        flatFieldFilterCalibrationAoiMode( src.flatFieldFilterCalibrationAoiMode ),
+        flatFieldFilterCalibrationAoiOffsetX( src.flatFieldFilterCalibrationAoiMode ),
+        flatFieldFilterCalibrationAoiOffsetY( src.flatFieldFilterCalibrationAoiOffsetY ),
+        flatFieldFilterCalibrationAoiWidth( src.flatFieldFilterCalibrationAoiWidth ),
+        flatFieldFilterCalibrationAoiHeight( src.flatFieldFilterCalibrationAoiHeight ),
         darkCurrentFilterMode( src.darkCurrentFilterMode ),
         darkCurrentFilterCalibrationImageCount( src.darkCurrentFilterCalibrationImageCount ),
         gainOffsetKneeEnable( src.gainOffsetKneeEnable ), gainOffsetKneeMasterOffset_pc( src.gainOffsetKneeMasterOffset_pc ),
@@ -11555,6 +13160,7 @@ public:
         colorTwistResultingMatrixRow2( src.colorTwistResultingMatrixRow2 ),
         formatReinterpreterEnable( src.formatReinterpreterEnable ),
         formatReinterpreterMode( src.formatReinterpreterMode ),
+        formatReinterpreterBayerMosaicParity( src.formatReinterpreterBayerMosaicParity ),
         rotationEnable( src.rotationEnable ), rotationAngle( src.rotationAngle )
     {
         ++( m_pRefData->m_refCnt );
@@ -11564,8 +13170,7 @@ public:
     {
         dealloc();
     }
-#ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::ImageProcessing objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::ImageProcessing objects.
     ImageProcessing& operator=( const ImageProcessing& rhs )
     {
         if( this != &rhs )
@@ -11578,9 +13183,8 @@ public:
         }
         return *this;
     }
-#endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining what kind of color processing shall be applied to the raw image data.
     /**
@@ -11651,6 +13255,53 @@ public:
      *  to \b mvIMPACT::acquire::momGlobal.
      */
     PropertyIMirrorMode mirrorModeGlobal;
+    /// \brief An enumerated integer property defining whether the polarization data extraction filter shall be active or not.
+    /**
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
+     *
+     *  \since 2.29.0
+     */
+    PropertyIBoolean polarizedDataExtractionEnable;
+    /// \brief An enumerated integer property defining in which mode the polarization data extraction filter shall be operated in.
+    /**
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TPolarizedDataExtractionMode.
+     *
+     *  \since 2.29.0
+     */
+    PropertyIPolarizedDataExtractionMode polarizedDataExtractionMode;
+    /// \brief An enumerated integer property defining the interpolation mode the polarization data extraction filter shall be operated in.
+    /**
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TPolarizedDataExtractionInterpolationMode.
+     *
+     *  \note This property will only be available when the polarization data extraction mode is either horizontal, vertical or single.
+     *
+     *  \since 2.29.0
+     */
+    PropertyIPolarizedDataExtractionInterpolationMode polarizedDataExtractionInterpolationMode;
+    /// \brief An integer property defining the channel within the processing window of the polarization data extraction filter.
+    /**
+     *  This channel will only be taken into account when \b mvIMPACT::acquire::ImageProcessing::polarizedDataExtractionMode is set to
+     *  \b mvIMPACT::acquire::prmExtractSingle.
+     *
+     *  \since 2.29.0
+     */
+    PropertyI polarizedDataExtractionChannelIndex;
+    /// \brief An integer property defining the lower limit of the grey value of a pixel to be taken into account within the processing window of the polarization data extraction filter.
+    /**
+     *  This limit will only be taken into account when \b mvIMPACT::acquire::ImageProcessing::polarizedDataExtractionMode is set to
+     *  \b mvIMPACT::acquire::prmMeanValue.
+     *
+     *  \since 2.29.0
+     */
+    PropertyI polarizedDataExtractionLowerLimit;
+    /// \brief An integer property defining the upper limit of the grey value of a pixel to be taken into account within the processing window of the polarization data extraction filter.
+    /**
+     *  This limit will only be taken into account when \b mvIMPACT::acquire::ImageProcessing::polarizedDataExtractionMode is set to
+     *  \b mvIMPACT::acquire::prmMeanValue.
+     *
+     *  \since 2.29.0
+     */
+    PropertyI polarizedDataExtractionUpperLimit;
     /// \brief An enumerated integer property defining the operation mode of the defective pixels filter.
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TDefectivePixelsFilterMode.
@@ -11671,8 +13322,37 @@ public:
      *  mode of the filter.
      */
     PropertyI defectivePixelsFilterColdPixelDeviation_pc;
+    /// \brief An integer property defining maximum the number of pixels considered as being defective during consecutive calibration runs.
+    /**
+     *  With this property it is possible to define an upper limit for the number of detected defective pixels. This is not to be meant
+     *  as an error checking mechanism for sensors reporting more defective pixels but to allow an application to keep the length of the
+     *  list of defective pixels within reasonable boundaries. The more pixels a sensor has the higher a reasonable value might be. Set this
+     *  to a value suitable for your application to protect the algorithm from huge lists due to incorrect calibration environments (too much light,
+     *  not enough light, ...).
+     *
+     *  When after a calibration this value and the value of the \b mvIMPACT::acquire::ImageProcessing::defectivePixelsFound property are the
+     *  same this indicates a problem. There are several possible reasons for this:
+     *
+     *  - the lighting conditions or calibration parameters have not been set up correctly (fix your setup then)
+     *  - the sensor is damaged (replace the device then)
+     *  - the sensor has more defective pixels then indicated by the value of this property but which are still valid according to the specification of the sensor manufacturer (adjust the value of this property accordingly then)
+     *
+     *  \attention When reducing this value at runtime excess pixels will be dropped from the current list of defective pixels if the new maximum list length is smaller then the amount of
+     *  defective pixels currently detected.
+     *
+     *  \attention Some devices might offer to store defective pixels inside the device in an mvIMPACT Acquire compatible format by calling \b mvIMPACT::acquire::ImageProcessing::defectivePixelWriteToDevice.
+     *  However the device might not be able to store all these pixels due to a lack of storage space. Therefore always check the return value of the function!
+     *
+     *  \note
+     *  In order to get rid of currently detected pixels an application must set the property
+     *  \b mvIMPACT::acquire::ImageProcessing::defectivePixelsFilterMode to \b mvIMPACT::acquire::dpfmResetCalibration
+     *  and then capture a fresh image. Only then all currently detected pixels will be discarded.
+     *
+     *  \since 2.37.0
+     */
+    PropertyI defectivePixelsMaxDetectionCount;
     /// \brief An integer property \b (read-only) containing the number of pixels considered as being defective with respect to the
-    /// last calibration run.
+    /// calibration runs executed after the last reset of the calibration data.
     /**
      *  \note
      *  In order to collect \b ALL defective pixels the list of detected pixels is not emptied each time a new calibration
@@ -11709,7 +13389,7 @@ public:
      *  \since 2.17.1
      */
     PropertyI defectivePixelOffsetY;
-    /// \brief Calling this method will download defective pixels from the device
+    /// \brief Calling this method will download defective pixels from the device.
     /**
      *  \note
      *  In order to collect \b ALL defective pixels the list of detected pixels is not emptied each time a download from the device is executed.
@@ -11727,7 +13407,7 @@ public:
      *  - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR otherwise. Most likely mvIMPACT::acquire::DMR_FEATURE_NOT_AVAILABLE if the device does not support this feature.
      */
     Method defectivePixelReadFromDevice;
-    /// \brief Calling this method will upload defective pixels from the device
+    /// \brief Calling this method will upload defective pixels from the device.
     /**
      *  \note
      *  This will \b NOT automatically store this data in non-volatile memory on the device!
@@ -11743,18 +13423,102 @@ public:
      *  - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR otherwise. Most likely mvIMPACT::acquire::DMR_FEATURE_NOT_AVAILABLE if the device does not support this feature.
      */
     Method defectivePixelWriteToDevice;
-    /// \brief An enumerated integer property defining the correction mode of the flat field correction filter.
-    /**
-     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TFlatFieldFilterCorrectionMode.
-     */
-    PropertyIFlatFieldFilterCorrectionMode flatFieldFilterCorrectionMode;
     /// \brief An enumerated integer property defining the operation mode of the flat field correction filter.
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TFlatFieldFilterMode.
      */
     PropertyIFlatFieldFilterMode flatFieldFilterMode;
+    /// \brief An enumerated integer property defining the correction mode of the flat field correction filter.
+    /**
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TFlatFieldFilterCorrectionMode.
+     */
+    PropertyIFlatFieldFilterCorrectionMode flatFieldFilterCorrectionMode;
+    /// \brief An enumerated integer property defining the X-orientation that shall be used when applying the correction.
+    /**
+     *  When active the calibration image will be applied reversed X direction thus the last correction factor of each line of the correction image will be applied to the first pixel of the image etc.. This can be useful e.g. if the calibration has been done and the device shall transmit the image flipped on a vertical axis in some configurations.
+     *
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
+     *
+     *  \since 2.40.0
+     */
+    PropertyIBoolean flatFieldFilterCorrectionModeReverseX;
+    /// \brief An enumerated integer property defining the Y-orientation that shall be used when applying the correction.
+    /**
+     *  When active the calibration image will be applied reversed Y direction thus the last line of correction factors of the correction image will be applied to the first line of the image etc.. This can be useful e.g. if the calibration has been done and the device shall transmit the image flipped on a horizontal axis in some configurations.
+     *
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
+     *
+     *  \since 2.40.0
+     */
+    PropertyIBoolean flatFieldFilterCorrectionModeReverseY;
+    /// \brief An enumerated integer property defining the correction AOI mode of the flat field correction filter.
+    /**
+     *  When using an AOI only the AOI region is corrected by this filter.
+     *
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TAoiMode.
+     *
+     *  \since 2.31.0
+     */
+    PropertyIAoiMode flatFieldFilterCorrectionAoiMode;
+    /// \brief An integer property defining the correction AOI's X-offset of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCorrectionAoiOffsetX;
+    /// \brief An integer property defining the correction AOI's Y-offset of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCorrectionAoiOffsetY;
+    /// \brief An integer property defining the correction AOI's width of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCorrectionAoiWidth;
+    /// \brief An integer property defining the correction AOI's height of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCorrectionAoiHeight;
     /// \brief An integer property defining the number of consecutive images to take into account during the calibration of the flat field filter.
     PropertyI flatFieldFilterCalibrationImageCount;
+    /// \brief An enumerated integer property defining the correction AOI mode of the flat field correction filter.
+    /**
+     *  When using an AOI only the AOI region is taken into consideration during calibration by this filter.
+     *
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TAoiMode.
+     *
+     *  \since 2.31.0
+     */
+    PropertyIAoiMode flatFieldFilterCalibrationAoiMode;
+    /// \brief An integer property defining the calibration AOI's X-offset of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCalibrationAoiOffsetX;
+    /// \brief An integer property defining the calibration AOI's Y-offset of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCalibrationAoiOffsetY;
+    /// \brief An integer property defining the calibration AOI's width of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCalibrationAoiWidth;
+    /// \brief An integer property defining the calibration AOI's height of the flat field correction filter.
+    /**
+     *
+     *  \since 2.31.0
+     */
+    PropertyI flatFieldFilterCalibrationAoiHeight;
     /// \brief An enumerated integer property defining the operation mode of the dark current filter.
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TDarkCurrentFilterMode.
@@ -11870,7 +13634,7 @@ public:
     PropertyIColorTwistInputCorrectionMatrixMode colorTwistInputCorrectionMatrixMode;
     /// \brief The first row of the input color correction matrix.
     /**
-     *  This property will store the first row of a user defined 3x3 input color correction matrix if
+     *  This property stores the first row of a user defined 3x3 input color correction matrix if
      *  \b mvIMPACT::acquire::ImageProcessing::colorTwistInputCorrectionMatrixMode is set to
      *  \b mvIMPACT::acquire::cticmmUser. For other values of \b mvIMPACT::acquire::ImageProcessing::colorTwistInputCorrectionMatrixMode
      *  modifying this property will have no effect.
@@ -11880,7 +13644,7 @@ public:
     PropertyF colorTwistInputCorrectionMatrixRow0;
     /// \brief The second row of the input color correction matrix.
     /**
-     *  This property will store the second row of a user defined 3x3 input color correction matrix if
+     *  This property stores the second row of a user defined 3x3 input color correction matrix if
      *  \b mvIMPACT::acquire::ImageProcessing::colorTwistInputCorrectionMatrixMode is set to
      *  \b mvIMPACT::acquire::cticmmUser. For other values of \b mvIMPACT::acquire::ImageProcessing::colorTwistInputCorrectionMatrixMode
      *  modifying this property will have no effect.
@@ -11890,7 +13654,7 @@ public:
     PropertyF colorTwistInputCorrectionMatrixRow1;
     /// \brief The third row of the input color correction matrix.
     /**
-     *  This property will store the third row of a user defined 3x3 input color correction matrix if
+     *  This property stores the third row of a user defined 3x3 input color correction matrix if
      *  \b mvIMPACT::acquire::ImageProcessing::colorTwistInputCorrectionMatrixMode is set to
      *  \b mvIMPACT::acquire::cticmmUser. For other values of \b mvIMPACT::acquire::ImageProcessing::colorTwistInputCorrectionMatrixMode
      *  modifying this property will have no effect.
@@ -11902,15 +13666,15 @@ public:
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
      *
-     *  The color twist filter can be used to apply a linear transformation to a 3 channel image. Each pixel will first
-     *  be multiplied by a 3x3 matrix and can then be added to an offset triplet.
+     *  The color twist filter can be used to apply a linear transformation to a 3 channel image. Each pixel will
+     *  at first be multiplied by a 3x3 matrix and afterwards an offset triplet can be added.
      *
      *  \since 2.2.2.
      */
     PropertyIBoolean colorTwistEnable;
     /// \brief The first row of the color twist matrix.
     /**
-     *  This property will store 4 values. The first 3 components for the first row of the 3x4 matrix, the last component is the
+     *  This property stores 4 values. The first 3 components for the first row of the 3x4 matrix, the last component is the
      *  offset of this row.
      *
      *  \since 2.2.2.
@@ -11918,7 +13682,7 @@ public:
     PropertyF colorTwistRow0;
     /// \brief The second row of the color twist matrix.
     /**
-     *  This property will store 4 values. The first 3 components for the second row of the 3x4 matrix, the last component is the
+     *  This property stores 4 values. The first 3 components for the second row of the 3x4 matrix, the last component is the
      *  offset of this row.
      *
      *  \since 2.2.2.
@@ -11926,7 +13690,7 @@ public:
     PropertyF colorTwistRow1;
     /// \brief The third row of the color twist matrix.
     /**
-     *  This property will store 4 values. The first 3 components for the third row of the 3x4 matrix, the last component is the
+     *  This property stores 4 values. The first 3 components for the third row of the 3x4 matrix, the last component is the
      *  offset of this row.
      *
      *  \since 2.2.2.
@@ -11948,7 +13712,7 @@ public:
     PropertyIColorTwistOutputCorrectionMatrixMode colorTwistOutputCorrectionMatrixMode;
     /// \brief The first row of the output color correction matrix.
     /**
-     *  This property will store the first row of a user defined 3x3 output color correction matrix if
+     *  This property stores the first row of a user defined 3x3 output color correction matrix if
      *  \b mvIMPACT::acquire::ImageProcessing::colorTwistOutputCorrectionMatrixMode is set to
      *  \b mvIMPACT::acquire::ctocmmUser. For other values of \b mvIMPACT::acquire::ImageProcessing::colorTwistOutputCorrectionMatrixMode
      *  modifying this property will have no effect.
@@ -11958,7 +13722,7 @@ public:
     PropertyF colorTwistOutputCorrectionMatrixRow0;
     /// \brief The second row of the output color correction matrix.
     /**
-     *  This property will store the second row of a user defined 3x3 output color correction matrix if
+     *  This property stores the second row of a user defined 3x3 output color correction matrix if
      *  \b mvIMPACT::acquire::ImageProcessing::colorTwistOutputCorrectionMatrixMode is set to
      *  \b mvIMPACT::acquire::ctocmmUser. For other values of \b mvIMPACT::acquire::ImageProcessing::colorTwistOutputCorrectionMatrixMode
      *  modifying this property will have no effect.
@@ -11968,7 +13732,7 @@ public:
     PropertyF colorTwistOutputCorrectionMatrixRow1;
     /// \brief The third row of the output color correction matrix.
     /**
-     *  This property will store the third row of a user defined 3x3 output color correction matrix if
+     *  This property stores the third row of a user defined 3x3 output color correction matrix if
      *  \b mvIMPACT::acquire::ImageProcessing::colorTwistOutputCorrectionMatrixMode is set to
      *  \b mvIMPACT::acquire::ctocmmUser. For other values of \b mvIMPACT::acquire::ImageProcessing::colorTwistOutputCorrectionMatrixMode
      *  modifying this property will have no effect.
@@ -12022,6 +13786,16 @@ public:
      *  \since 2.10.1
      */
     PropertyIImageBufferFormatReinterpreterMode formatReinterpreterMode;
+    /// \brief An enumerated integer property defining the new Bayer parity of this buffer.
+    /**
+     *  After applying the format reinterpreter this will be the new Bayer parity of the buffer when the filter is operated
+     *  in one of the \c Mono \c To \c Mono modes.
+     *
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBayerMosaicParity.
+     *
+     *  \since 2.31.0
+     */
+    PropertyIBayerMosaicParity formatReinterpreterBayerMosaicParity;
     /// \brief An enumerated integer property which can be used to enable/disable the rotation filter.
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
@@ -12037,7 +13811,7 @@ public:
      */
     PropertyF rotationAngle;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
     /// \brief Sets the saturation by using the color twist matrix.
     /**
@@ -12167,8 +13941,140 @@ public:
     }
 };
 
+
+
 //-----------------------------------------------------------------------------
-/// \brief Contains basic statistical information
+/// \brief Convenience class to provide an easy way for a more precise white balance calibration.
+/**
+ *  A convenience function which will be used to do a white balance calibration
+ *  with more than 8bit image data to increase the precision of the calculated
+ *  gain values.
+ *
+ *  \note
+ *  Since a homogeneous grey image is needed for the processing, it is necessary
+ *  that the camera is not configured to a triggered mode and a reasonable
+ *  exposure time.
+ */
+class WhiteBalancer
+//-----------------------------------------------------------------------------
+{
+public:
+
+    static void highQualityWhiteBalance( Device* pDev )
+    {
+        FunctionInterface fi( pDev );
+        ImageProcessing ip( pDev );
+        fi.saveCurrentSettingOnStack();
+
+        PropertyI64 pixelFormat;
+        DeviceComponentLocator locator( pDev, dltSetting, "" );
+        locator.bindComponent( pixelFormat, "PixelFormat" );
+
+        std::vector<std::string> availablePixelFormats;
+        pixelFormat.getTranslationDictStrings( availablePixelFormats );
+        std::string sBayerColorMask;
+        bool boIsBayer = false;
+        bool boIsMono = false;
+        int iMaxBitDepth = 0;
+        const std::string bayerToken = "Bayer";
+        const std::string monoToken = "Mono";
+
+        for( std::vector<std::string>::size_type i = 0; i != availablePixelFormats.size(); i++ )
+        {
+            boIsBayer = ( availablePixelFormats[i].find( bayerToken ) ) != std::string::npos;
+            boIsMono = ( availablePixelFormats[i].find( monoToken ) ) != std::string::npos;
+            std::string sTempBitDepth = "";
+            for( size_t j = 0; j < availablePixelFormats[i].length(); j++ )
+            {
+                if( isdigit( availablePixelFormats[i][j] ) )
+                {
+                    sTempBitDepth += availablePixelFormats[i][j];
+                }
+                if( boIsBayer )
+                {
+                    if( sBayerColorMask == "" )
+                    {
+                        // extract the Bayer parity AFTER the word 'Bayer'
+                        const std::string::size_type len = bayerToken.length();
+                        sBayerColorMask += availablePixelFormats[i][len];
+                        sBayerColorMask += availablePixelFormats[i][len + 1];
+                    }
+                }
+            }
+            const int iTempBitDepth = atoi( sTempBitDepth.c_str() );
+            if( iTempBitDepth > iMaxBitDepth )
+            {
+                iMaxBitDepth = iTempBitDepth;
+            }
+        }
+
+        const std::string sPixelFormatPrefix = ( boIsBayer && !boIsMono ) ? bayerToken : monoToken;
+        std::ostringstream sOptimalPixelFormat;
+        sOptimalPixelFormat << sPixelFormatPrefix << sBayerColorMask << iMaxBitDepth;
+
+        try
+        {
+            pixelFormat.writeS( sOptimalPixelFormat.str() );
+        }
+        catch( const ImpactAcquireException& ) {}
+
+        PropertyF balanceRatio;
+        PropertyI64 balanceRatioSelector;
+        locator.bindComponent( balanceRatio, "BalanceRatio" );
+        locator.bindComponent( balanceRatioSelector, "BalanceRatioSelector" );
+
+        if( ( pDev->interfaceLayout.read() == dilGenICam ) && balanceRatioSelector.isValid() && balanceRatio.isValid() )
+        {
+            try
+            {
+                balanceRatioSelector.writeS( "Red" );
+                balanceRatio.write( 1.00 );
+
+                balanceRatioSelector.writeS( "Blue" );
+                balanceRatio.write( 1.00 );
+            }
+            catch( const ImpactAcquireException& ) {}
+        }
+
+        ip.whiteBalance.write( wbpUser1 );
+        ip.whiteBalanceCalibration.write( wbcmNextFrame );
+
+        fi.imageRequestSingle();
+        fi.acquisitionStart();
+        int requestNr = fi.imageRequestWaitFor( 8000 );
+        Request* pRequest = fi.isRequestNrValid( requestNr ) ? fi.getRequest( requestNr ) : 0;
+        if( pRequest )
+        {
+            pRequest->unlock();
+        }
+        fi.acquisitionStop();
+
+        WhiteBalanceSettings& wbs( ip.getWBUserSetting( 0 ) );
+        const double dRedGain = wbs.redGain.read();
+        const double dGreenGain = wbs.greenGain.read();
+        const double dBlueGain = wbs.blueGain.read();
+
+        fi.loadAndDeleteSettingFromStack();
+
+        if( ( pDev->interfaceLayout.read() == dilGenICam ) && balanceRatioSelector.isValid() && balanceRatio.isValid() )
+        {
+            balanceRatioSelector.writeS( "Red" );
+            balanceRatio.write( dRedGain / dGreenGain );
+
+            balanceRatioSelector.writeS( "Blue" );
+            balanceRatio.write( dBlueGain / dGreenGain );
+        }
+        else
+        {
+            wbs.redGain.write( dRedGain );
+            wbs.greenGain.write( dGreenGain );
+            wbs.blueGain.write( dBlueGain );
+        }
+    }
+};
+
+//-----------------------------------------------------------------------------
+/// \brief Contains basic statistical information.
 /**
  *  This class contains basic statistical information about the \b mvIMPACT::acquire::Device and the
  *  the current image acquisition progress.
@@ -12218,7 +14124,7 @@ public:
         return m_resetStatistics.call();
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A float property \b (read-only) containing the overall time an image request spent in the device drivers processing chain.
     /**
@@ -12245,6 +14151,9 @@ public:
     PropertyF framesPerSecond;
     /// \brief An integer property \b (read-only) containing the overall count of images captured since the
     /// \b mvIMPACT::acquire::Device has been opened OR since the last call to \b mvIMPACT::acquire::Statistics::reset().
+    /**
+     *  This counter is incremented regardless of the result a request is returned with thus also e.g. if a request did time out, was aborted(e.g. due to a call to \b mvIMPACT::acquire::FunctionInterface::imageRequestReset or \b mvIMPACT::acquire::FunctionInterface::acquisitionStop) or the data was not completely captured.
+     */
     PropertyI frameCount;
     /// \brief An integer property \b (read-only) containing the time (in seconds) needed to process the image data internally.
     /**
@@ -12318,7 +14227,7 @@ public:
      */
     PropertyI64 retransmitCount;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -12348,7 +14257,7 @@ public:
     }
     virtual ~FullSettingsBase() {}
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief Image processing related properties.
     ImageProcessing imageProcessing;
@@ -12357,10 +14266,11 @@ public:
     /// \brief A string property \b (read-only) containing the name of the setting this setting is based on.
     PropertyS basedOn;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
+#ifndef WRAP_ANY
 /// \brief \b deprecated. Use the class \b mvIMPACT::acquire::Statistics instead
 /**
  *  \deprecated
@@ -12368,9 +14278,8 @@ public:
  *  All features of this class are available in \b mvIMPACT::acquire::Statistics as well, so please use
  *  this class instead.
  */
-#ifndef WRAP_PYTHON
 typedef Statistics MVIMPACT_DEPRECATED_CPP( StatisticsBase );
-#endif // #ifndef WRAP_PYTHON
+#endif // #ifndef WRAP_ANY
 
 //-----------------------------------------------------------------------------
 /// \brief A base class for accessing settings that control the overall behaviour of a device driver.
@@ -12384,17 +14293,17 @@ public:
     /// \brief Constructs a new \b mvIMPACT::acquire::SystemSettings object.
     explicit SystemSettings(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
-        Device* pDev ) : ComponentCollection( pDev ), requestCount(), workerPriority(),
-        acquisitionMode(), acquisitionIdleTimeMax_ms(), imageProcessingMode(), imageProcessingOptimization(),
+        Device* pDev ) : ComponentCollection( pDev ), requestCount(),
+        acquisitionMode(), acquisitionIdleTimeMax_ms(), imageProcessingMode(), imageProcessingMaximumThreadCount(), imageProcessingOptimization(),
         featurePollingEnable(), featurePollingInterval_ms(), methodPollingInterval_ms(), methodPollingMaxRetryCount()
     {
         DeviceComponentLocator locator( pDev, dltSystemSettings );
         m_hRoot = locator.searchbase_id();
         locator.bindComponent( requestCount, "RequestCount" );
-        locator.bindComponent( workerPriority, "WorkerPriority" );
         locator.bindComponent( acquisitionMode, "AcquisitionMode" );
         locator.bindComponent( acquisitionIdleTimeMax_ms, "AcquisitionIdleTimeMax_ms" );
         locator.bindComponent( imageProcessingMode, "ImageProcessingMode" );
+        locator.bindComponent( imageProcessingMaximumThreadCount, "ImageProcessingMaximumThreadCount" );
         locator.bindComponent( imageProcessingOptimization, "ImageProcessingOptimization" );
         locator.bindComponent( featurePollingEnable, "FeaturePollingEnable" );
         locator.bindComponent( featurePollingInterval_ms, "FeaturePollingInterval_ms" );
@@ -12402,14 +14311,19 @@ public:
         locator.bindComponent( methodPollingMaxRetryCount, "MethodPollingMaxRetryCount" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property defining the number of requests allocated by the driver.
     /**
      *  Each request object can be used to capture data into. Multiple requests can be processed
      *  by a device driver as background tasks.
      *
-     *  \note for performance reasons this value can be increased at any time(only exception: Working with the interface layout
+     *  Setting this property to a value at least allowing a driver to capture data for up to 500ms without user interaction (thus 0.5 times the expected frame rate) is highly
+     *  recommended. Increasing this value will NOT introduce additional latency to your application. The only drawback will be additional RAM consumption by the driver but
+     *  applications that do not need to copy the request buffers can even benefit from that as the overall memory fragmentation is likely to go down then.
+     *  Values smaller than 3 most likely result in undesired behaviour and should be avoided unless absolutely needed.
+     *
+     *  \note For performance reasons this value can be increased at any time(only exception: Working with the interface layout
      *  \b mvIMPACT::acquire::dilGenICam while streaming is active) but can only be
      *  decreased when no request object is currently locked by the application and no requests has been
      *  queued for acquisition. So modifying this value might require the application to call \b mvIMPACT::acquire::FunctionInterface::imageRequestReset
@@ -12418,25 +14332,15 @@ public:
      *  There are not too many reasons to modify the default request count suggested by the device driver. Good reasons include:
      *
      *  - a single image is huge compared to the overall system memory(e.g. a single image has 200MB while the system itself only
-     *  has about 2GB of RAM. Here it might make sense to reduce the number of capture buffers to 1 or 2.
+     *  has about 2GB of RAM. Here it might make sense to reduce the number of capture buffers to 1 or 2. Please note that in such a
+     *  scenario double buffering or live display when one buffer is constantly blocked by the display engine can become a challenge!
      *  - the frame rate is high(larger than 100 frames per second) and no frames shall be lost. Here it might make sense to set
-     *  the number of capture buffers to something like frame rate divided by 10 as a rule of thumb.
+     *  the number of capture buffers to something like frame rate divided by 2 to 5 as a rule of thumb.
      *
      *  \sa
      *  \b mvIMPACT::acquire::FunctionInterface::requestCount
      */
     PropertyI requestCount;
-    /// \brief An enumerated integer property defining the thread priority of the drivers internal worker thread (\b deprecated).
-    /**
-     *  \deprecated
-     *  This property has been declared <b>deprecated</b> and will be removed in future versions of this interface. There
-     *  is no replacement. Simply remove all references to this property in your code. The original intent of this property was
-     *  to allow an application to fine tune thread priorities, but it turned out that this does not provide any real benefit
-     *  but instead confuses users.
-     *
-     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TThreadPriority.
-     */
-    PropertyIThreadPriority workerPriority;
     /// \brief An enumerated integer property defining the acquisition mode of the device.
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TAcquisitionMode.
@@ -12475,6 +14379,23 @@ public:
      *
      */
     PropertyIImageProcessingMode imageProcessingMode;
+    /// \brief An integer property influencing the number of parallel threads used by the internal image processing pipeline.
+    /**
+     * This property can be used to control the size of the internal thread pool used for image processing tasks. Using
+     * a value higher than the number of physical CPU cores usually has a negative impact on the performance. Use with care!
+     *
+     * \note
+     * This property will only be available on some platforms. Always check if this property is available before using it!
+     *
+     * \sa
+     * \b mvIMPACT::acquire::SystemSettings::imageProcessingOptimization \n
+     * \b mvIMPACT::acquire::SystemSettings::imageProcessingMode \n
+     * \ref ImageProcessing_General_Multithreading
+     *
+     *  \since 2.41.0
+     *
+     */
+    PropertyI imageProcessingMaximumThreadCount;
     /// \brief An enumerated integer property influencing the behaviour of the internal image processing algorithms.
     /**
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TImageProcessingOptimization.
@@ -12531,10 +14452,11 @@ public:
      */
     PropertyI methodPollingMaxRetryCount;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
+#ifndef WRAP_ANY
 /// \brief \b deprecated. Use the class \b mvIMPACT::acquire::SystemSettings instead
 /**
  *  \deprecated
@@ -12542,9 +14464,8 @@ public:
  *  All features of this class are available in \b mvIMPACT::acquire::SystemSettings as well, so please use
  *  this class instead.
  */
-#ifndef WRAP_PYTHON
 typedef SystemSettings MVIMPACT_DEPRECATED_CPP( SystemBase );
-#endif // #ifndef WRAP_PYTHON
+#endif // #ifndef WRAP_ANY
 
 /// @}
 
@@ -12558,321 +14479,290 @@ typedef SystemSettings MVIMPACT_DEPRECATED_CPP( SystemBase );
 ///
 /// @{
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAcquisitionField
+#if defined(WRAP_JAVA) || defined(BUILD_FOR_JAVA)
+typedef EnumPropertyI<int> PropertyIAcquisitionField;
+typedef EnumPropertyI<int> PropertyIAutoControlSpeed;
+typedef EnumPropertyI<int> PropertyIAutoControlMode;
+typedef EnumPropertyI<int> PropertyIAutoExposureControl;
+typedef EnumPropertyI<int> PropertyIAutoGainControl;
+typedef EnumPropertyI<int> PropertyIAutoOffsetCalibration;
+typedef EnumPropertyI<int> PropertyIBlueFOXDigitalInputThreshold;
+typedef EnumPropertyI<int> PropertyIBlueFOXFooterMode;
+typedef EnumPropertyI<int> PropertyIBlueFOXInfoSensorCapabilities;
+typedef EnumPropertyI<int> PropertyIBlueFOXOffsetAutoBlackSpeed;
+typedef EnumPropertyI<int> PropertyIBlueFOXSensorTiming;
+typedef EnumPropertyI<int> PropertyIBlueFOXTransferSize;
+typedef EnumPropertyI<int> PropertyICameraAoiMode;
+typedef EnumPropertyI<int> PropertyICameraBinningMode;
+typedef EnumPropertyI<int> PropertyICameraDataFormat;
+typedef EnumPropertyI<int> PropertyICameraExposeMode;
+typedef EnumPropertyI<int> PropertyICameraExternalSyncEdge;
+typedef EnumPropertyI<int> PropertyICameraExternalSyncOutput;
+typedef EnumPropertyI<int> PropertyICameraFlashMode;
+typedef EnumPropertyI<int> PropertyICameraFlashType;
+typedef EnumPropertyI<int> PropertyICameraHDRMode;
+typedef EnumPropertyI<int> PropertyICameraInterlacedType;
+typedef EnumPropertyI<int> PropertyICameraLinkDataValidMode;
+typedef EnumPropertyI<int> PropertyICameraPixelClock;
+typedef EnumPropertyI<int> PropertyICameraScanMode;
+typedef EnumPropertyI<int> PropertyICameraShutterMode;
+typedef EnumPropertyI<int> PropertyICameraTapsXGeometry;
+typedef EnumPropertyI<int> PropertyICameraTapsYGeometry;
+typedef EnumPropertyI<int> PropertyICameraTriggerMode;
+typedef EnumPropertyI<int> PropertyICameraTestMode;
+typedef EnumPropertyI<int> PropertyICameraSerialPortBaudRate;
+typedef EnumPropertyI<int> PropertyICameraTriggerSource;
+typedef EnumPropertyI<int> PropertyIClampMode;
+typedef EnumPropertyI<int> PropertyIDeviceAdvancedOptions;
+typedef EnumPropertyI<int> PropertyIDeviceDigitalOutputMode;
+typedef EnumPropertyI<int> PropertyIDeviceEventMode;
+typedef EnumPropertyI<int> PropertyIDeviceEventType;
+typedef EnumPropertyI<int> PropertyIDeviceImageTrigger;
+typedef EnumPropertyI<int> PropertyIDevicePowerMode;
+typedef EnumPropertyI<int> PropertyIDeviceScanRateMode;
+typedef EnumPropertyI<int> PropertyIDeviceSignalOutputStartEvent;
+typedef EnumPropertyI<int> PropertyIDeviceSyncOutMode;
+typedef EnumPropertyI<int> PropertyIDeviceTriggerInterface;
+typedef EnumPropertyI<int> PropertyIDeviceTriggerMode;
+typedef EnumPropertyI<int> PropertyIDigIOState;
+typedef EnumPropertyI<int> PropertyIDigitalIOMeasurementMode;
+typedef EnumPropertyI<int> PropertyIDigitalIOMeasurementSource;
+typedef EnumPropertyI<int> PropertyIDigitalOutputControlMode;
+typedef EnumPropertyI<int> PropertyIDigitalSignal;
+typedef std::vector<std::pair<std::string, int> > TDigitalSignalTranslationDict;
+typedef EnumPropertyI<int> PropertyIFieldGateMode;
+typedef EnumPropertyI<int> PropertyII2COperationMode;
+typedef EnumPropertyI<int> PropertyII2COperationStatus;
+typedef EnumPropertyI<int> PropertyIInfoSensorColorMode;
+typedef EnumPropertyI<int> PropertyIInfoSensorType;
+typedef EnumPropertyI<int> PropertyIInterlacedMode;
+typedef EnumPropertyI<int> PropertyILineCounter;
+typedef EnumPropertyI<int> PropertyIMemoryManagerMode;
+typedef EnumPropertyI<int> PropertyIMemoryManagerPoolMode;
+typedef EnumPropertyI<int> PropertyIOnBoardMemoryMode;
+typedef EnumPropertyI<int> PropertyIPulseStartTrigger;
+typedef EnumPropertyI<int> PropertyIRTCtrlModes;
+typedef EnumPropertyI<int> PropertyIRTProgOpCodes;
+typedef EnumPropertyI<int> PropertyIScanClock;
+typedef EnumPropertyI<int> PropertyIScanStandard;
+typedef EnumPropertyI<int> PropertyITriggerMoment;
+typedef EnumPropertyI<int> PropertyIVideoStandard;
+typedef EnumPropertyI<int> PropertyIVirtualDeviceImageType;
+typedef EnumPropertyI<int> PropertyIVirtualDeviceTestMode;
+#else
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAcquisitionField.
 typedef EnumPropertyI<TAcquisitionField> PropertyIAcquisitionField;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAcquisitionField, EnumPropertyI, mvIMPACT::acquire::TAcquisitionField ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoControlSpeed
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoControlSpeed.
 typedef EnumPropertyI<TAutoControlSpeed> PropertyIAutoControlSpeed;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoControlSpeed, EnumPropertyI, mvIMPACT::acquire::TAutoControlSpeed ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoControlMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoControlMode.
 typedef EnumPropertyI<TAutoControlMode> PropertyIAutoControlMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoControlMode, EnumPropertyI, mvIMPACT::acquire::TAutoControlMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoExposureControl
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoExposureControl.
 typedef EnumPropertyI<TAutoExposureControl> PropertyIAutoExposureControl;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoExposureControl, EnumPropertyI, mvIMPACT::acquire::TAutoExposureControl ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoGainControl
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoGainControl.
 typedef EnumPropertyI<TAutoGainControl> PropertyIAutoGainControl;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoGainControl, EnumPropertyI, mvIMPACT::acquire::TAutoGainControl ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoOffsetCalibration
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TAutoOffsetCalibration.
 typedef EnumPropertyI<TAutoOffsetCalibration> PropertyIAutoOffsetCalibration;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoOffsetCalibration, EnumPropertyI, mvIMPACT::acquire::TAutoOffsetCalibration ) )
 
 #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXDigitalInputThreshold
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXDigitalInputThreshold.
 typedef EnumPropertyI<TBlueFOXDigitalInputThreshold> PropertyIBlueFOXDigitalInputThreshold;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXDigitalInputThreshold, EnumPropertyI, mvIMPACT::acquire::TBlueFOXDigitalInputThreshold ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXFooterMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXFooterMode.
 typedef EnumPropertyI<TBlueFOXFooterMode> PropertyIBlueFOXFooterMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXFooterMode, EnumPropertyI, mvIMPACT::acquire::TBlueFOXFooterMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXInfoSensorCapabilities
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXInfoSensorCapabilities.
 typedef EnumPropertyI<TBlueFOXInfoSensorCapabilities> PropertyIBlueFOXInfoSensorCapabilities;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXInfoSensorCapabilities, EnumPropertyI, mvIMPACT::acquire::TBlueFOXInfoSensorCapabilities ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXOffsetAutoBlackSpeed
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXOffsetAutoBlackSpeed.
 typedef EnumPropertyI<TBlueFOXOffsetAutoBlackSpeed> PropertyIBlueFOXOffsetAutoBlackSpeed;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXOffsetAutoBlackSpeed, EnumPropertyI, mvIMPACT::acquire::TBlueFOXOffsetAutoBlackSpeed ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXSensorTiming
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXSensorTiming.
 typedef EnumPropertyI<TBlueFOXSensorTiming> PropertyIBlueFOXSensorTiming;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXSensorTiming, EnumPropertyI, mvIMPACT::acquire::TBlueFOXSensorTiming ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXTransferSize
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TBlueFOXTransferSize.
 typedef EnumPropertyI<TBlueFOXTransferSize> PropertyIBlueFOXTransferSize;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXTransferSize, EnumPropertyI, mvIMPACT::acquire::TBlueFOXTransferSize ) )
 #endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraAoiMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraAoiMode.
 typedef EnumPropertyI<TCameraAoiMode> PropertyICameraAoiMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraAoiMode, EnumPropertyI, mvIMPACT::acquire::TCameraAoiMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraBinningMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraBinningMode.
 typedef EnumPropertyI<TCameraBinningMode> PropertyICameraBinningMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraBinningMode, EnumPropertyI, mvIMPACT::acquire::TCameraBinningMode ) )
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraDataFormat
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraDataFormat.
 typedef EnumPropertyI<TCameraDataFormat> PropertyICameraDataFormat;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraDataFormat, EnumPropertyI, mvIMPACT::acquire::TCameraDataFormat ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraExposeMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraExposeMode.
 typedef EnumPropertyI<TCameraExposeMode> PropertyICameraExposeMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraExposeMode, EnumPropertyI, mvIMPACT::acquire::TCameraExposeMode ) )
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraExternalSyncEdge
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraExternalSyncEdge.
 typedef EnumPropertyI<TCameraExternalSyncEdge> PropertyICameraExternalSyncEdge;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraExternalSyncEdge, EnumPropertyI, mvIMPACT::acquire::TCameraExternalSyncEdge ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraExternalSyncOutput
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraExternalSyncOutput.
 typedef EnumPropertyI<TCameraExternalSyncOutput> PropertyICameraExternalSyncOutput;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraExternalSyncOutput, EnumPropertyI, mvIMPACT::acquire::TCameraExternalSyncOutput ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraFlashMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraFlashMode.
 typedef EnumPropertyI<TCameraFlashMode> PropertyICameraFlashMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraFlashMode, EnumPropertyI, mvIMPACT::acquire::TCameraFlashMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraFlashType
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraFlashType.
 typedef EnumPropertyI<TCameraFlashType> PropertyICameraFlashType;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraFlashType, EnumPropertyI, mvIMPACT::acquire::TCameraFlashType ) )
-
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraHDRMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraHDRMode.
 typedef EnumPropertyI<TCameraHDRMode> PropertyICameraHDRMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraHDRMode, EnumPropertyI, mvIMPACT::acquire::TCameraHDRMode ) )
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraInterlacedType
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraInterlacedType.
 typedef EnumPropertyI<TCameraInterlacedType> PropertyICameraInterlacedType;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraInterlacedType, EnumPropertyI, mvIMPACT::acquire::TCameraInterlacedType ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraLinkDataValidMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraLinkDataValidMode.
 typedef EnumPropertyI<TCameraLinkDataValidMode> PropertyICameraLinkDataValidMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraLinkDataValidMode, EnumPropertyI, mvIMPACT::acquire::TCameraLinkDataValidMode ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraPixelClock
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraPixelClock.
 typedef EnumPropertyI<TCameraPixelClock> PropertyICameraPixelClock;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraPixelClock, EnumPropertyI, mvIMPACT::acquire::TCameraPixelClock ) )
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraScanMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraScanMode.
 typedef EnumPropertyI<TCameraScanMode> PropertyICameraScanMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraScanMode, EnumPropertyI, mvIMPACT::acquire::TCameraScanMode ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraShutterMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraShutterMode.
 typedef EnumPropertyI<TCameraShutterMode> PropertyICameraShutterMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraShutterMode, EnumPropertyI, mvIMPACT::acquire::TCameraShutterMode ) )
 #endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTapsXGeometry
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTapsXGeometry.
 typedef EnumPropertyI<TCameraTapsXGeometry> PropertyICameraTapsXGeometry;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTapsXGeometry, EnumPropertyI, mvIMPACT::acquire::TCameraTapsXGeometry ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTapsYGeometry
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTapsYGeometry.
 typedef EnumPropertyI<TCameraTapsYGeometry> PropertyICameraTapsYGeometry;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTapsYGeometry, EnumPropertyI, mvIMPACT::acquire::TCameraTapsYGeometry ) )
-#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTriggerMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTriggerMode.
 typedef EnumPropertyI<TCameraTriggerMode> PropertyICameraTriggerMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTriggerMode, EnumPropertyI, mvIMPACT::acquire::TCameraTriggerMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTestMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTestMode.
 typedef EnumPropertyI<TCameraTestMode> PropertyICameraTestMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTestMode, EnumPropertyI, mvIMPACT::acquire::TCameraTestMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraSerialPortBaudRate
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraSerialPortBaudRate.
 typedef EnumPropertyI<TCameraSerialPortBaudRate> PropertyICameraSerialPortBaudRate;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraSerialPortBaudRate, EnumPropertyI, mvIMPACT::acquire::TCameraSerialPortBaudRate ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTriggerSource
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TCameraTriggerSource.
 typedef EnumPropertyI<TCameraTriggerSource> PropertyICameraTriggerSource;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTriggerSource, EnumPropertyI, mvIMPACT::acquire::TCameraTriggerSource ) )
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TClampMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TClampMode.
 typedef EnumPropertyI<TClampMode> PropertyIClampMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIClampMode, EnumPropertyI, mvIMPACT::acquire::TClampMode ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceAdvancedOptions
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceAdvancedOptions.
 typedef EnumPropertyI<TDeviceAdvancedOptions> PropertyIDeviceAdvancedOptions;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceAdvancedOptions, EnumPropertyI, mvIMPACT::acquire::TDeviceAdvancedOptions ) )
-
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceDigitalOutputMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceDigitalOutputMode.
 typedef EnumPropertyI<TDeviceDigitalOutputMode> PropertyIDeviceDigitalOutputMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceDigitalOutputMode, EnumPropertyI, mvIMPACT::acquire::TDeviceDigitalOutputMode ) )
-#endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceEventMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceEventMode.
 typedef EnumPropertyI<TDeviceEventMode> PropertyIDeviceEventMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceEventMode, EnumPropertyI, mvIMPACT::acquire::TDeviceEventMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceEventType
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceEventType.
 typedef EnumPropertyI<TDeviceEventType> PropertyIDeviceEventType;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceEventType, EnumPropertyI, mvIMPACT::acquire::TDeviceEventType ) )
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceImageTrigger
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceImageTrigger.
 typedef EnumPropertyI<TDeviceImageTrigger> PropertyIDeviceImageTrigger;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceImageTrigger, EnumPropertyI, mvIMPACT::acquire::TDeviceImageTrigger ) )
-#endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDevicePowerMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDevicePowerMode.
 typedef EnumPropertyI<TDevicePowerMode> PropertyIDevicePowerMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDevicePowerMode, EnumPropertyI, mvIMPACT::acquire::TDevicePowerMode ) )
 #endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceScanRateMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceScanRateMode.
 typedef EnumPropertyI<TDeviceScanRateMode> PropertyIDeviceScanRateMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceScanRateMode, EnumPropertyI, mvIMPACT::acquire::TDeviceScanRateMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceSignalOutputStartEvent
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceSignalOutputStartEvent.
 typedef EnumPropertyI<TDeviceSignalOutputStartEvent> PropertyIDeviceSignalOutputStartEvent;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceSignalOutputStartEvent, EnumPropertyI, mvIMPACT::acquire::TDeviceSignalOutputStartEvent ) )
-#endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceSyncOutMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceSyncOutMode.
 typedef EnumPropertyI<TDeviceSyncOutMode> PropertyIDeviceSyncOutMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceSyncOutMode, EnumPropertyI, mvIMPACT::acquire::TDeviceSyncOutMode ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceTriggerInterface
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceTriggerInterface.
 typedef EnumPropertyI<TDeviceTriggerInterface> PropertyIDeviceTriggerInterface;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceTriggerInterface, EnumPropertyI, mvIMPACT::acquire::TDeviceTriggerInterface ) )
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceTriggerMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDeviceTriggerMode.
 typedef EnumPropertyI<TDeviceTriggerMode> PropertyIDeviceTriggerMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceTriggerMode, EnumPropertyI, mvIMPACT::acquire::TDeviceTriggerMode ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigIOState
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigIOState.
 typedef EnumPropertyI<TDigIOState> PropertyIDigIOState;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigIOState, EnumPropertyI, mvIMPACT::acquire::TDigIOState ) )
 
 #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalIOMeasurementMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalIOMeasurementMode.
 typedef EnumPropertyI<TDigitalIOMeasurementMode> PropertyIDigitalIOMeasurementMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalIOMeasurementMode, EnumPropertyI, mvIMPACT::acquire::TDigitalIOMeasurementMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalIOMeasurementSource
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalIOMeasurementSource.
 typedef EnumPropertyI<TDigitalIOMeasurementSource> PropertyIDigitalIOMeasurementSource;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalIOMeasurementSource, EnumPropertyI, mvIMPACT::acquire::TDigitalIOMeasurementSource ) )
 #endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalOutputControlMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalOutputControlMode.
 typedef EnumPropertyI<TDigitalOutputControlMode> PropertyIDigitalOutputControlMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalOutputControlMode, EnumPropertyI, mvIMPACT::acquire::TDigitalOutputControlMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalSignal
-typedef EnumPropertyI<TDigitalSignal> PropertyIDigitalSignal;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalSignal, EnumPropertyI, mvIMPACT::acquire::TDigitalSignal ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TFieldGateMode
-typedef EnumPropertyI<TFieldGateMode> PropertyIFieldGateMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIFieldGateMode, EnumPropertyI, mvIMPACT::acquire::TFieldGateMode ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TI2COperationMode
-typedef EnumPropertyI<TI2COperationMode> PropertyII2COperationMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyII2COperationMode, EnumPropertyI, mvIMPACT::acquire::TI2COperationMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TI2COperationStatus
-typedef EnumPropertyI<TI2COperationStatus> PropertyII2COperationStatus;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyII2COperationStatus, EnumPropertyI, mvIMPACT::acquire::TI2COperationStatus ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TInfoSensorColorMode
-typedef EnumPropertyI<TInfoSensorColorMode> PropertyIInfoSensorColorMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIInfoSensorColorMode, EnumPropertyI, mvIMPACT::acquire::TInfoSensorColorMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TInfoSensorType
-typedef EnumPropertyI<TInfoSensorType> PropertyIInfoSensorType;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIInfoSensorType, EnumPropertyI, mvIMPACT::acquire::TInfoSensorType ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TInterlacedMode
-typedef EnumPropertyI<TInterlacedMode> PropertyIInterlacedMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIInterlacedMode, EnumPropertyI, mvIMPACT::acquire::TInterlacedMode ) )
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TDigitalSignal.
+typedef EnumPropertyI<TDigitalSignal> PropertyIDigitalSignal;
+typedef std::vector<std::pair<std::string, TDigitalSignal> > TDigitalSignalTranslationDict;
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLineCounter
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TFieldGateMode.
+typedef EnumPropertyI<TFieldGateMode> PropertyIFieldGateMode;
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TI2COperationMode.
+typedef EnumPropertyI<TI2COperationMode> PropertyII2COperationMode;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TI2COperationStatus.
+typedef EnumPropertyI<TI2COperationStatus> PropertyII2COperationStatus;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TInfoSensorColorMode.
+typedef EnumPropertyI<TInfoSensorColorMode> PropertyIInfoSensorColorMode;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TInfoSensorType.
+typedef EnumPropertyI<TInfoSensorType> PropertyIInfoSensorType;
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TInterlacedMode.
+typedef EnumPropertyI<TInterlacedMode> PropertyIInterlacedMode;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TLineCounter.
 typedef EnumPropertyI<TLineCounter> PropertyILineCounter;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyILineCounter, EnumPropertyI, mvIMPACT::acquire::TLineCounter ) )
-#endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 #if !defined(IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMemoryManagerMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMemoryManagerMode.
 typedef EnumPropertyI<TMemoryManagerMode> PropertyIMemoryManagerMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIMemoryManagerMode, EnumPropertyI, mvIMPACT::acquire::TMemoryManagerMode ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMemoryManagerPoolMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TMemoryManagerPoolMode.
 typedef EnumPropertyI<TMemoryManagerPoolMode> PropertyIMemoryManagerPoolMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIMemoryManagerPoolMode, EnumPropertyI, mvIMPACT::acquire::TMemoryManagerPoolMode ) )
 #endif // #if !defined(IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TOnBoardMemoryMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TOnBoardMemoryMode.
 typedef EnumPropertyI<TOnBoardMemoryMode> PropertyIOnBoardMemoryMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIOnBoardMemoryMode, EnumPropertyI, mvIMPACT::acquire::TOnBoardMemoryMode ) )
-#endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TPulseStartTrigger
-typedef EnumPropertyI<TPulseStartTrigger> PropertyIPulseStartTrigger;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIPulseStartTrigger, EnumPropertyI, mvIMPACT::acquire::TPulseStartTrigger ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRTCtrlModes
-typedef EnumPropertyI<TRTCtrlModes> PropertyIRTCtrlModes;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIRTCtrlModes, EnumPropertyI, mvIMPACT::acquire::TRTCtrlModes ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRTProgOpCodes
-typedef EnumPropertyI<TRTProgOpCodes> PropertyIRTProgOpCodes;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIRTProgOpCodes, EnumPropertyI, mvIMPACT::acquire::TRTProgOpCodes ) )
-
-#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScanClock
-typedef EnumPropertyI<TScanClock> PropertyIScanClock;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIScanClock, EnumPropertyI, mvIMPACT::acquire::TScanClock ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScanStandard
-typedef EnumPropertyI<TScanStandard> PropertyIScanStandard;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIScanStandard, EnumPropertyI, mvIMPACT::acquire::TScanStandard ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TTriggerMoment
-typedef EnumPropertyI<TTriggerMoment> PropertyITriggerMoment;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyITriggerMoment, EnumPropertyI, mvIMPACT::acquire::TTriggerMoment ) )
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TPulseStartTrigger.
+typedef EnumPropertyI<TPulseStartTrigger> PropertyIPulseStartTrigger;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRTCtrlModes.
+typedef EnumPropertyI<TRTCtrlModes> PropertyIRTCtrlModes;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TRTProgOpCodes.
+typedef EnumPropertyI<TRTProgOpCodes> PropertyIRTProgOpCodes;
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TVideoStandard
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScanClock.
+typedef EnumPropertyI<TScanClock> PropertyIScanClock;
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TScanStandard.
+typedef EnumPropertyI<TScanStandard> PropertyIScanStandard;
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TTriggerMoment.
+typedef EnumPropertyI<TTriggerMoment> PropertyITriggerMoment;
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TVideoStandard.
 typedef EnumPropertyI<TVideoStandard> PropertyIVideoStandard;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIVideoStandard, EnumPropertyI, mvIMPACT::acquire::TVideoStandard ) )
 #endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 #ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TVirtualDeviceImageType
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TVirtualDeviceImageType.
 typedef EnumPropertyI<TVirtualDeviceImageType> PropertyIVirtualDeviceImageType;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIVirtualDeviceImageType, EnumPropertyI, mvIMPACT::acquire::TVirtualDeviceImageType ) )
-
-/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TVirtualDeviceTestMode
+/// \brief Defines a property for values defined by \b mvIMPACT::acquire::TVirtualDeviceTestMode.
 typedef EnumPropertyI<TVirtualDeviceTestMode> PropertyIVirtualDeviceTestMode;
-PYTHON_ONLY( ENUM_PROPERTY( PropertyIVirtualDeviceTestMode, EnumPropertyI, mvIMPACT::acquire::TVirtualDeviceTestMode ) )
 #endif // #ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
+#endif // #if defined(WRAP_JAVA) || defined(BUILD_FOR_JAVA)
 
 #   ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 //-----------------------------------------------------------------------------
@@ -12888,9 +14778,9 @@ PYTHON_ONLY( ENUM_PROPERTY( PropertyIVirtualDeviceTestMode, EnumPropertyI, mvIMP
  *  system during startup and is shared between all installed devices.
  *
  *  The memory size needed to achieve optimal performance depends on the image size to grab, the queue depth
- *  and the mode the memory manager is operated in. Valid modes are defined by the enumeration
- *  \b mvIMPACT::acquire::TMemoryManagerMode and can be selected by modifying the property
- *  \b mvIMPACT::acquire::ImageMemoryManager::mode.
+ *  and the mode the memory manager is operated in.
+ *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TMemoryManagerMode
+ *  and can be selected by modifying the property \b mvIMPACT::acquire::ImageMemoryManager::mode.
  *
  *  \note This class is currently available for frame grabber devices only.
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
@@ -12921,7 +14811,7 @@ public:
         locator.bindComponent( poolBlockCount, "PoolBlockCount" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property containing the mode the memory manager is currently operated in.
     /**
@@ -12944,7 +14834,7 @@ public:
     /// \brief An integer property \b (read-only) containing the number of individual blocks of DMA memory currently available when using the current pool block size and pool mode.
     PropertyI poolBlockCount;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
@@ -12977,7 +14867,7 @@ public:
         locator.bindComponent( sensorType, "SensorType" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property \b (read-only) containing the horizontal resolution of the camera sensor.
     /**
@@ -13013,17 +14903,17 @@ public:
      */
     PropertyIInfoSensorType sensorType;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
 
 #   ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 //-----------------------------------------------------------------------------
-/// \brief A more specific class to query information about a \b mvBlueCOUGAR or \b mvBlueLYNX-M7 device and its driver(\b Device specific interface layout only).
+/// \brief A more specific class to query information about a \b mvBlueCOUGAR devices and its driver(\b Device specific interface layout only).
 /**
  *  This class contains a collection of properties providing various information about
- *  a \b mvBlueCOUGAR or \b mvBlueLYNX-M7 device and its driver.
+ *  a \b mvBlueCOUGAR devices and its driver.
  *
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
@@ -13035,82 +14925,22 @@ public:
     /// \brief Constructs a new \b mvIMPACT::acquire::InfoBlueCOUGAR object.
     explicit InfoBlueCOUGAR(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
-        Device* pDev ) : InfoBlueDevice( pDev ), deviceBootloaderVersion(), deviceRFSVersion(),
-        deviceKernelVersion(), deviceFPGAVersion(), deviceStatus(), deviceStatusMessage(),
-        deviceSensorRevision(), clientConnectionState()
+        Device* pDev ) : InfoBlueDevice( pDev ), deviceFPGAVersion()
     {
         ComponentLocator locator( m_hRoot, "Camera" );
-        locator.bindComponent( deviceBootloaderVersion, "DeviceBootloaderVersion" );
-        locator.bindComponent( deviceRFSVersion, "DeviceRFSVersion" );
-        locator.bindComponent( deviceKernelVersion, "DeviceKernelVersion" );
         locator.bindComponent( deviceFPGAVersion, "DeviceFPGAVersion" );
-        locator.bindComponent( deviceStatus, "DeviceStatus" );
-        locator.bindComponent( deviceStatusMessage, "DeviceStatusMessage" );
-        locator.bindComponent( deviceSensorRevision, "DeviceSensorRevision" );
-        locator.bindComponent( clientConnectionState, "ClientConnectionState" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
-    /// \brief A 64 bit integer property \b (read-only) containing the current bootloader version of this device.
-    /**
-     *  \note
-     *  This feature is only supported by \b mvBlueCOUGAR-P and mvBlueLYNX-M7 devices.
-     */
-    PropertyI64 deviceBootloaderVersion;
-    /// \brief A 64 bit integer property \b (read-only) containing the current version of the root file system (RFS) of this device.
-    /**
-     *  \note
-     *  This feature is only supported by \b mvBlueCOUGAR-P and mvBlueLYNX-M7 devices.
-     */
-    PropertyI64 deviceRFSVersion;
-    /// \brief A 64 bit integer property \b (read-only) containing the current kernel version of this device.
-    /**
-     *  \note
-     *  This feature is only supported by \b mvBlueCOUGAR-P and mvBlueLYNX-M7 devices.
-     */
-    PropertyI64 deviceKernelVersion;
     /// \brief A 64 bit integer property \b (read-only) containing the current FPGA version of this device.
     /**
      *  \note
-     *  This feature is only supported by \b mvBlueCOUGAR-P and mvBlueLYNX-M7 devices.
+     *  This feature is only supported by \b mvBlueCOUGAR-S devices.
      */
     PropertyI64 deviceFPGAVersion;
-    /// \brief A 64 bit integer property \b (read-only) containing the current device status of the sensor head of this device.
-    /**
-     *  If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-     *  this property will contain as many values as the devices offers sensor heads.
-     *
-     *  \note
-     *  This feature is only supported by \b mvBlueCOUGAR-P and mvBlueLYNX-M7 devices.
-     */
-    PropertyI64 deviceStatus;
-    /// \brief A string property \b (read-only) containing the current device status message of the sensor head of this device.
-    /**
-     *  If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-     *  this property will contain as many values as the devices offers sensor heads.
-     *
-     *  \note
-     *  This feature is only supported by \b mvBlueCOUGAR-P and mvBlueLYNX-M7 devices.
-     */
-    PropertyS deviceStatusMessage;
-    /// \brief A 64 bit integer property \b (read-only) containing the current revision of the sensor head of this device.
-    /**
-     *  If the device has more than one sensor head, and all these sensor heads can be accessed using the current interface,
-     *  this property will contain as many values as the devices offers sensor heads.
-     *
-     *  \note
-     *  This feature is only supported by \b mvBlueCOUGAR-P and mvBlueLYNX-M7 devices.
-     */
-    PropertyI64 deviceSensorRevision;
-    /// \brief An integer property \b (read-only) providing information about the current connection state of a remote client.
-    /**
-     *  A value different from 0 indicates that at least one client is connected to this device. When \b NOT working locally
-     *  this property will always contain '1'.
-     */
-    PropertyI clientConnectionState;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
@@ -13145,7 +14975,7 @@ public:
         locator.bindComponent( deviceTemperature, "DeviceTemperature" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property \b (read-only) containing the firmware version of this device.
     PropertyI firmwareVersion;
@@ -13191,7 +15021,7 @@ public:
      */
     PropertyF deviceTemperature;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
@@ -13223,7 +15053,7 @@ public:
         const TDMR_ERROR result = DMR_UpdateDigitalInputs( m_hDrv );
         if( result != DMR_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
         return m_register.read( m_bitNumber ) != 0;
     }
@@ -13340,14 +15170,14 @@ class SyncOutput : public ComponentCollection
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A float property defining the frequency(in Hertz) for the sync. signal generated by this pin.
     PropertyF frequency_Hz;
     /// \brief A float property defining the width in percent the sync. signal stays low during one period. The output signal generated will be a square pulse.
     PropertyF lowPart_pc;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
     /// \brief Returns a description for this sync. output.
     /**
@@ -13399,7 +15229,7 @@ class RTCtrProgramStep : public ComponentCollection
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property, which defines the absolute jump address within this \b mvIMPACT::acquire::RTCtrProgram.
     /**
@@ -13488,7 +15318,7 @@ public:
      */
     PropertyI registerValue;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13570,7 +15400,133 @@ public:
  *    // when it is constantly feed with image requests.
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  //=============================================================================
+ *  public static void runAt10Hz( Device pBF )
+ *  //=============================================================================
+ *  {
+ *    CameraSettingsBlueFOX bfs = new CameraSettingsBlueFOX( pBF );
+ *    IOSubSystemBlueFOX bfIOs = new IOSubSystemBlueFOX( pBF );
+ *    // define a HRTC program that results in a define image frequency
+ *    // the hardware real time controller shall be used to trigger an image
+ *    bfs.getTriggerSource().write( TCameraTriggerSource.ctsRTCtrl );
+ *    // when the hardware real time controller switches the trigger signal to
+ *    // high the exposure of the image shall start
+ *    bfs.getTriggerMode().write( TCameraTriggerMode.ctmOnRisingEdge );
+ *
+ *    // error checks
+ *    if( bfIOs.RTCtrProgramCount() == 0 )
+ *    {
+ *      // no HRTC controllers available (this never happens for the mvBlueFOX)
+ *      return;
+ *    }
+ *
+ *    RTCtrProgram pRTCtrlProgram = bfIOs.getRTCtrProgram( 0 );
+ *    if( pRTCtrlProgram == null )
+ *    {
+ *      // this only should happen if the system is short of memory
+ *      return;
+ *    }
+ *
+ *    // start of the program
+ *
+ *    // we need 5 steps for the program
+ *    pRTCtrlProgram.setProgramSize(5);
+ *
+ *    // wait a certain amount of time to achieve the desired frequency
+ *    int progStep = 0;
+ *    RTCtrProgramStep pRTCtrlStep = null;
+ *    pRTCtrlStep = pRTCtrlProgram.programStep( progStep++ );
+ *    pRTCtrlStep.getOpCode().write( TRTProgOpCodes.rtctrlProgWaitClocks );
+ *    pRTCtrlStep.getClocks_us().write( 99900 );
+ *
+ *    // trigger an image
+ *    pRTCtrlStep = pRTCtrlProgram.programStep( progStep++ );
+ *    pRTCtrlStep.getOpCode().write( TRTProgOpCodes.rtctrlProgTriggerSet );
+ *
+ *    // high time for the trigger signal (should not be smaller than 100 us)
+ *    pRTCtrlStep = pRTCtrlProgram.programStep( progStep++ );
+ *    pRTCtrlStep.getOpCode().write( TRTProgOpCodes.rtctrlProgWaitClocks );
+ *    pRTCtrlStep.getClocks_us().write( 100 );
+ *
+ *    // end trigger signal
+ *    pRTCtrlStep = pRTCtrlProgram.programStep( progStep++ );
+ *    pRTCtrlStep.getOpCode().write( TRTProgOpCodes.rtctrlProgTriggerReset );
+ *
+ *    // restart the program
+ *    pRTCtrlStep = pRTCtrlProgram.programStep( progStep++ );
+ *    pRTCtrlStep.getOpCode().write( TRTProgOpCodes.rtctrlProgJumpLoc );
+ *    pRTCtrlStep.getAddress().write( 0 );
+ *
+ *    // start the program
+ *    pRTCtrlProgram.getMode().write( TRTCtrlModes.rtctrlModeRun );
+ *
+ *    // Now this camera will deliver images at exactly 10 Hz ( 1 / ( 99900 us + 100us ) )
+ *    // when it is constantly feed with image requests.
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  def runAt10Hz(pBF):
+ *     bfs = acquire.CameraSettingsBlueFOX(pBF)
+ *     bfIOs = acquire.IOSubSystemBlueFOX(pBF)
+ *     # define a HRTC program that results in a define image frequency
+ *     # the hardware real time controller shall be used to trigger an image
+ *     bfs.triggerSource.write(acquire.ctsRTCtrl)
+ *     # when the hardware real time controller switches the trigger signal to
+ *     # high the exposure of the image shall start
+ *     bfs.triggerMode.write(acquire.ctmOnRisingEdge)
+ *
+ *     # error checks
+ *     if bfIOs.RTCtrProgramCount == 0:
+ *         # no HRTC controllers available (this never happens for the mvBlueFOX)
+ *         return
+ *
+ *    pRTCtrlProgram = bfIOs.getRTCtrProgram(0)
+ *    if pRTCtrlProgram == None:
+ *       # this only should happen if the system is short of memory
+ *       return
+ *
+ *    # start of the program
+ *    # we need 5 steps for the program
+ *    pRTCtrlProgram.setProgramSize(5)
+ *    # wait a certain amount of time to achieve the desired frequency
+ *    progStep = 0
+ *    pRTCtrlStep = None
+ *    pRTCtrlStep = pRTCtrlProgram.programStep(progStep)
+ *    pRTCtrlStep.opCode.write(acquire.rtctrlProgWaitClocks)
+ *    pRTCtrlStep.clocks_us.write(99900)
+ *
+ *    # trigger an image
+ *    progStep = progStep + 1
+ *    pRTCtrlStep = pRTCtrlProgram.programStep(progStep)
+ *    pRTCtrlStep.opCode.write(acquire.rtctrlProgTriggerSet)
+ *
+ *    # high time for the trigger signal (should not be smaller than 100 us)
+ *    progStep = progStep + 1
+ *    pRTCtrlStep = pRTCtrlProgram.programStep(progStep)
+ *    pRTCtrlStep.opCode.write(acquire.rtctrlProgWaitClocks)
+ *    pRTCtrlStep.clocks_us.write(100)
+ *
+ *    # end trigger signal
+ *    progStep = progStep + 1
+ *    pRTCtrlStep = pRTCtrlProgram.programStep(progStep)
+ *    pRTCtrlStep.opCode.write(acquire.rtctrlProgTriggerReset)
+ *
+ *    # restart the program
+ *    progStep = progStep + 1
+ *    pRTCtrlStep = pRTCtrlProgram.programStep(progStep)
+ *    pRTCtrlStep.opCode.write(acquire.rtctrlProgJumpLoc)
+ *    pRTCtrlStep.address.write(0)
+ *
+ *    # start the program
+ *    pRTCtrlProgram.mode.write(acquire.rtctrlModeRun)
+ *
+ *    # Now this camera will deliver images at exactly 10 Hz (1 / (99900 us + 100us))
+ *    # when it is constantly feed with image requests.
+ * \endcode
+ * \endif
  *
  *  Once this program has been defined it can be executed by setting the \a mode
  *  property to \b mvIMPACT::acquire::rtctrlModeRun. As in this example we do not
@@ -13636,7 +15592,7 @@ class RTCtrProgram : public ComponentCollection
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -13662,7 +15618,7 @@ class RTCtrProgram : public ComponentCollection
         else if( lSize > vSize )
         {
             // new steps have been created
-            ComponentIterator iter( m_pRefData->m_programStepList );
+            Component iter( m_pRefData->m_programStepList );
             iter = iter.firstChild();
             // move to the next valid end point
             for( unsigned int i = 0; i < vSize; i++ )
@@ -13690,7 +15646,7 @@ class RTCtrProgram : public ComponentCollection
     }
 public:
     /// \brief Constructs a new \b mvIMPACT::acquire::RTCtrProgram from an existing one.
-    explicit RTCtrProgram(
+    RTCtrProgram(
         /// [in] A constant reference to the \b mvIMPACT::acquire::RTCtrProgram object, this object shall be created from
         const RTCtrProgram& src ) : ComponentCollection( src.m_hRoot ), m_pRefData( src.m_pRefData ), mode( src.mode ),
         filename( src.filename ), programState( src.programState )
@@ -13702,8 +15658,7 @@ public:
     {
         dealloc();
     }
-#   ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::RTCtrProgram objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::RTCtrProgram objects.
     RTCtrProgram& operator=( const RTCtrProgram& rhs )
     {
         if( this != &rhs )
@@ -13716,7 +15671,6 @@ public:
         }
         return *this;
     }
-#   endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief A function to define the number of instructions this program should consist of.
     void setProgramSize(
         /// [in] The new number of program instructions
@@ -13750,7 +15704,7 @@ public:
         return m_pRefData->m_programSteps.at( nr );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the current state this program is into.
     /**
@@ -13772,7 +15726,7 @@ public:
     /// \brief A string property \b (read-only) containing information about the current state of the program.
     PropertyS programState;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
     /// \brief Loads an existing program specified by the property \b mvIMPACT::acquire::RTCtrProgram::fileName.
     /**
@@ -13787,7 +15741,7 @@ public:
     {
         return DMR_LoadRTCtrProgram( m_pRefData->m_hDrv, m_pRefData->m_hRTCtrList );
     }
-    /// \brief stores the current state of the program under the name specified by the property \b mvIMPACT::acquire::RTCtrProgram::filename
+    /// \brief Stores the current state of the program under the name specified by the property \b mvIMPACT::acquire::RTCtrProgram::filename.
     /**
      *  The default file extension for files stored using this function is '*.rtp'. If
      *  the user doesn't specify this file extension, it is appended automatically. Only
@@ -13802,7 +15756,7 @@ public:
     }
 };
 
-#ifndef WRAP_ANY // don't wrap deprecated stuff
+#if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 //-----------------------------------------------------------------------------
 /// \brief An interface class to model a internal driver event that the user can wait for(\b Device specific interface layout only)(\b deprecated).
 /**
@@ -13849,10 +15803,9 @@ class Event
         locator.bindComponent( queueDepth, "QueueDepth" );
         locator.bindComponent( type, "Type" );
         // buffer this type as it doesn't change and this provides faster access at runtime.
-        m_type = type.read();
+        m_type = static_cast<TDeviceEventType>( type.read() );
     }
 public:
-#   ifndef WRAP_PYTHON
     /// \brief Returns a const reference to the \b mvIMPACT::acquire::EventData structure of this event(<b>deprecated</b>).
     /**
      *  \deprecated
@@ -13871,9 +15824,8 @@ public:
      *  will refer to the previous result.
      */
     MVIMPACT_DEPRECATED_CPP( const EventData& getData( void ) const );
-#   endif // #ifndef WRAP_PYTHON
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property \b (read-only) defining the mode this event is currently operated in.
     /**
@@ -13907,7 +15859,7 @@ public:
      */
     PropertyIDeviceEventType type;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13993,7 +15945,7 @@ public:
  *
  *  This class combines everything that is related \b mvIMPACT \a Acquire s event
  *  handling.
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  //-----------------------------------------------------------------------------
  *  void fn( void )
@@ -14031,7 +15983,7 @@ public:
  *    }
  *  }
  * \endcode
- *  \endif
+ * \endif
  *
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
@@ -14070,7 +16022,7 @@ class EventSubSystem
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -14079,7 +16031,6 @@ class EventSubSystem
         }
     }
 public:
-#   ifndef WRAP_PYTHON
     /// \brief Constructs a new \b mvIMPACT::acquire::EventSubSystem object(\b deprecated).
     /**
      *  \deprecated
@@ -14089,7 +16040,6 @@ public:
     explicit MVIMPACT_DEPRECATED_CPP( EventSubSystem(
                                           /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
                                           Device* pDev ) );
-#   endif // #ifndef WRAP_PYTHON
     /// \brief Constructs a new \b mvIMPACT::acquire::EventSubSystem from an existing one.
     /**
      *  \deprecated
@@ -14099,7 +16049,7 @@ public:
      *  Internal data is reference counted, thus modifying an event obtained from \a src will also
      *  modify the same event obtained from this newly constructed class.
      */
-    explicit EventSubSystem(
+    EventSubSystem(
         /// [in] A reference to an existing \b mvIMPACT::acquire::EventSubSystem.
         const EventSubSystem& src ) : m_pRefData( src.m_pRefData )
     {
@@ -14110,7 +16060,6 @@ public:
     {
         dealloc();
     }
-#   ifndef WRAP_PYTHON
     /// \brief Allows assignment of one \b mvIMPACT::acquire::EventSubSystem to another.
     /**
      *  \deprecated
@@ -14129,7 +16078,6 @@ public:
         }
         return *this;
     }
-#   endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Returns a reference to an \b mvIMPACT::acquire::Event based on the index in the internal array of event references.
     /**
      *  \deprecated
@@ -14205,7 +16153,6 @@ public:
     {
         return static_cast<unsigned int>( m_pRefData->m_vEvents.size() );
     }
-#   ifndef WRAP_PYTHON
     /// \brief Waits for the occurrence of one or more events(\b deprecated).
     /**
      *  \deprecated
@@ -14226,11 +16173,9 @@ public:
                                  /// [in] A mask specifying the event types to wait for. Here values defined by
                                  /// \b mvIMPACT::acquire::TDeviceEventType can be ORed together.
                                  TDeviceEventType mask ) );
-#   endif // #ifndef WRAP_PYTHON
 };
 
 #   ifndef DOXYGEN_SHOULD_SKIP_THIS
-#       if !defined(WRAP_PYTHON) // This was already deprecated when the Python wrapper was published
 //-----------------------------------------------------------------------------
 inline const EventData& Event::getData( void ) const
 //-----------------------------------------------------------------------------
@@ -14261,11 +16206,10 @@ inline EventSubSystem::EventSubSystem( Device* pDev ) : m_pRefData( 0 )
 
     m_pRefData = new ReferenceCountedData( pDev->hDrv() );
 
-    TDMR_ERROR result;
     HLIST hList;
-    if( ( result = DMR_FindList( pDev->hDrv(), 0, dmltEventSubSystemSettings, 0, &hList ) ) == DMR_NO_ERROR )
+    if( DMR_FindList( pDev->hDrv(), 0, dmltEventSubSystemSettings, 0, &hList ) == DMR_NO_ERROR )
     {
-        ComponentIterator it( hList );
+        Component it( hList );
         it = it.firstChild();
         while( it.isValid() )
         {
@@ -14286,9 +16230,8 @@ inline EventWaitResults EventSubSystem::waitFor( int timeout_ms, TDeviceEventTyp
     int errorCode = DMR_EventWaitFor( m_pRefData->m_hDrv, timeout_ms, mask, 0, 0, &resultMask );
     return EventWaitResults( errorCode, mask, resultMask );
 }
-#       endif // #if !defined(WRAP_PYTHON)
 #   endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
-#endif // #ifndef WRAP_ANY
+#endif // #if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 
 //-----------------------------------------------------------------------------
 /// \brief A class to configure the creation of digital signals passed to one or more of the digital outputs of a device(\b Device specific interface layout only).
@@ -14312,13 +16255,13 @@ class PulseStartConfiguration : public ComponentCollection
     }
     int m_nr;
 public:
-    /// \brief Returns the internal number associated with this pulse start configuration
+    /// \brief Returns the internal number associated with this pulse start configuration.
     int number( void ) const
     {
         return m_nr;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property that will define how/when a digital signal is generated by the device.
     /**
@@ -14425,7 +16368,7 @@ public:
      */
     PropertyITriggerMoment triggerMoment;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -14518,7 +16461,7 @@ protected:
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -14566,8 +16509,8 @@ protected:
     }
 #   endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::IOSubSystem from and existing one.
-    explicit IOSubSystem(
+    /// \brief Constructs a new \b mvIMPACT::acquire::IOSubSystem from an existing one.
+    IOSubSystem(
         /// [in] A constant reference to the \b mvIMPACT::acquire::IOSubSystem object, this object shall be created from
         const IOSubSystem& src ) : m_pRefData( src.m_pRefData )
     {
@@ -14577,8 +16520,7 @@ public:
     {
         dealloc();
     }
-#   ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::IOSubSystem objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::IOSubSystem objects.
     IOSubSystem& operator=( const IOSubSystem& rhs )
     {
         if( this != &rhs )
@@ -14590,7 +16532,6 @@ public:
         }
         return *this;
     }
-#   endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Returns a pointer to a \b mvIMPACT::acquire::PulseStartConfiguration associated with this device.
     /**
      *  \if DOXYGEN_CPP_DOCUMENTATION
@@ -14771,7 +16712,64 @@ public:
  *    cout << "outputs: " << bfIOs.readOutputRegister() << ", inputs " << bfIOs.readInputRegister() << endl;
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *   public static void doSomeIOStuff( Device pBF )
+ *   {
+ *     IOSubSystemBlueFOX bfIOs = new mvIMPACT.acquire.IOSubSystemBlueFOX( pBF );
+ *     System.out.println( "output 0 was " + bfIOs.output(0).get() + " and is now(after flipping) ");
+ *     bfIOs.output(0).flip();
+ *     System.out.println( bfIOs.output(0).get() );
+ *     System.out.println( "input threshold(" + bfIOs.getDigitalInputThreshold().readS() + ") set to " + TBlueFOXDigitalInputThreshold .bfdit10V );
+ *     if( bfIOs.getDigitalInputThreshold().isWriteable() ) // mvBlueFOX-M doesn't support modifying the input threshold
+ *     {
+ *       bfIOs.getDigitalInputThreshold().write( TBlueFOXDigitalInputThreshold .bfdit10V );
+ *       System.out.println( "input threshold is now " + bfIOs.getDigitalInputThreshold().readS() );
+ *     }
+ *     System.out.println( "input 0 is " + bfIOs.input(0).get());
+ *     System.out.println( "press ENTER." );
+ *     waitForENTER();
+ *     System.out.println( "input 0 is " + bfIOs.input(0).get() );
+ *     System.out.println( "press ENTER." );
+ *     waitForENTER();
+ *     System.out.println( "input 0 is " + bfIOs.input(0).get() );
+ *     // switch on digital out 0 and 1 ( 3 = 00000011 binary )
+ *     bfIOs.writeOutputRegister( 3 );
+ *     System.out.println( "outputs: " + bfIOs.readOutputRegister() + ", inputs: " + bfIOs.readInputRegister());
+ *     // the next line will reset bit 0 only, resulting in output 1 to remain high
+ *     // as the mask parameter of '1' defines that only the LSB of the register will be
+ *     // affected by the first parameter of the function call
+ *     bfIOs.writeOutputRegister( 0, 1 );
+ *     System.out.println( "outputs: " + bfIOs.readOutputRegister() + ", inputs " + bfIOs.readInputRegister() );
+ *   }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  def doSomeIOStuff(pBF):
+ *    bfIOs = acquire.IOSubSystemBlueFOX(pBF)
+ *    print("output 0 was " + str(bfIOs.getOutput(0).get()) + " and is now(after flipping) ")
+ *    bfIOs.getOutput(0).flip()
+ *    print(bfIOs.getOutput(0).get())
+ *    print("input threshold(" + bfIOs.digitalInputThreshold.readS() + ") set to " + str(acquire.bfdit10V))
+ *    if(bfIOs.digitalInputThreshold.isWriteable): # mvBlueFOX-M doesn't support modifying the input threshold
+ *      bfIOs.digitalInputThreshold.write(acquire.bfdit10V)
+ *      print("input threshold is now " + bfIOs.digitalInputThreshold.readS())
+ *
+ *    print("input 0 is " + str(bfIOs.getInput(0).get()))
+ *    time.sleep(5) # wait for 5 seconds
+ *    print("input 0 is " + str(bfIOs.getInput(0).get()))
+ *    time.sleep(5) # wait for 5 seconds
+ *    print("input 0 is " + str(bfIOs.getInput(0).get()))
+ *    # switch on digital out 0 and 1 (3 = 00000011 binary)
+ *    bfIOs.writeOutputRegister(3)
+ *    print("outputs: " + str(bfIOs.readOutputRegister()) + ", inputs: " + str(bfIOs.readInputRegister()))
+ *    # the next line will reset bit 0 only, resulting in output 1 to remain high
+ *    # as the mask parameter of '1' defines that only the LSB of the register will be
+ *    # affected by the first parameter of the function call
+ *    bfIOs.writeOutputRegister(0, 1)
+ *    print("outputs: " + str(bfIOs.readOutputRegister()) + ", inputs " + str(bfIOs.readInputRegister()))
+ * \endcode
+ * \endif
  *
  *  \note
  *  The \b mvBlueFOX defines an additional property \b mvIMPACT::acquire::CameraSettingsBlueFOX::flashMode.
@@ -14861,7 +16859,7 @@ public:
         const TDMR_ERROR result = DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
         if( result != DMR_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
         return readRegister( m_inputRegister );
     }
@@ -14880,7 +16878,7 @@ public:
         const TDMR_ERROR result = DMR_UpdateDigitalInputs( m_pRefData->m_hDrv );
         if( result != DMR_NO_ERROR )
         {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, INVALID_ID );
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
         }
         return readRegisterAtomic( m_inputRegister );
     }
@@ -14979,7 +16977,7 @@ public:
         m_outputRegister.write( v, true );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the threshold for the digital inputs in Volt.
     /**
@@ -14993,7 +16991,7 @@ public:
      */
     PropertyIBlueFOXDigitalInputThreshold digitalInputThreshold;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #  ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
@@ -15015,7 +17013,7 @@ public:
  *  using them. The corresponding functions to do that can be found in the
  *  base class \b mvIMPACT::acquire::IOSubSystem.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
  *  #include <iostream>
@@ -15026,7 +17024,7 @@ public:
  *  // lists all available digital inputs and outputs and their description
  *  void listIOPins( Device* pDev )
  *  {
- *    IOSubSystemCommon io(pDev);
+ *    IOSubSystemCommon io( pDev );
  *    unsigned int iCnt = io.getInputCount();
  *    cout << "available digital inputs: " << iCnt << endl;
  *    for( unsigned int d=0; d<iCnt; d++ )
@@ -15044,7 +17042,104 @@ public:
  *    }
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  import mvIMPACT.acquire.*;
+ *
+ *  //-----------------------------------------------------------------------------
+ *  public class CameraDescriptionManagerExample
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    //=============================================================================
+ *    //=== Static member functions =================================================
+ *    //=============================================================================
+ *    static
+ *    {
+ *      try
+ *      {
+ *        System.loadLibrary( "mvIMPACT_Acquire.java" );
+ *      }
+ *      catch( UnsatisfiedLinkError e )
+ *      {
+ *        System.err.println( "Native code library failed to load. Make sure the 'mvIMPACT_Acquire.java' library can be found in the systems search path.\n" + e );
+ *        System.exit( 1 );
+ *      }
+ *    }
+ *
+ *    //-----------------------------------------------------------------------------
+ *    public static void main( String[] args )
+ *    //-----------------------------------------------------------------------------
+ *    {
+ *      DeviceManager devMgr = new DeviceManager();
+ *      Device pDev = mvIMPACT.acquire.examples.helper.DeviceAccess.getDeviceFromUserInput( devMgr );
+ *      if( pDev == null )
+ *      {
+ *        System.out.print( "Unable to continue!" );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *
+ *      System.out.println( "Initialising the device. This might take some time..." );
+ *      try
+ *      {
+ *        pDev.open();
+ *      }
+ *      catch( ImpactAcquireException e )
+ *      {
+ *        // this e.g. might happen if the same device is already opened in another process...
+ *        System.out.println( "An error occurred while opening device " + pDev.getSerial().read() +
+ *                            "(error code: " + e.getMessage() + ")." );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *
+ *      try
+ *      {
+ *        // the next line will raise an exception if this device is not a frame grabber
+ *        IOSubSystemFrameGrabber io = new IOSubSystemFrameGrabber( pDev );
+ *        final long iCnt = io.getInputCount();
+ *        System.out.println( String.format( "Available digital inputs: %d", iCnt ) );
+ *        for( long d=0; d<iCnt; d++ )
+ *        {
+ *          System.out.println( io.input( d ).getDescription() );
+ *        }
+ *        final long oCnt = io.getOutputCount();
+ *        System.out.println( String.format( "Available digital outputs: %d", oCnt ) );
+ *        // set all available digital outputs to high
+ *        for( long e=0; e<oCnt; e++ )
+ *        {
+ *          DigitalOutput pOutput = io.output( e );
+ *          System.out.println( "setting " + pOutput.getDescription() + " to high" );
+ *          pOutput.set();
+ *        }
+ *      }
+ *      catch( ImpactAcquireException e )
+ *      {
+ *        System.out.println( "An error occurred: " + e.getMessage() + "." );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *    }
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  def listIOPins(pDev):
+ *    io = acquire.IOSubSystemCommon(pDev)
+ *    iCnt = io.getInputCount()
+ *    print("available digital inputs: " + str(iCnt))
+ *    for d in range(iCnt):
+ *        print(io.getInput(d).getDescription())
+ *
+ *    oCnt = io.getOutputCount()
+ *    print("available digital outputs: " + str(oCnt))
+ *    for e in range(oCnt):
+ *        pOutput = io.getOutput(e)
+ *        print("setting " + pOutput.getDescription() + " to high")
+ *        # set this output to logic '1'
+ *        pOutput.state = True
+ * \endcode
+ * \endif
  *
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
@@ -15063,7 +17158,7 @@ public:
         HOBJ hObj = locator.findComponent( "PulseStartConfigurations" );
         if( hObj != INVALID_ID )
         {
-            ComponentIterator itPulseConfigs( hObj );
+            Component itPulseConfigs( hObj );
             itPulseConfigs = itPulseConfigs.firstChild();
             while( itPulseConfigs.isValid() )
             {
@@ -15075,7 +17170,7 @@ public:
         locator.bindComponent( m_inputs, "DigitalInputs", 0, 1 );
         if( m_inputs.isValid() )
         {
-            ComponentIterator it( m_inputs );
+            Component it( m_inputs );
             it = it.firstChild();
             while( it.isValid() )
             {
@@ -15088,7 +17183,7 @@ public:
         locator.bindComponent( outputs, "DigitalOutputs", 0, 1 );
         if( outputs.isValid() )
         {
-            ComponentIterator it( outputs );
+            Component it( outputs );
             it = it.firstChild();
             while( it.isValid() )
             {
@@ -15124,7 +17219,7 @@ public:
             return 0;
         }
         unsigned int result = 0;
-        ComponentIterator it( m_inputs );
+        Component it( m_inputs );
         int i = 0;
         it = it.firstChild();
         while( it.isValid() )
@@ -15256,7 +17351,7 @@ class OutputSignalGeneratorBlueDevice
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -15292,7 +17387,7 @@ public:
         locator.bindComponent( outputs, "DigitalOutputs" );
         if( outputs.isValid() )
         {
-            ComponentIterator it( outputs.hObj() );
+            Component it( outputs.hObj() );
             it = it.firstChild();
             while( it.isValid() )
             {
@@ -15304,8 +17399,7 @@ public:
             }
         }
     }
-    /// \brief Constructs a new \b mvIMPACT::acquire::OutputSignalGeneratorBlueDevice from
-    /// and existing one.
+    /// \brief Constructs a new \b mvIMPACT::acquire::OutputSignalGeneratorBlueDevice from and existing one.
     explicit OutputSignalGeneratorBlueDevice(
         /// [in] A constant reference to the \b mvIMPACT::acquire::OutputSignalGeneratorBlueDevice object, this object shall be created from
         const OutputSignalGeneratorBlueDevice& src ) : m_pRefData( src.m_pRefData )
@@ -15317,8 +17411,7 @@ public:
     {
         dealloc();
     }
-#       ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::OutputSignalGeneratorBlueDevice objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::OutputSignalGeneratorBlueDevice objects.
     OutputSignalGeneratorBlueDevice& operator=( const OutputSignalGeneratorBlueDevice& rhs )
     {
         if( this != &rhs )
@@ -15330,7 +17423,6 @@ public:
         }
         return *this;
     }
-#       endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Removes the signal definition from the specified output pin.
     /**
      *  Whenever a signal has been defined for a a certain digital output
@@ -15405,9 +17497,9 @@ public:
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, "Unsupported feature query(Could not obtain pointer to output properties)" );
         }
-        return p->mode.read();
+        return p ? static_cast<TDeviceDigitalOutputMode>( p->mode.read() ) : ddomManual;
     }
-    /// \brief Checks whether the specified output is currently operated in a certain mode
+    /// \brief Checks whether the specified output is currently operated in a certain mode.
     bool isOutputModeActive(
         /// [in] A pointer to a \b mvIMPACT::acquire::DigitalOutput object
         /// obtained from an instance of the class \b mvIMPACT::acquire::IOSubSystemCommon
@@ -15499,11 +17591,12 @@ class IOSubSystemFrameGrabber : public IOSubSystemCommon
 {
 public:
     /// \brief Constructs a new \b mvIMPACT::acquire::IOSubSystemFrameGrabber object.
-    explicit IOSubSystemFrameGrabber(   /// A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
+    explicit IOSubSystemFrameGrabber(
+        /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev ) : IOSubSystemCommon( pDev ), syncOutputMode()
     {
         DeviceComponentLocator locator( pDev, dltIOSubSystem );
-        ComponentIterator itSyncs;
+        Component itSyncs;
         locator.bindComponent( itSyncs, "SyncOutputs", 0, 1 );
         if( itSyncs.isValid() && itSyncs.firstChild().isValid() )
         {
@@ -15578,7 +17671,7 @@ public:
         return m_pRefData->m_vVDOutputs.at( nr );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the current mode for sync. signal creation.
     /**
@@ -15603,7 +17696,7 @@ public:
      */
     PropertyIDeviceSyncOutMode syncOutputMode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -15636,7 +17729,7 @@ public:
  *  by an instance to a \b mvIMPACT::acquire::IOSubSystemFrameGrabber object of the
  *  same device.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
  *  #include <iostream>
@@ -15645,63 +17738,240 @@ public:
  *  using namespace std;
  *  using namespace mvIMPACT::acquire;
  *
- *  Device* pDev = getValidDevicePointerFromSomewhere();
- *  IOSubSystemFrameGrabber io(pDev);
- *  unsigned int iCnt = io.getInputCount();
- *  cout << "available digital inputs: " << iCnt << endl;
- *  for( unsigned int d=0; d<iCnt; d++ )
+ *  //-----------------------------------------------------------------------------
+ *  int main( int argc, char* argv[] )
+ *  //-----------------------------------------------------------------------------
  *  {
- *    cout << io.input(d)->getDescription() << endl;
- *  }
- *  unsigned int oCnt = io.getOutputCount();
- *  cout << "available digital outputs: " << oCnt << endl;
- *  // set all available digital outputs to high
- *  for( unsigned int e=0; e<oCnt; e++ )
- *  {
- *    DigitalOutput* pOutput = io.output(e);
- *    cout << "setting " << pOutput->getDescription() << " to high" << endl;
- *    pOutput->set();
- *  }
- *
- *  // check there is at least one digital output
- *  if( oCnt > 0 )
- *  {
- *    OutputSignalGeneratorFrameGrabber osg(pDev);
- *    // check if this device supports enhanced signal creation at all
- *    if( osg.controlMode.isValid() )
+ *    DeviceManager devMgr;
+ *    Device* pDev = getValidDevicePointerFromSomewhere( devMgr );
+ *    // The next line will raise an exception if the device is not operated
+ *    // in interface layout 'dilDeviceSpecific' or is not a frame grabber! This
+ *    // should therefore be wrapped in an exception handler if in doubt!
+ *    IOSubSystemFrameGrabber io( pDev );
+ *    unsigned int iCnt = io.getInputCount();
+ *    cout << "available digital inputs: " << iCnt << endl;
+ *    for( unsigned int d=0; d<iCnt; d++ )
  *    {
- *      // define a simple pulse on the first digital output detected.
- *      // this pulse will be low after 100 us for
- *      // 200us and then switches back to high.
- *      osg.definePulse( io.output( 0 ), 0, 100, 200 );
+ *      cout << io.input( d )->getDescription() << endl;
+ *    }
+ *    unsigned int oCnt = io.getOutputCount();
+ *    cout << "available digital outputs: " << oCnt << endl;
+ *    // set all available digital outputs to high
+ *    for( unsigned int e=0; e<oCnt; e++ )
+ *    {
+ *      DigitalOutput* pOutput = io.output( e );
+ *      cout << "setting " << pOutput->getDescription() << " to high" << endl;
+ *      pOutput->set();
+ *    }
  *
- *      // define a more complex pulse
- *      vector<int> v;
- *      v.push_back(100);
- *      v.push_back(299);
- *      v.push_back(666);
- *      osg.definePulseSequence( io.output( 0 ), 0, v );
- *      osg.controlMode.write( docmSoftware );
- *      osg.imageTrigger.write( ditAfterDigOutSignals );
- *
- *      // check if line scan pulse creation is supported by this device
- *      vector<pair<string, TDigitalOutputControlMode> > dict;
- *      osg.controlMode.getTranslationDict( dict );
- *      unsigned int dictSize = osg.controlMode.dictSize();
- *      for( unsigned int i=0; i<dictSize; i++ )
+ *    // check there is at least one digital output
+ *    if( oCnt > 0 )
+ *    {
+ *      OutputSignalGeneratorFrameGrabber osg( pDev );
+ *      // check if this device supports enhanced signal creation at all
+ *      if( osg.controlMode.isValid() )
  *      {
- *        if( dict[i].second == docmRTC )
+ *        // define a simple pulse on the first digital output detected.
+ *        // this pulse will be low after 100 us for
+ *        // 200us and then switches back to high.
+ *        osg.definePulse( io.output( 0 ), 0, 100, 200 );
+ *
+ *        // define a more complex pulse
+ *        vector<int> v;
+ *        v.push_back( 100 );
+ *        v.push_back( 299 );
+ *        v.push_back( 666 );
+ *        osg.definePulseSequence( io.output( 0 ), 0, v );
+ *        osg.controlMode.write( docmSoftware );
+ *        osg.imageTrigger.write( ditAfterDigOutSignals );
+ *
+ *        // check if line scan pulse creation is supported by this device
+ *        vector<pair<string, TDigitalOutputControlMode> > dict;
+ *        osg.controlMode.getTranslationDict( dict );
+ *        unsigned int dictSize = osg.controlMode.dictSize();
+ *        for( unsigned int i=0; i<dictSize; i++ )
  *        {
- *          // supported -> define some signal
- *          cout << "checkGrabberInterface: This device supports RTC control signal creation." << endl;
- *          osg.controlMode.write( docmRTC );
- *          osg.defineLineScanPulse( io.output( 0 ), dsosePeriodically, 100, 100, 1, 1 );
+ *          if( dict[i].second == docmRTC )
+ *          {
+ *            // supported -> define some signal
+ *            cout << "checkGrabberInterface: This device supports RTC control signal creation." << endl;
+ *            osg.controlMode.write( docmRTC );
+ *            osg.defineLineScanPulse( io.output( 0 ), dsosePeriodically, 100, 100, 1, 1 );
+ *          }
  *        }
+ *      }
+ *    }
+ *    return 0;
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  import mvIMPACT.acquire.*;
+ *
+ *  //-----------------------------------------------------------------------------
+ *  public class OutputSignalGeneratorExample
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    //=============================================================================
+ *    //=== Static member functions =================================================
+ *    //=============================================================================
+ *    static
+ *    {
+ *      try
+ *      {
+ *        System.loadLibrary( "mvIMPACT_Acquire.java" );
+ *      }
+ *      catch( UnsatisfiedLinkError e )
+ *      {
+ *        System.err.println( "Native code library failed to load. Make sure the 'mvIMPACT_Acquire.java' library can be found in the systems search path.\n" + e );
+ *        System.exit( 1 );
+ *      }
+ *    }
+ *
+ *    //-----------------------------------------------------------------------------
+ *    public static void main( String[] args )
+ *    //-----------------------------------------------------------------------------
+ *    {
+ *      DeviceManager devMgr = new DeviceManager();
+ *      Device pDev = mvIMPACT.acquire.examples.helper.DeviceAccess.getDeviceFromUserInput( devMgr );
+ *      if( pDev == null )
+ *      {
+ *        System.out.print( "Unable to continue!" );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *
+ *      System.out.println( "Initialising the device. This might take some time..." );
+ *      try
+ *      {
+ *        pDev.open();
+ *      }
+ *      catch( ImpactAcquireException e )
+ *      {
+ *        // this e.g. might happen if the same device is already opened in another process...
+ *        System.out.println( "An error occurred while opening device " + pDev.getSerial().read() +
+ *                            "(error code: " + e.getMessage() + ")." );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *
+ *      try
+ *      {
+ *        IOSubSystemFrameGrabber io = new IOSubSystemFrameGrabber( pDev );
+ *        final long iCnt = io.getInputCount();
+ *        System.out.println( String.format( "Available digital inputs: %d", iCnt ) );
+ *        for( long d=0; d<iCnt; d++ )
+ *        {
+ *          System.out.println( io.input( d ).getDescription() );
+ *        }
+ *        final long oCnt = io.getOutputCount();
+ *        System.out.println( String.format( "Available digital outputs: %d", oCnt ) );
+ *        // set all available digital outputs to high
+ *        for( long e=0; e<oCnt; e++ )
+ *        {
+ *          DigitalOutput pOutput = io.output( e );
+ *          System.out.println( "setting " + pOutput.getDescription() + " to high" );
+ *          pOutput.set();
+ *        }
+ *
+ *        // check there is at least one digital output
+ *        if( oCnt > 0 )
+ *        {
+ *          OutputSignalGeneratorFrameGrabber osg = new OutputSignalGeneratorFrameGrabber( pDev );
+ *          // check if this device supports enhanced signal creation at all
+ *          if( osg.getControlMode().isValid() )
+ *          {
+ *            // define a simple pulse on the first digital output detected.
+ *            // this pulse will be low after 100 us for
+ *            // 200us and then switches back to high.
+ *            osg.definePulse( io.output( 0 ), 0, 100, 200 );
+ *
+ *            // define a more complex pulse
+ *            IntVector v = new IntVector();
+ *            v.add( 100 );
+ *            v.add( 299 );
+ *            v.add( 666 );
+ *            osg.definePulseSequence( io.output( 0 ), 0, v );
+ *            osg.getControlMode().write( TDigitalOutputControlMode.docmSoftware );
+ *            osg.getImageTrigger().write( TDeviceImageTrigger.ditAfterDigOutSignals );
+ *
+ *            // check if line scan pulse creation is supported by this device
+ *            StringIntVector dict = new StringIntVector();
+ *            osg.getControlMode().getTranslationDict( dict );
+ *            final long dictSize = osg.getControlMode().dictSize();
+ *            for( long i=0; i<dictSize; i++ )
+ *            {
+ *              if( dict.get( ( int )i ).getSecond() == TDigitalOutputControlMode.docmRTC )
+ *              {
+ *                // supported -> define some signal
+ *                System.out.println( "checkGrabberInterface: This device supports RTC control signal creation." );
+ *                osg.getControlMode().write( TDigitalOutputControlMode.docmRTC );
+ *                osg.defineLineScanPulse( io.output( 0 ), TDeviceSignalOutputStartEvent.dsosePeriodically, 100, 100, 1, 1 );
+ *              }
+ *            }
+ *          }
+ *        }
+ *      }
+ *      catch( ImpactAcquireException e )
+ *      {
+ *        System.out.println( "An error occurred: " + e.getMessage() + ")." );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
  *      }
  *    }
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  def setUpIOs(pDev):
+ *     # The next line will raise an exception if the device is not operated
+ *     # in interface layout 'dilDeviceSpecific' or is not a frame grabber! This
+ *     # should therefore be wrapped in an exception handler if in doubt!
+ *     io = acquire.IOSubSystemFrameGrabber(pDev)
+ *     iCnt = io.getInputCount()
+ *     print("available digital inputs: " + str(iCnt))
+ *     for x in range(iCnt):
+ *       print(io.getInput(d).getDescription())
+ *
+ *     oCnt = io.getOutputCount()
+ *     print("available digital outputs: " + str(oCnt))
+ *     # set all available digital outputs to high
+ *     for e in range(oCnt):
+ *       pOutput = io.getOutput(e)
+ *       print("setting " + pOutput.getDescription() + " to high")
+ *       pOutput.state = True
+ *
+ *     # check there is at least one digital output
+ *     if oCnt > 0:
+ *       osg = acquire.OutputSignalGeneratorFrameGrabber(pDev)
+ *       # check if this device supports enhanced signal creation at all
+ *       if osg.controlMode.isValid:
+ *         # define a simple pulse on the first digital output detected.
+ *         # this pulse will be low after 100 us for
+ *         # 200us and then switches back to high.
+ *         osg.definePulse(io.getOutput(0), 0, 100, 200)
+ *
+ *         # define a more complex pulse
+ *         v = []
+ *         v[0] = 100
+ *         v[1] = 299
+ *         v[1] = 666
+ *         osg.definePulseSequence(io.getOutput(0), 0, v)
+ *         osg.controlMode.write(acquire.docmSoftware)
+ *         osg.imageTrigger.write(acquire.ditAfterDigOutSignals)
+ *
+ *         # check if line scan pulse creation is supported by this device
+ *         dict = {None:None}
+ *         osg.controlMode.getTranslationDict(dict)
+ *         dictSize = osg.controlMode.dictSize
+ *         for i in range(dictSize):
+ *             if dict[i].second == acquire.docmRTC:
+ *             # supported -> define some signal
+ *                 print("checkGrabberInterface: This device supports RTC control signal creation.")
+ *                 osg.controlMode.write(acquire.docmRTC)
+ *                 osg.defineLineScanPulse(io.getOutput(0), acquire.dsosePeriodically, 100, 100, 1, 1)
+ * \endcode
+ * \endif
  *
  *  Whenever a signal has been defined for a a certain digital output
  *  pin, this pin can no longer controlled using the corresponding functions
@@ -15785,7 +18055,7 @@ class OutputSignalGeneratorFrameGrabber
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -15810,7 +18080,8 @@ class OutputSignalGeneratorFrameGrabber
 #       endif // #ifdef DOXYGEN_SHOULD_SKIP_THIS
 public:
     /// \brief Constructs a new \b mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber object.
-    explicit OutputSignalGeneratorFrameGrabber( /// A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
+    explicit OutputSignalGeneratorFrameGrabber(
+        /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev ) : m_pRefData( 0 ), controlMode(), pulseStartEvent(), imageTrigger()
     {
         pDev->validateInterfaceLayout( dilDeviceSpecific );
@@ -15827,7 +18098,7 @@ public:
         locator.bindComponent( m_pRefData->m_divider, "Divider" );
         if( m_pRefData->m_outputs.isValid() )
         {
-            ComponentIterator it( m_pRefData->m_outputs.hObj() );
+            Component it( m_pRefData->m_outputs.hObj() );
             it = it.firstChild();
             while( it.isValid() )
             {
@@ -15839,8 +18110,8 @@ public:
             }
         }
     }
-    /// \brief Constructs a new \b mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber from and existing one.
-    explicit OutputSignalGeneratorFrameGrabber(
+    /// \brief Constructs a new \b mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber from an existing one.
+    OutputSignalGeneratorFrameGrabber(
         /// [in] A constant reference to the \b mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber object, this object shall be created from
         const OutputSignalGeneratorFrameGrabber& src ) : m_pRefData( src.m_pRefData ),
         controlMode( src.controlMode ), pulseStartEvent( src.pulseStartEvent ), imageTrigger( src.imageTrigger )
@@ -15852,8 +18123,7 @@ public:
     {
         dealloc();
     }
-#       ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::OutputSignalGeneratorFrameGrabber objects.
     OutputSignalGeneratorFrameGrabber& operator=( const OutputSignalGeneratorFrameGrabber& rhs )
     {
         if( this != &rhs )
@@ -15866,7 +18136,6 @@ public:
         }
         return *this;
     }
-#       endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Assigns a single pulse to a digital output.
     /**
      *  Whenever a single pulse of a certain duration and polarity shall be generated
@@ -15923,10 +18192,7 @@ public:
             }
             return DMR_NO_ERROR;
         }
-        else
-        {
-            return DMR_FEATURE_NOT_AVAILABLE;
-        }
+        return DMR_FEATURE_NOT_AVAILABLE;
     }
     /// \brief Assigns a complex signal to a digital output.
     /**
@@ -15985,10 +18251,7 @@ public:
             }
             return DMR_NO_ERROR;
         }
-        else
-        {
-            return DMR_FEATURE_NOT_AVAILABLE;
-        }
+        return DMR_FEATURE_NOT_AVAILABLE;
     }
     /// \brief Receives a list of valid signals that can be passed directly to a certain digital output pin.
     /**
@@ -16017,7 +18280,7 @@ public:
         DigitalOutput* pOutput,
         /// [out] A reference to a vector that will receive the list of allowed digital signals
         /// for this particular digital output pin.
-        std::vector<std::pair<std::string, TDigitalSignal> >& sequence ) const
+        TDigitalSignalTranslationDict& sequence ) const
     {
         if( !pOutput )
         {
@@ -16029,10 +18292,7 @@ public:
             p->digitalSignal.getTranslationDict( sequence );
             return DMR_NO_ERROR;
         }
-        else
-        {
-            return DMR_FEATURE_NOT_AVAILABLE;
-        }
+        return DMR_FEATURE_NOT_AVAILABLE;
     }
     /// \brief Returns the number of signals that can be used for pass through signal definitions for a certain digital output pin of this device.
     unsigned int getValidPassThroughSignalCount(
@@ -16078,7 +18338,7 @@ public:
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, "Unsupported feature query" );
         }
-        return p->digitalSignal.getTranslationDictValue( index );
+        return p ? static_cast<TDigitalSignal>( p->digitalSignal.getTranslationDictValue( index ) ) : dsNone;
     }
     /// \brief Receives a valid string representation of a signal that can be passed directly to a certain digital output pin.
     /**
@@ -16110,9 +18370,9 @@ public:
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_FEATURE_NOT_AVAILABLE, "Unsupported feature query" );
         }
-        return p->digitalSignal.getTranslationDictString( index );
+        return p ? p->digitalSignal.getTranslationDictString( index ) : std::string();
     }
-    /// \brief Assing a certain signal to a digital output.
+    /// \brief Assigns a certain signal to a digital output.
     /**
      *  Some digital input signals or even some internal signals can be passed directly to one or more
      *  digital outputs.
@@ -16149,7 +18409,7 @@ public:
             return DMR_FEATURE_NOT_AVAILABLE;
         }
     }
-    /// \brief Assing a certain signal to a digital output.
+    /// \brief Assigning a certain signal to a digital output.
     /**
      *  Some digital input signals or even some internal signals can be passed directly to one or more
      *  digital outputs.
@@ -16181,10 +18441,7 @@ public:
             p->digitalSignal.writeS( digitalSignal );
             return DMR_NO_ERROR;
         }
-        else
-        {
-            return DMR_FEATURE_NOT_AVAILABLE;
-        }
+        return DMR_FEATURE_NOT_AVAILABLE;
     }
     /// \brief Removes the signal definition from the specified output pin.
     /**
@@ -16212,10 +18469,7 @@ public:
             p->mode.write( ddomManual );
             return DMR_NO_ERROR;
         }
-        else
-        {
-            return DMR_FEATURE_NOT_AVAILABLE;
-        }
+        return DMR_FEATURE_NOT_AVAILABLE;
     }
     /// \brief Defines a pulse to trigger line scan cameras.
     /**
@@ -16297,13 +18551,10 @@ public:
             }
             return DMR_NO_ERROR;
         }
-        else
-        {
-            return DMR_FEATURE_NOT_AVAILABLE;
-        }
+        return DMR_FEATURE_NOT_AVAILABLE;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the general method used to create output signals.
     /**
@@ -16329,7 +18580,7 @@ public:
      *  \b mvIMPACT::acquire::Component::isValid will return false). However then calls to \b mvIMPACT::acquire::IOSubSystem::getPulseStartConfigurationCount
      *  and \b mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration will succeed and the objects returned by
      *  \b mvIMPACT::acquire::IOSubSystem::getPulseStartConfiguration (\b mvIMPACT::acquire::PulseStartConfiguration) will
-     *  provide a more sofisticated way to define the signal output behaviour of a device.
+     *  provide a more sophisticated way to define the signal output behaviour of a device.
      */
     PropertyIDigitalOutputControlMode controlMode;
     /// \brief An enumerated integer property defining the general behaviour of created output signals.
@@ -16349,61 +18600,10 @@ public:
      */
     PropertyIDeviceImageTrigger imageTrigger;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
-
-#   ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
-//-----------------------------------------------------------------------------
-/// \brief A class to handle the digital inputs and outputs of a \b mvBlueCOUGAR of \b mvBlueLYNX-M7 device(\b Device specific interface layout only).
-/**
- *  This class provides a convenient basic access to the digital inputs and
- *  outputs of a \b mvBlueCOUGAR or \b mvBlueLYNX-M7 device.
- *
- *  \note
- *  The number of digital inputs and outputs available will vary significantly
- *  from device to device. Some devices might not even have digital inputs and/or
- *  digital outputs. Therefore it's crucial to check for available pins before
- *  using them. The corresponding functions to do that can be found in the
- *  base class \b mvIMPACT::acquire::IOSubSystem.
- *
- *  Please also see the code sample in the base class \b mvIMPACT::acquire::IOSubSystemCommon.
- *
- *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
- *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
- */
-class IOSubSystemBlueCOUGAR : public IOSubSystemCommon
-//-----------------------------------------------------------------------------
-{
-public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::IOSubSystemBlueCOUGAR object.
-    explicit IOSubSystemBlueCOUGAR(
-        /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
-        Device* pDev ) : IOSubSystemCommon( pDev )
-    {
-        DeviceComponentLocator locator( pDev, dltIOSubSystem );
-        locator.bindComponent( digitalInputThreshold_mV, "DigitalInputThreshold_mV" );
-    }
-    // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
-    // *INDENT-ON*
-    /// \brief An integer property defining the threshold for the digital inputs in milli-Volt.
-    /**
-     *  If a voltage applied to the digital input lies above the threshold this pin
-     *  will be considered as 'logic 1' otherwise it will be considered as 'logic 0'.
-     *
-     *  \note
-     *  This property is currently only available for \b mvBlueLYNX-M7 devices. Thus always call \b mvIMPACT::acquire::Component::isValid
-     *  to check if the device you are working it supports this feature. Not doing so and using the feature with a device
-     *  not supporting it will raise an exception.
-     */
-    PropertyI digitalInputThreshold_mV;
-    // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
-    // *INDENT-ON*
-};
-#   endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 
 //-----------------------------------------------------------------------------
 /// \brief A class describing how a video signal source(e.g. a camera or image sensor) is connected to a video signal sink(e.g. a frame grabber)(\b Device specific interface layout only).
@@ -16425,7 +18625,7 @@ class Connector : public ComponentCollection
 //-----------------------------------------------------------------------------
 {
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::Connector object
+    /// \brief Constructs a new \b mvIMPACT::acquire::Connector object.
     explicit Connector(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -16449,15 +18649,16 @@ public:
         }
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the video signal output of the video signal source used for the connection to the video signal sink.
     /**
      *  \note
-     *  Not every video signal sink will support every possible value defined in the enumeration
-     *  \b mvIMPACT::acquire::TCameraOutput. For example a CameraLink&reg; frame grabber
-     *  will not offer to use a SVideo connector. Therefore the translation dictionary of this
-     *  property should be used to find out, which connector types are available.
+     *  Not every video signal sink will support every possible value defined for this property.
+     *  For example a CameraLink&reg; frame grabber will not offer to use an SVideo connector.
+     *  Therefore the translation dictionary of this property should be used to find out, which connector types are available.
+     *
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TCameraOutput.
      *
      *  \note
      *  This property might not be supported by every device. Therefore always call the function
@@ -16481,7 +18682,7 @@ public:
      *  \b mvIMPACT::acquire::Component::isValid to check if this property is available or not.
      */
     PropertyI videoChannel;
-    /// \brief A string property \b (read-only) containing a description for the video channel currently selected by the property \b mvIMPACT::acquire::Connector::videoChannel
+    /// \brief A string property \b (read-only) containing a description for the video channel currently selected by the property \b mvIMPACT::acquire::Connector::videoChannel.
     /**
      *  The description string contains information about the connector pins belonging to this video
      *  input of the video signal sink as well as the corresponding name of this video input.
@@ -16492,7 +18693,7 @@ public:
      */
     PropertyS pinDescription;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -16509,7 +18710,7 @@ class BasicDeviceSettingsWithAOI : public BasicDeviceSettings
 //-----------------------------------------------------------------------------
 {
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::BasicDeviceSettingsWithAOI object
+    /// \brief Constructs a new \b mvIMPACT::acquire::BasicDeviceSettingsWithAOI object.
     explicit BasicDeviceSettingsWithAOI(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -16533,7 +18734,7 @@ public:
         }
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property defining the number of lines to capture.
     PropertyI aoiHeight;
@@ -16554,7 +18755,7 @@ public:
     /// \brief An integer property defining the number of pixels to capture per line.
     PropertyI aoiWidth;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -16571,7 +18772,7 @@ class CameraSettingsBase : public BasicDeviceSettingsWithAOI
 //-----------------------------------------------------------------------------
 {
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBase object
+    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBase object.
     explicit CameraSettingsBase(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -16586,7 +18787,7 @@ public:
         locator.bindComponent( pixelFormat, "PixelFormat" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the pixel format used to transfer the image data into the target systems host memory.
     /**
@@ -16606,14 +18807,13 @@ public:
      *  Selecting a defined transfer format can in some cases result in certain filters (e.g. dark current, ...) to be switched
      *  of as then the filters themselves can no longer influence the transfer format, which is sometimes necessary as not every
      *  filter does support every input format. Also this property will contain only pixel formats, which are actually supported
-     *  by the capture device, thus in most of the cases this will be a subset of the pixel formats defined by
-     *  \b mvIMPACT::acquire::TImageBufferPixelFormat
+     *  by the capture device, thus in most of the cases this will be a subset of the pixel formats defined by the enumeration defining this property.
      *
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TImageBufferPixelFormat.
      */
     PropertyIImageBufferPixelFormat pixelFormat;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -16634,7 +18834,7 @@ class CameraSettingsVirtualDevice : public CameraSettingsBase
 //-----------------------------------------------------------------------------
 {
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsVirtualDevice object
+    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsVirtualDevice object.
     explicit CameraSettingsVirtualDevice(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -16664,7 +18864,7 @@ public:
         locator.bindComponent( userData, "UserData" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property defining the number of buffer part to transmit in each request.
     /**
@@ -16761,12 +18961,14 @@ public:
      * \since 2.5.2
      */
     PropertyICameraTapsYGeometry tapsYGeometry;
-    /// \brief An integer property defining a delay in us before the 'captured' image is returned to the user
+    /// \brief An integer property defining a delay in us before the 'captured' image is returned to the user.
     PropertyI frameDelay_us;
     /// \brief A string property defining the directory to capture images from.
     /**
      *  This feature will only be visible, when the property \b mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode
      *  is set to \b mvIMPACT::acquire::vdtmImageDirectory.
+     *
+     *  See \b mvIMPACT::acquire::CameraSettingsVirtualDevice::imageType to find out how to configure what kind of images shall be captured from disc.
      */
     PropertyS imageDirectory;
     /// \brief An enumerated integer property defining what images shall be captured from hard disk.
@@ -16774,7 +18976,7 @@ public:
      *  This feature will only be visible, when the property \b mvIMPACT::acquire::CameraSettingsVirtualDevice::testMode
      *  is set to \b mvIMPACT::acquire::vdtmImageDirectory.
      *
-     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TVirtualDeviceTestMode.
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TVirtualDeviceImageType.
      */
     PropertyIVirtualDeviceImageType imageType;
     /// \brief An enumerated integer property defining the Bayer attribute assigned to the generated test image.
@@ -16793,7 +18995,7 @@ public:
      */
     PropertyS userData;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
@@ -16810,7 +19012,7 @@ public:
 class CameraSettingsV4L2Device : public BasicDeviceSettingsWithAOI
 //-----------------------------------------------------------------------------
 {
-    ComponentIterator        m_customFeatureIterator;
+    Component        m_customFeatureIterator;
 public:
     /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsV4L2Device object.
     explicit CameraSettingsV4L2Device(
@@ -16851,7 +19053,7 @@ public:
         locator.bindComponent( whiteBalanceTemperature, "WhiteBalanceTemperature" );
         locator.bindComponent( sharpness, "Sharpness" );
         locator.bindComponent( backlightCompensation, "BacklightCompensation" );
-        m_customFeatureIterator = ComponentIterator( pixelFormat.hObj() );
+        m_customFeatureIterator = Component( pixelFormat.hObj() );
         m_customFeatureIterator = m_customFeatureIterator.firstSibling();
     }
     /// \brief Returns an iterator to for iterating inside a device specific feature list.
@@ -16859,32 +19061,64 @@ public:
      *  This can be useful a device offers custom features that are not defined in the V4L2 standard and thus
      *  can't be known at compile time.
      *
-     *  \if DOXYGEN_CPP_DOCUMENTATION
-     *  It makes it possible to write code like this:
+     *  It allows to write code like this:
      *
+     * \if DOXYGEN_CPP_DOCUMENTATION
      * \code
-     *  CameraSettingsV4L2Device cs(getDevicePointerFromSomewhere());
-     *  ComponentIterator it(cs.getCustomFeatureIterator());
+     *  CameraSettingsV4L2Device cs( getDevicePointerFromSomewhere() );
+     *  Component it( cs.getCustomFeatureIterator() );
      *  std::map<std::string, std::string> m;
      *  while( it.isValid() )
      *  {
      *    // collect all entries that are properties and store their current name and value in a map
      *    if( it.isProp() && it.isVisible() )
      *    {
-     *      Property prop(it);
+     *      Property prop( it );
      *      m.insert( std::make_pair( prop.name(), prop.readS() );
      *    }
      *    ++it;
      *  }
      * \endcode
-     *  \endif
+     * \elseif DOXYGEN_JAVA_DOCUMENTATION
+     * \code
+     *  import java.util.Hashtable;
+     *
+     *  // ...
+     *
+     *  CameraSettingsV4L2Device cs = new CameraSettingsV4L2Device( getDevicePointerFromSomewhere() );
+     *  Component it = cs.getCustomFeatureIterator();
+     *  Hashtable<String, String> m = new Hashtable<String, String>();
+     *  while( it.isValid() )
+     *  {
+     *    // collect all entries that are properties and store their current name and value in a hash table
+     *    if( it.isProp() && it.isVisible() )
+     *    {
+     *       Property prop = new Property( it.hObj() );
+     *       m.put( prop.name(), prop.readS() );
+     *    }
+     *    it = it.nextSibling();
+     *  }
+     * \endcode
+     * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+     * \code
+     *   cs = acquire.CameraSettingsV4L2Device(pDev)
+     *   it = acquire.Component(cs.getCustomFeatureIterator())
+     *   m = {}
+     *   while it.isValid:
+     *     # collect all entries that are properties and store their current name and value in a map
+     *     if it.isProp and it.isVisible:
+     *       prop = acquire.Property(it);
+     *       m[prop.name()] = prop.readS()
+     *     it = it.nextSibling()
+     * \endcode
+     * \endif
      */
-    ComponentIterator getCustomFeatureIterator( void ) const
+    Component getCustomFeatureIterator( void ) const
     {
         return m_customFeatureIterator;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property defining the width of the image supplied by the V4L2 device.
     /**
@@ -16896,7 +19130,7 @@ public:
      *  \sa V4L2 API at http://v4l2spec.bytesex.org/spec-single/v4l2.html
      */
     PropertyI imageHeight;
-    /// \brief An integer property defining the video standard
+    /// \brief An integer property defining the video standard.
     /**
      *  Use this property to configure the V4L2-device corresponding to the connected video source.
      *  Available video standards depend on the V4L2-device and conform to \b v4l2_std_id
@@ -16958,7 +19192,7 @@ public:
      *  values too large or too small will raise an exception.
      */
     PropertyI blackLevel;
-    /// \brief An enumerated integer property to switch on/off the auto white balance function of the V4L2-device
+    /// \brief An enumerated integer property to switch on/off the auto white balance function of the V4L2-device.
     /**
      *  This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
      *
@@ -17022,7 +19256,7 @@ public:
      *  values too large or too small will raise an exception.
      */
     PropertyI gain;
-    /// \brief An enumerated integer property to mirror the frames horizontally
+    /// \brief An enumerated integer property to mirror the frames horizontally.
     /**
      *  This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
      *
@@ -17092,7 +19326,7 @@ public:
      */
     PropertyI backlightCompensation;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
@@ -17178,7 +19412,7 @@ public:
         return m_boAvailable;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property defining the height of the rectangle used for the parameter calculation.
     PropertyI aoiHeight;
@@ -17274,7 +19508,7 @@ public:
      */
     PropertyI exposeUpperLimit_us;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -17288,7 +19522,7 @@ class CameraSettingsBlueDevice : public CameraSettingsBase
 //-----------------------------------------------------------------------------
 {
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBlueDevice object
+    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBlueDevice object.
     explicit CameraSettingsBlueDevice(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -17317,7 +19551,7 @@ public:
         locator.bindComponent( frameDelay_us, "FrameDelay_us" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the auto control mode the device is operated in.
     /**
@@ -17505,8 +19739,9 @@ public:
      */
     AutoControlParameters autoControlParameters;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
+#ifndef WRAP_JAVA
     /// \brief Provides access to the control parameters for AGC and AEC.
     /**
      *  \note
@@ -17517,6 +19752,7 @@ public:
     {
         return autoControlParameters;
     }
+#endif // #ifndef WRAP_JAVA
 };
 #   endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
 
@@ -17549,14 +19785,14 @@ class HDRKneePoint : public ComponentCollection
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property that can be used to define the control voltage in mV for this knee point.
     PropertyI HDRControlVoltage_mV;
     /// \brief An enumerated integer property that can be used to define the exposure time in ppm of the overall exposure time for this knee point.
     PropertyI HDRExposure_ppm;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -17606,7 +19842,7 @@ class HDRControl : public ComponentCollection
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -17639,7 +19875,7 @@ class HDRControl : public ComponentCollection
             bindPublicProperties();
             locator.bindSearchBase( locator.searchbase_id(), "HDRControl" );
             // create the HDR knee point objects for this setting
-            ComponentIterator it;
+            Component it;
             locator.bindComponent( it, "HDRKneePoints" );
             if( it.isValid() )
             {
@@ -17654,14 +19890,14 @@ class HDRControl : public ComponentCollection
         }
     }
 public:
-    /// \brief Copy constructor
+    /// \brief Copy constructor.
     /**
      *  Creates a new object from an existing device object. Keep in mind that this new object
      *  will provide access to the very same hardware and therefore you might as well use the original
      *  reference. This constructor is only provided for internal reference counting to guarantee correct operation of the
      *  objects of this class under all platforms and languages.
      */
-    explicit HDRControl( const HDRControl& src ) : ComponentCollection( src ), m_pRefData( src.m_pRefData ), HDREnable( src.HDREnable ),
+    explicit HDRControl( const HDRControl& src ) : ComponentCollection( src.m_hRoot ), m_pRefData( src.m_pRefData ), HDREnable( src.HDREnable ),
         HDRMode( src.HDRMode ), HDRKneePointCount( src.HDRKneePointCount )
     {
         ++( m_pRefData->m_refCnt );
@@ -17670,8 +19906,7 @@ public:
     {
         dealloc();
     }
-#       ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::HDRControl objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::HDRControl objects.
     HDRControl& operator=( const HDRControl& rhs )
     {
         if( this != &rhs )
@@ -17684,8 +19919,7 @@ public:
         }
         return *this;
     }
-#       endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
-    /// \brief This function should be called to check if this device offers auto control parameters.
+    /// \brief This function should be called to check if this device offers HDR (<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) control parameters.
     /**
      *  \return
      *  - true if the device offers the features defined by this object.
@@ -17714,7 +19948,7 @@ public:
         return *( m_pRefData->m_KneePoints.at( nr ) );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property which can be used to enable/disable HDR (<b>H</b>igh <b>D</b>ynamic <b>R</b>ange) mode.
     /**
@@ -17729,7 +19963,7 @@ public:
     /// \brief An integer property to define the number of knee points to work with when \b mvIMPACT::acquire::HDRControl::HDRMode is set to \b mvIMPACT::acquire::cHDRmUser.
     PropertyI HDRKneePointCount;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #if !defined(IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION) || !defined(IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION)
@@ -17749,7 +19983,7 @@ class CameraSettingsBlueFOX : public CameraSettingsBlueDevice
 {
     HDRControl HDRControl_;
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBlueFOX object
+    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBlueFOX object.
     explicit CameraSettingsBlueFOX(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -17784,7 +20018,7 @@ public:
         return HDRControl_;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the offset calibration mode.
     /**
@@ -17904,17 +20138,17 @@ public:
      */
     PropertyIBlueFOXSensorTiming sensorTimingMode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 
 #   ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 //-----------------------------------------------------------------------------
-/// \brief \b mvBlueCOUGAR and \b mvBlueLYNX-M7 related camera settings (\b Device specific interface layout only).
+/// \brief \b mvBlueCOUGAR related camera settings (\b Device specific interface layout only).
 /**
  *  This class contains properties to control the way the image sensor(s) of the
- *  \b mvBlueCOUGAR or \b mvBlueLYNX-M7 behaves.
+ *  \b mvBlueCOUGAR behaves.
  *
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
@@ -17926,7 +20160,7 @@ class CameraSettingsBlueCOUGAR : public CameraSettingsBlueDevice
     TriggerControlVector m_triggerControls;
     HDRControl HDRControl_;
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBlueCOUGAR object
+    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsBlueCOUGAR object.
     explicit CameraSettingsBlueCOUGAR(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -17948,7 +20182,7 @@ public:
         if( locator.findComponent( "TriggerControls" ) != INVALID_ID )
         {
             locator.bindSearchBase( locator.searchbase_id(), "TriggerControls" );
-            ComponentIterator it( locator.searchbase_id() );
+            Component it( locator.searchbase_id() );
             it = it.firstChild();
             while( it.isValid() )
             {
@@ -18013,7 +20247,7 @@ public:
         return HDRControl_;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A float property defining the frame rate (in Hz) this device shall use to transfer images.
     /**
@@ -18057,12 +20291,12 @@ public:
     /// \brief A 64-bit integer property defining the number of frames to acquire for each FrameBurstStart trigger.
     /**
     *  \note
-    *  This feature will only be taken into account if the \c FrameBurstStart trigger is active when \b mv.impact.acquire.CameraSettingsBlueCOUGAR.triggerInterface
-    *  is set to \b mv.impact.acquire.dtiAdvanced.
+    *  This feature will only be taken into account if the \c FrameBurstStart trigger is active when \b mvIMPACT::acquire::CameraSettingsBlueCOUGAR::triggerInterface
+    *  is set to \b mvIMPACT::acquire::dtiAdvanced.
     */
     PropertyI64 acquisitionBurstFrameCount;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
@@ -18089,7 +20323,7 @@ class CameraSettingsFrameGrabber : public CameraSettingsBase
     typedef std::vector<TriggerControl*> TriggerControlVector;
     TriggerControlVector m_triggerControls;
 public:
-    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsFrameGrabber object
+    /// \brief Constructs a new \b mvIMPACT::acquire::CameraSettingsFrameGrabber object.
     explicit CameraSettingsFrameGrabber(
         /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
         Device* pDev,
@@ -18124,7 +20358,7 @@ public:
         if( locator.findComponent( "TriggerControls" ) != INVALID_ID )
         {
             locator.bindSearchBase( locator.searchbase_id(), "TriggerControls" );
-            ComponentIterator it( locator.searchbase_id() );
+            Component it( locator.searchbase_id() );
             if( it.isValid() )
             {
                 it = it.firstChild();
@@ -18182,13 +20416,13 @@ public:
         return 0;
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the camera description used for the image acquisition.
     /**
      *  This property \b ALWAYS defines a translation dictionary containing a string representation
      *  and a numerical value for the camera descriptions available for the device. The string
-     *  representation of the camera description will be build from the property name of the class this
+     *  representation of the camera description will be built from the property name of the class this
      *  camera description belongs to (e.g. \a 'Standard', \a 'NonStandard' or \a 'CameraLink') and
      *  the name of the camera description itself. Assuming a the device can handle standard
      *  video cameras and a description for a camera named \a 'MyCCIRCamera' will therefore
@@ -18248,7 +20482,7 @@ public:
     PropertyI offset_mV;
     /// \brief An enumerated integer property defining the scan clock mode used for the current acquisition.
     /**
-     *  Valid modes are defined by the enumeration \b mvIMPACT::acquire::TScanClock.
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TScanClock.
      *
      *  \note
      *  This property will not be available for every frame grabber, so before using it, check
@@ -18260,7 +20494,7 @@ public:
     /// \brief An enumerated integer property defining the behaviour of the frame grabbers trigger input.
     /**
      *  \note
-     *  All trigger modes are defined by \b mvIMPACT::acquire::TDeviceTriggerMode. However
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TDeviceTriggerMode. However
      *  not every device will offer all these trigger modes but a subset of them. Valid trigger modes therefore
      *  can be found by reading the properties translation dictionary.
      *
@@ -18381,8 +20615,8 @@ public:
     PropertyI contrast_pc;
     /// \brief An enumerated integer property defining the way line counter information is handled by the device.
     /**
-     *  This is interesting for line scan camera applications. More information can be found a the documentation
-     *  of the enumeration \b mvIMPACT::acquire::TLineCounter.
+     *  This is interesting for line scan camera applications.
+     *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TLineCounter.
      *
      *  \note
      *  This property will not be available for every frame grabber, so before using it, check
@@ -18391,7 +20625,7 @@ public:
      */
     PropertyILineCounter lineCounter;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18431,7 +20665,7 @@ public:
  *
  *  Example: For a standard description with the name \a 'MyCam' the full name would be \a 'Standard_MyCam'.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
  *  #include <iostream>
@@ -18447,14 +20681,14 @@ public:
  *    if( !pDev )
  *    {
  *      cout << "No device found" << endl;
- *      return 0;
+ *      return 1;
  *    }
  *
  *    try
  *    {
  *      // the next line will raise an exception if this device does not
  *      // support camera descriptions (e.g. if it is a USB camera rather than a frame grabber)
- *      mvIMPACT::acquire::CameraDescriptionManager cdm(pDev);
+ *      mvIMPACT::acquire::CameraDescriptionManager cdm( pDev );
  *      mvIMPACT::acquire::CameraDescriptionStandard* pCam = cdm.cameraDescriptionStandard( "Generic" );
  *      pCam->copyDescription( "MyCam" );
  *      // Get access to the newly created description
@@ -18465,7 +20699,7 @@ public:
  *      // now save the description to make it available in all future sessions
  *      pMyCam->exportDescription();
  *      // select the newly created description
- *      mvIMPACT::acquire::CameraSettingsFrameGrabber cs(pDev);
+ *      mvIMPACT::acquire::CameraSettingsFrameGrabber cs( pDev );
  *      // the name for this property is always a combination of the class the camera
  *      // description is belonging to and the actual name:
  *      cs.type.writeS( pMyCam->getClassName() + "_" + pMyCam->name.read() );
@@ -18473,11 +20707,115 @@ public:
  *    catch( const ImpactAcquireException& e )
  *    {
  *      cout << "An exception occurred: " << e.getErrorString() << endl;
+ *      return 1;
  *    }
  *    return 0;
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  import mvIMPACT.acquire.*;
+ *
+ *  //-----------------------------------------------------------------------------
+ *  public class CameraDescriptionManagerExample
+ *  //-----------------------------------------------------------------------------
+ *  {
+ *    //=============================================================================
+ *    //=== Static member functions =================================================
+ *    //=============================================================================
+ *    static
+ *    {
+ *      try
+ *      {
+ *        System.loadLibrary( "mvIMPACT_Acquire.java" );
+ *      }
+ *      catch( UnsatisfiedLinkError e )
+ *      {
+ *        System.err.println( "Native code library failed to load. Make sure the 'mvIMPACT_Acquire.java' library can be found in the systems search path.\n" + e );
+ *        System.exit( 1 );
+ *      }
+ *    }
+ *
+ *    //-----------------------------------------------------------------------------
+ *    public static void main( String[] args )
+ *    //-----------------------------------------------------------------------------
+ *    {
+ *      DeviceManager devMgr = new DeviceManager();
+ *      Device pDev = mvIMPACT.acquire.examples.helper.DeviceAccess.getDeviceFromUserInput( devMgr );
+ *      if( pDev == null )
+ *      {
+ *        System.out.print( "Unable to continue!" );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *
+ *      System.out.println( "Initialising the device. This might take some time..." );
+ *      try
+ *      {
+ *        pDev.open();
+ *      }
+ *      catch( ImpactAcquireException e )
+ *      {
+ *        // this e.g. might happen if the same device is already opened in another process...
+ *        System.out.println( "An error occurred while opening device " + pDev.getSerial().read() +
+ *                            "(error code: " + e.getMessage() + ")." );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *
+ *      try
+ *      {
+ *        // the next line will raise an exception if this device does not
+ *        // support camera descriptions (e.g. if it is a USB camera rather than a frame grabber)
+ *        CameraDescriptionManager cdm = new CameraDescriptionManager( pDev );
+ *        CameraDescriptionStandard pCam = cdm.cameraDescriptionStandard( "Generic" );
+ *        pCam.copyDescription( "MyCam" );
+ *        // Get access to the newly created description
+ *        CameraDescriptionStandard pMyCam = cdm.cameraDescriptionStandard( "MyCam" );
+ *        // Modify something
+ *        pMyCam.getVideoStandard().write( TVideoStandard.vsRS170 );
+ *        pMyCam.getScanStandard().write( TScanStandard.ssITU601 );
+ *        // now save the description to make it available in all future sessions
+ *        pMyCam.exportDescription();
+ *        // select the newly created description
+ *        CameraSettingsFrameGrabber cs = new CameraSettingsFrameGrabber( pDev );
+ *        // the name for this property is always a combination of the class the camera
+ *        // description is belonging to and the actual name:
+ *        cs.getType().writeS( pMyCam.getClassName() + "_" + pMyCam.getName().read() );
+ *      }
+ *      catch( ImpactAcquireException e )
+ *      {
+ *        System.out.println( "An error occurred: " + e.getMessage() + "." );
+ *        mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *        System.exit( 1 );
+ *      }
+ *    }
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ * try:
+ *   # the next line will raise an exception if this device does not
+ *   # support camera descriptions (e.g. if it is a USB camera rather than a frame grabber)
+ *   cdm = acquire.CameraDescriptionManager(pDev)
+ *   pCam = cdm.cameraDescriptionStandard("Generic")
+ *   pCam.copyDescription("MyCam")
+ *   # Get access to the newly created description
+ *   pMyCam = cdm.cameraDescriptionStandard("MyCam")
+ *   # Modify something
+ *   pMyCam.videoStandard.write(acquire.vsRS170)
+ *   pMyCam.scanStandard.write(acquire.ssITU601)
+ *   # now save the description to make it available in all future sessions
+ *   pMyCam.exportDescription()
+ *   # select the newly created description
+ *   cs = acquire.CameraSettingsFrameGrabber(pDev)
+ *   # the name for this property is always a combination of the class the camera
+ *   # description is belonging to and the actual name:
+ *   cs.type.writeS(pMyCam.getClassName() + "_" + pMyCam.name.readS())
+ * except Exception as e:
+ *   print("An exception occurred: " + e.getErrorString())
+ * \endcode
+ * \endif
  *
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
@@ -18541,17 +20879,16 @@ public:
      *  This function can be used to store the current settings of a camera description
      *  permanently so that the next time the driver is initialized these settings are restored.
      *
-     *  When exporting a camera description a file in XML format will be written to disc. Under
-     *  Windows&reg; camera descriptions will be stored under
+     *  When exporting a camera description a file in XML format will be written to disc. On
      *  Windows&reg; camera descriptions will be stored under
      * \code
-     *  %ALLUSERS%\Documents\MATRIX VISION\mvIMPACT acquire\CameraFiles
+     *  %ALLUSERS%/Documents/MATRIX VISION/mvIMPACT acquire/CameraFiles
      * \endcode
      *  or
      * \code
-     *  %MVIMPACT_ACQUIRE_DATA_DIR%\CameraFiles
+     *  %MVIMPACT_ACQUIRE_DATA_DIR%/CameraFiles
      * \endcode
-     *  which will point to the same folder), under Linux&reg; this directory will be
+     *  which will point to the same folder), on Linux&reg; this directory will be
      *  \code
      *  /etc/matrix-vision/mvimpact-acquire/camerafiles
      *  \endcode
@@ -18573,13 +20910,13 @@ public:
     /// \brief Updates a camera description with the data stored in a previous session or with the original default data.
     /**
      *  When importing a camera description the device driver will try to retrieve the parameters
-     *  needed from a XML file. Under Windows&reg; camera descriptions MUST be stored under
+     *  needed from a XML file. On Windows&reg; camera descriptions MUST be stored under
      * \code
-     *  %ALLUSERS%\Documents\MATRIX VISION\mvIMPACT acquire\CameraFiles
+     *  %ALLUSERS%/Documents/MATRIX VISION/mvIMPACT acquire/CameraFiles
      * \endcode
      *  or
      * \code
-     *  %MVIMPACT_ACQUIRE_DATA_DIR%\CameraFiles
+     *  %MVIMPACT_ACQUIRE_DATA_DIR%/CameraFiles
      * \endcode
      *  which will point to the same folder), under Linux&reg; this directory will be
      *  \code
@@ -18618,7 +20955,7 @@ public:
         return DMR_ImportCameraDescription( m_hDrv, m_hRoot );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property \b read-only containing the name of this camera description list.
     PropertyS name;
@@ -18647,7 +20984,7 @@ public:
     /// \brief An integer property defining the number of active pixels to capture per line.
     PropertyI aoiWidth;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18673,7 +21010,7 @@ protected:
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property defining the number of bits per pixel currently transmitted by this camera.
     PropertyI bitsPerPixel;
@@ -18688,7 +21025,7 @@ public:
      */
     PropertyIBayerMosaicParity bayerParity;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18711,7 +21048,7 @@ class CameraDescriptionSDI : public CameraDescriptionDigitalBase
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property for defining the video standard this camera is compliant with.
     /**
@@ -18719,7 +21056,7 @@ public:
      */
     PropertyIVideoStandard videoStandard;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18744,7 +21081,7 @@ protected:
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property defining the number of pixels per clock cycle transmitted by this camera.
     /**
@@ -18757,7 +21094,7 @@ public:
      */
     PropertyICameraScanMode scanMode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18783,7 +21120,7 @@ class CameraDescriptionCameraLink : public CameraDescriptionDigitalBase2
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the way this camera transmits the data valid (\b DVAL) signal.
     /**
@@ -18801,7 +21138,7 @@ public:
      */
     PropertyICameraTapsYGeometry tapsYGeometry;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18827,7 +21164,7 @@ class CameraDescriptionDigital : public CameraDescriptionDigitalBase2
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the edge valid for the frame sync signal of this camera.
     /**
@@ -18875,7 +21212,7 @@ public:
      */
     PropertyICameraExternalSyncEdge pixelClk;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18902,7 +21239,7 @@ protected:
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property for defining the video standard this camera is compliant with.
     /**
@@ -18924,7 +21261,7 @@ public:
      */
     PropertyIAcquisitionField startField;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -18973,7 +21310,7 @@ class CameraDescriptionNonStandard : public CameraDescriptionStandardBase
     }
 public:
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property containing the line frequency of this camera in Hertz.
     PropertyI lineFrequency_Hz;
@@ -19027,7 +21364,7 @@ public:
      */
     PropertyI clampStart_us;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -19046,7 +21383,7 @@ public:
  *  available for the current device therefore can only be queried by reading the
  *  the translation dictionary of the property \b mvIMPACT::acquire::CameraSettingsFrameGrabber::type.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  #include <mvIMPACT_CPP/mvIMPACT_acquire.h>
  *  #include <algorithm>
@@ -19081,39 +21418,158 @@ public:
  *    }
  *
  *    // display the name of every camera description available for this device.
- *    // this might be less then the number of camera descriptions available on the system as e.g.
+ *    // this might be less than the number of camera descriptions available on the system as e.g.
  *    // an analog frame grabber can't use descriptions for digital cameras
- *    CameraSettingsFrameGrabber(pDev);
- *    IntDict vAvailableDescriptions;
+ *    CameraSettingsFrameGrabber cs( pDev );
+ *    std::string<std::string, int> vAvailableDescriptions;
  *    cs.type.getTranslationDict( vAvailableDescriptions );
  *    cout << endl << "Available camera descriptions: " << vAvailableDescriptions.size() << endl
  *         << "----------------------------------" << endl;
  *    for_each( vAvailableDescriptions.begin(), vAvailableDescriptions.end(), DisplayDictEntry<int>() )
  *
  *    // list all descriptions that already have been selected at least once
- *    CameraDescriptionManager camMgr(pDev);
+ *    CameraDescriptionManager camMgr( pDev );
  *    unsigned int camCnt = camMgr.getCLCameraDescriptionCount();
  *    cout << "Available CL descriptions: " << camCnt << endl;
  *    for( unsigned int a=0; a<camCnt; a++ )
  *    {
- *      cout << "  " << camMgr.cameraDescriptionCameraLink(a)->name.read() << endl;
+ *      cout << "  " << camMgr.cameraDescriptionCameraLink( a )->name.read() << endl;
  *    }
  *    camCnt = camMgr.getStandardCameraDescriptionCount();
  *    cout << "Available Std descriptions: " << camCnt << endl;
  *    for( unsigned int b=0; b<camCnt; b++ )
  *    {
- *      cout << "  " << camMgr.cameraDescriptionStandard(b)->name.read() << endl;
+ *      cout << "  " << camMgr.cameraDescriptionStandard( b )->name.read() << endl;
  *    }
  *    camCnt = camMgr.getNonStandardCameraDescriptionCount();
  *    cout << "Available NonStd descriptions: " << camCnt << endl;
  *    for( unsigned int c=0; c<camCnt; c++ )
  *    {
- *      cout << "  " << camMgr.cameraDescriptionNonStandard(c)->name.read() << endl;
+ *      cout << "  " << camMgr.cameraDescriptionNonStandard( c )->name.read() << endl;
  *    }
  *    return 0;
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ * import mvIMPACT.acquire.*;
+ *
+ * //-----------------------------------------------------------------------------
+ * public class ListCameraDescriptions
+ * //-----------------------------------------------------------------------------
+ * {
+ *   static
+ *   {
+ *     try
+ *     {
+ *       System.loadLibrary( "mvIMPACT_Acquire.java" );
+ *     }
+ *     catch( UnsatisfiedLinkError e )
+ *     {
+ *       System.err.println( "Native code library failed to load. Make sure the 'mvIMPACT_Acquire.java' library can be found in the systems search path.\n" + e );
+ *       System.exit( 1 );
+ *     }
+ *   }
+ *
+ *   //-----------------------------------------------------------------------------
+ *   public static void main( String[] args )
+ *   //-----------------------------------------------------------------------------
+ *   {
+ *     DeviceManager devMgr = new DeviceManager();
+ *     Device pDev = mvIMPACT.acquire.examples.helper.DeviceAccess.getDeviceFromUserInput( devMgr );
+ *     if( pDev == null )
+ *     {
+ *       System.out.print( "Unable to continue!" );
+ *       mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *       System.exit( 1 );
+ *     }
+ *
+ *     System.out.println( "Initialising the device. This might take some time..." );
+ *     try
+ *     {
+ *       pDev.open();
+ *     }
+ *     catch( ImpactAcquireException e )
+ *     {
+ *       // this e.g. might happen if the same device is already opened in another process...
+ *       System.out.println( "An error occurred while opening device " + pDev.getSerial().read() +
+ *                           "(error code: " + e.getMessage() + ")." );
+ *       mvIMPACT.acquire.examples.helper.DeviceAccess.waitForENTER();
+ *       System.exit( 1 );
+ *     }
+ *
+ *     // display the name of every camera description available for this device.
+ *     // this might be less than the number of camera descriptions available on the system as e.g.
+ *     // an analog frame grabber can't use descriptions for digital cameras
+ *     CameraSettingsFrameGrabber cs = new CameraSettingsFrameGrabber(pDev);
+ *     StringIntVector vAvailableDescriptions = new StringIntVector();
+ *     cs.getType().getTranslationDict( vAvailableDescriptions );
+ *     System.out.println( String.format( "\nAvailable camera descriptions: %d", vAvailableDescriptions.size() ) );
+ *     System.out.println( "----------------------------------" );
+ *
+ *     for( int i=0; i<vAvailableDescriptions.size(); i++ )
+ *     {
+ *         System.out.println( String.format( "[%d]: %s", vAvailableDescriptions.get( i ).getSecond(), vAvailableDescriptions.get( i ).getFirst() ) );
+ *     }
+ *
+ *     // list all descriptions that already have been selected at least once
+ *     CameraDescriptionManager camMgr = new CameraDescriptionManager( pDev );
+ *     long camCnt = camMgr.getCLCameraDescriptionCount();
+ *     System.out.println( String.format( "Available CL descriptions: %d", camCnt ) );
+ *     for( long a=0; a<camCnt; a++ )
+ *     {
+ *       System.out.println( "  " + camMgr.cameraDescriptionCameraLink( a ).getName().read() );
+ *     }
+ *     camCnt = camMgr.getStandardCameraDescriptionCount();
+ *     System.out.println( String.format( "Available Std descriptions: %d", camCnt ) );
+ *     for( long b=0; b<camCnt; b++ )
+ *     {
+ *       System.out.println( "  " + camMgr.cameraDescriptionStandard( b ).getName().read() );
+ *     }
+ *     camCnt = camMgr.getNonStandardCameraDescriptionCount();
+ *     System.out.println( String.format( "Available NonStd descriptions: %d", camCnt ) );
+ *     for( long c=0; c<camCnt; c++ )
+ *     {
+ *       System.out.println( "  " + camMgr.cameraDescriptionNonStandard( c ).getName().read() );
+ *     }
+ *   }
+ * }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *   # ...
+ *   # display the name of every camera description available for this device.
+ *   # this might be less than the number of camera descriptions available on the system as e.g.
+ *   # an analog frame grabber can't use descriptions for digital cameras
+ *   cs = acquire.CameraSettingsFrameGrabber(pDev)
+ *   availableDescriptions = []
+ *
+ *   cs.type.getTranslationDict(availableDescriptions)
+ *   print()
+ *   print("Available camera descriptions: " + str(availableDescriptions.size()))
+ *   print("----------------------------------")
+ *
+ *   for description in availableDescriptions:
+ *       print(description)
+ *
+ *   # list all descriptions that already have been selected at least once
+ *   camMgr = acquire.CameraDescriptionManager(pDev)
+ *   camCnt = camMgr.getCLCameraDescriptionCount()
+ *   print("Available CL descriptions: " + str(camCnt))
+ *   for a in range(camCnt):
+ *       print("  " + camMgr.cameraDescriptionCameraLink(a).name.readS())
+ *
+ *   camCnt = camMgr.getStandardCameraDescriptionCount()
+ *   print("Available Std descriptions: " + str(camCnt))
+ *   for b in range(camCnt):
+ *       print("  " << camMgr.cameraDescriptionStandard(b).name.readS())
+ *
+ *   camCnt = camMgr.getNonStandardCameraDescriptionCount()
+ *   print("Available NonStd descriptions: " + str(camCnt))
+ *   for c in range(camCnt):
+ *     print("  " << camMgr.cameraDescriptionNonStandard(c).name.readS())
+ * \endcode
+ * \endif
  *
  *  \note
  *  This class will only be available for frame grabber devices. For other devices
@@ -19185,7 +21641,7 @@ class CameraDescriptionManager
     void dealloc( void )
     //-----------------------------------------------------------------------------
     {
-        assert( ( m_pRefData != 0 ) && "BUG in reference counting detected!" );
+        assert( m_pRefData && "BUG in reference counting detected!" );
         --( m_pRefData->m_refCnt );
         if( m_pRefData->m_refCnt == 0 )
         {
@@ -19224,7 +21680,7 @@ class CameraDescriptionManager
         if( m_pRefData->m_lastListSize != curSize )
         {
             // new cameras at runtime can only appear at the end of the list
-            ComponentIterator it( m_pRefData->m_hListCameraDescriptions );
+            Component it( m_pRefData->m_hListCameraDescriptions );
             it = it.firstChild();
             // move to the old end
             for( unsigned int i = 0; ( i < m_pRefData->m_lastListSize ) && it.isValid(); i++ )
@@ -19305,19 +21761,19 @@ public:
         }
         m_pRefData = new ReferenceCountedData( pDev->hDrv(), hList );
     }
-    /// \brief Constructs a new \b mvIMPACT::acquire::CameraDescriptionManager from and existing one.
-    explicit CameraDescriptionManager(  /// A constant reference to the \b mvIMPACT::acquire::CameraDescriptionManager object, this object shall be created from
+    /// \brief Constructs a new \b mvIMPACT::acquire::CameraDescriptionManager from an existing one.
+    CameraDescriptionManager(
+        /// A constant reference to the \b mvIMPACT::acquire::CameraDescriptionManager object, this object shall be created from
         const CameraDescriptionManager& src ) : m_pRefData( src.m_pRefData )
     {
         ++( m_pRefData->m_refCnt );
     }
-    /// \brief Class destructor
+    /// \brief Class destructor.
     ~CameraDescriptionManager()
     {
         dealloc();
     }
-#           ifndef WRAP_PYTHON
-    /// \brief Allows assignments of \b mvIMPACT::acquire::CameraDescriptionManager objects
+    /// \brief Allows assignments of \b mvIMPACT::acquire::CameraDescriptionManager objects.
     CameraDescriptionManager& operator=( const CameraDescriptionManager& rhs )
     {
         if( this != &rhs )
@@ -19329,7 +21785,6 @@ public:
         }
         return *this;
     }
-#           endif // #ifndef WRAP_PYTHON (In Python, object assignment amounts to just a reference count increment anyhow; you need to call the constructor or possibly some slice operation to make a true copy)
     /// \brief Returns the number of CameraLink&reg; camera descriptions currently available for the device that constructed this instance of the class.
     unsigned int getCLCameraDescriptionCount( void ) const
     {
@@ -19548,18 +22003,18 @@ public:
  *
  *  The following I2C addresses will be blocked for access from an application:
  *  <table>
- *  <tr><td class="header">i2c address</td><td class="header">remark</td></tr>
- *  <tr><td class="indexvalue">0x20-0x3F</td><td class="indexvalue">-</td></tr>
- *  <tr><td class="indexvalue">0x66-0x67</td><td class="indexvalue">-</td></tr>
+ *  <tr><td class="header">i2c address range</td><td class="header">affected devices</td></tr>
+ *  <tr><td class="indexvalue">0x20-0x3F</td><td class="indexvalue">all mvBlueFOX devices</td></tr>
+ *  <tr><td class="indexvalue">0x66-0x67</td><td class="indexvalue">all mvBlueFOX devices</td></tr>
  *  <tr><td class="indexvalue">0x90-0x91</td><td class="indexvalue">mvBlueFOX-200w only</td></tr>
- *  <tr><td class="indexvalue">0xA0-0xA3</td><td class="indexvalue">-</td></tr>
- *  <tr><td class="indexvalue">0xA6-0xA7</td><td class="indexvalue">-</td></tr>
+ *  <tr><td class="indexvalue">0xA0-0xA3</td><td class="indexvalue">all mvBlueFOX devices</td></tr>
+ *  <tr><td class="indexvalue">0xA6-0xA7</td><td class="indexvalue">all mvBlueFOX devices</td></tr>
  *  <tr><td class="indexvalue">0xBA-0xBB</td><td class="indexvalue">mvBlueFOX-202a and mvBlueFOX-205 only</td></tr>
  *  </table>
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
- *  I2CControl i2cc(pBF);
+ *  I2CControl i2cc( pBF ); // assuming 'pBF' to be a valid 'Device*' instance to an mvBlueFOX device
  *  if( i2cc.I2COperationMode.isValid() )
  *  {
  *    // direct property access
@@ -19575,8 +22030,10 @@ public:
  *    i2cc.I2CBuffer.writeBinary( string() );
  *    assert( ( i2cc.I2COperationExecute.call() == DMR_INVALID_PARAMETER ) && "Unexpected driver behaviour" );
  *    assert( ( i2cc.I2COperationStatus.read() == I2CosNotEnoughData ) && "Unexpected driver behaviour" );
- *    char binData[2] = { 'A', 'B' };
- *    i2cc.I2CBuffer.writeBinary( string(binData, sizeof(binData)) );
+ *    {
+ *      char binData[2] = { 'A', 'B' };
+ *      i2cc.I2CBuffer.writeBinary( string(binData, sizeof(binData)) );
+ *    }
  *    // assuming we write to an invalid address
  *    assert( ( i2cc.I2COperationExecute.call() == DMR_EXECUTION_FAILED ) && "Unexpected driver behaviour" );
  *    assert( ( i2cc.I2COperationStatus.read() == I2CosFailure ) && "Unexpected driver behaviour" );
@@ -19588,8 +22045,10 @@ public:
  *    i2cc.I2CDeviceAddress.write( 0xA6 );
  *    i2cc.I2CDeviceSubAddress.write( 0x04 );
  *    i2cc.I2CDeviceSubAddressWidth.write( 8 );
- *    char binData[9] = { 'D', 'E', 'A', 'D', ' ', 'B', 'E', 'E', 'F' };
- *    i2cc.I2CBuffer.writeBinary( string(binData, sizeof(binData)) );
+ *    {
+ *      char binData[9] = { 'D', 'E', 'A', 'D', ' ', 'B', 'E', 'E', 'F' };
+ *      i2cc.I2CBuffer.writeBinary( string( binData, sizeof( binData ) ) );
+ *    }
  *    i2cc.I2COperationMode.write( I2ComWrite );
  *    int I2COperationExecuteResult = i2cc.I2COperationExecute.call();
  *    if( I2COperationExecuteResult != DMR_NO_ERROR )
@@ -19624,7 +22083,150 @@ public:
  *    printf( "I2CControl not available.\n" );
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  import java.nio.ByteBuffer; // needed for binary data exchange!
+ *
+ *  // more code and a class definition must follow here...
+ *
+*  I2CControl i2cc = new I2CControl( pDev ); // assuming 'pBF' to be a valid 'Device*' instance to an mvBlueFOX device
+*  if( i2cc.getI2COperationMode().isValid() )
+*  {
+*    // direct property access
+*    i2cc.getI2CBufferLength().write( 0 );
+*    i2cc.getI2COperationMode().write( TI2COperationMode.I2ComRead );
+*    assert i2cc.getI2COperationExecute().call() == TDMR_ERROR.DMR_INVALID_PARAMETER : "Unexpected driver behaviour";
+*    assert i2cc.getI2COperationStatus().read() == TI2COperationStatus.I2CosNotEnoughData : "Unexpected driver behaviour";
+*    i2cc.getI2CBufferLength().write( 1 );
+*    // assuming we write to an invalid address
+*    assert i2cc.getI2COperationExecute().call() == TDMR_ERROR.DMR_EXECUTION_FAILED : "Unexpected driver behaviour";
+*    assert i2cc.getI2COperationStatus().read() == TI2COperationStatus.I2CosFailure : "Unexpected driver behaviour";
+*    i2cc.getI2COperationMode().write( TI2COperationMode.I2ComWrite );
+*    {
+*      final int BUF_SIZE = 2;
+*      byte[] data_bytes = new byte[BUF_SIZE];
+*      data_bytes[0] = 'A';
+*      data_bytes[1] = 'B';
+*      ByteBuffer data = ByteBuffer.allocateDirect( BUF_SIZE );
+*      data.put( data_bytes );
+*      i2cc.getI2CBuffer().writeBinary( data );
+*    }
+*    // assuming we write to an invalid address
+*    assert i2cc.getI2COperationExecute().call() == TDMR_ERROR.DMR_EXECUTION_FAILED : "Unexpected driver behaviour";
+*    assert i2cc.getI2COperationStatus().read() == TI2COperationStatus.I2CosFailure : "Unexpected driver behaviour";
+*    // Write some data. This will only work if several conditions are met:
+*    // - there is a device that can be written to at address 0xA6
+*    // - the sub-address 0x04 is valid
+*    // - the device is designed to work with 8 bit sub-addresses
+*    // - the device can deal with 9 bytes in a single command
+*    i2cc.getI2CDeviceAddress().write( 0xA6 );
+*    i2cc.getI2CDeviceSubAddress().write( 0x04 );
+*    i2cc.getI2CDeviceSubAddressWidth().write( 8 );
+*    {
+*      final int BUF_SIZE = 9;
+*      byte[] data_bytes = new byte[BUF_SIZE];
+*      data_bytes[0] = 'D';
+*      data_bytes[0] = 'E';
+*      data_bytes[0] = 'A';
+*      data_bytes[0] = 'D';
+*      data_bytes[0] = ' ';
+*      data_bytes[0] = 'B';
+*      data_bytes[0] = 'E';
+*      data_bytes[0] = 'E';
+*      data_bytes[0] = 'F';
+*      ByteBuffer data = ByteBuffer.allocateDirect( BUF_SIZE );
+*      data.put( data_bytes );
+*      i2cc.getI2CBuffer().writeBinary( data );
+*    }
+*    i2cc.getI2COperationMode().write( TI2COperationMode.I2ComWrite );
+*    int I2COperationExecuteResult = i2cc.getI2COperationExecute().call();
+*    if( I2COperationExecuteResult != TDMR_ERROR.DMR_NO_ERROR )
+*    {
+*      System.out.println( String.format( "'I2COperationExecute' write failed. Return value: %s(%d).", ImpactAcquireException.getErrorCodeAsString( I2COperationExecuteResult ), I2COperationExecuteResult ) );
+*    }
+*    System.out.println( String.format( "'I2COperationStatus' after write: %s.", i2cc.getI2COperationStatus().readS() ) );
+*    // Read some data. Similar condition as for write apply
+*    final int bytesToRead = 4;
+*    i2cc.getI2CDeviceAddress().write( 0xA8 );
+*    i2cc.getI2CDeviceSubAddress().write( 0x00 );
+*    i2cc.getI2CDeviceSubAddressWidth().write( 8 );
+*    i2cc.getI2CBufferLength().write( bytesToRead ); // read 'bytesToRead' bytes
+*    i2cc.getI2COperationMode().write( TI2COperationMode.I2ComRead );
+*    i2cc.getI2COperationExecute().call();
+*    I2COperationExecuteResult = i2cc.getI2COperationExecute().call();
+*    if( I2COperationExecuteResult != TDMR_ERROR.DMR_NO_ERROR )
+*    {
+*      System.out.println( String.format( "'I2COperationExecute' read failed. Return value: %s(%d).", ImpactAcquireException.getErrorCodeAsString( I2COperationExecuteResult ), I2COperationExecuteResult ) );
+*    }
+*    System.out.println( String.format( "'I2COperationStatus' after read: %s.", i2cc.getI2COperationStatus().readS() ) );
+*    if( i2cc.getI2CBuffer().binaryDataBufferSize() != bytesToRead )
+*    {
+*      System.out.println( String.format( "'I2CBuffer' reports %d bytes of data while %d bytes where expected.", i2cc.getI2CBuffer().binaryDataBufferSize(), bytesToRead ) );
+*    }
+*    // usage of the convenience functions
+*    i2cc.I2CWrite( 0xA4, 0x00, 8, "TEST" );
+*    final String i2cReadBuffer = i2cc.I2CRead( 0xA4, 0x00, 8, 4 );
+*  }
+*  else
+*  {
+*    System.out.println( "I2CControl not available." );
+*  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  i2cc = acquire.I2CControl(pBF); # assuming 'pBF' to be a valid 'Device*' instance to an mvBlueFOX device
+ *  if i2cc.I2COperationMode.isValid():
+ *    # direct property access
+ *    i2cc.I2CBufferLength.write(0)
+ *    i2cc.I2COperationMode.write(acquire.I2ComRead)
+ *    assert i2cc.I2COperationExecute.call() == acquire.DMR_INVALID_PARAMETER, "Unexpected driver behaviour"
+ *    assert i2cc.I2COperationStatus.read() == acquire.I2CosNotEnoughData, "Unexpected driver behaviour"
+ *    i2cc.I2CBufferLength.write(1)
+ *    # assuming we write to an invalid address
+ *    assert i2cc.I2COperationExecute.call() == acquire.DMR_EXECUTION_FAILED, "Unexpected driver behaviour"
+ *    assert i2cc.I2COperationStatus.read() == acquire.I2CosFailure, "Unexpected driver behaviour"
+ *    i2cc.I2COperationMode.write(acquire.I2ComWrite)
+ *    pBuf = '\x41\x42' # 'A' and 'B'
+ *    i2cc.I2CBuffer.writeBinary(pBuf)
+ *    # assuming we write to an invalid address
+ *    assert i2cc.I2COperationExecute.call() == acquire.DMR_EXECUTION_FAILED, "Unexpected driver behaviour"
+ *    assert i2cc.I2COperationStatus.read() == acquire.I2CosFailure, "Unexpected driver behaviour"
+ *    # Write some data. This will only work if several conditions are met:
+ *    # - there is a device that can be written to at address 0xA6
+ *    # - the sub-address 0x04 is valid
+ *    # - the device is designed to work with 8 bit sub-addresses
+ *    # - the device can deal with 9 bytes in a single command
+ *    i2cc.I2CDeviceAddress.write(0xA6)
+ *    i2cc.I2CDeviceSubAddress.write(0x04)
+ *    i2cc.I2CDeviceSubAddressWidth.write(8)
+ *    pBuf = '\x44\x45\x41\x44\x20\x42\x45\x45\x46' # The good old 'DEAD BEEF' in HEX notation
+ *    i2cc.I2CBuffer.writeBinary(pBuf)
+ *    i2cc.I2COperationMode.write(acquire.I2ComWrite)
+ *    I2COperationExecuteResult = i2cc.I2COperationExecute.call()
+ *    if I2COperationExecuteResult != acquire.DMR_NO_ERROR:
+ *      print("'I2COperationExecute' write failed. Return value: {0}({1}).".format(acquire.ImpactAcquireException.getErrorCodeAsString(I2COperationExecuteResult), I2COperationExecuteResult))
+ *    print("'I2COperationStatus' after write: {0}.".format(i2cc.I2COperationStatus.readS()))
+ *    # Read some data. Similar condition as for write apply
+ *    bytesToRead = 4
+ *    i2cc.I2CDeviceAddress.write(0xA8)
+ *    i2cc.I2CDeviceSubAddress.write(0x00)
+ *    i2cc.I2CDeviceSubAddressWidth.write(8)
+ *    i2cc.I2CBufferLength.write(bytesToRead) # read 'bytesToRead' bytes
+ *    i2cc.I2COperationMode.write(acquire.I2ComRead)
+ *    i2cc.I2COperationExecute.call()
+ *    I2COperationExecuteResult = i2cc.I2COperationExecute.call()
+ *    if I2COperationExecuteResult != acquire.DMR_NO_ERROR:
+ *      System.out.println(String.format("'I2COperationExecute' read failed. Return value: %s(%d).", ImpactAcquireException.getErrorCodeAsString(I2COperationExecuteResult), I2COperationExecuteResult))
+ *    print("'I2COperationStatus' after read: {0}.".format(i2cc.I2COperationStatus.readS()))
+ *    if i2cc.I2CBuffer.binaryDataBufferSize() != bytesToRead:
+ *      print("'I2CBuffer' reports {0} bytes of data while {1} bytes where expected.".format(i2cc.I2CBuffer.binaryDataBufferSize(), bytesToRead))
+ *    # usage of the convenience functions
+ *    i2cc.I2CWrite(0xA4, 0x00, 8, "TEST")
+ *    i2cReadBuffer = i2cc.I2CRead(0xA4, 0x00, 8, 4)
+ *  else:
+ *    print("I2CControl not available.")
+ * \endcode
+ * \endif
  *
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
@@ -19665,7 +22267,7 @@ public:
         }
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property to select the I2C operation.
     /**
@@ -19708,7 +22310,7 @@ public:
     /// \brief An integer property controlling the length of the mapping between the I2C device and the \b mvIMPACT::acquire::I2CControl::I2CBuffer property.
     PropertyI I2CBufferLength;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
     /// \brief Read data from an I2C device.
     /**
@@ -19793,7 +22395,7 @@ public:
         }
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property storing a command to be sent to the motor focus.
     /**
@@ -19820,7 +22422,7 @@ public:
     /// \brief Calling this function will cause the motor focus to move to the position defined by the value of \b mvIMPACT::acquire::MotorFocusControl::motorFocusAbsolutePositionDesired.
     Method motorFocusMoveToAbsolutePositionDesired;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -19830,7 +22432,7 @@ public:
 /**
  *  Properties in this class will only be available if a device offers digital I/O measurement features.
  *
- *  \if DOXYGEN_CPP_DOCUMENTATION
+ * \if DOXYGEN_CPP_DOCUMENTATION
  * \code
  *  // This code fragment will print result of measurement using all modes on all sources
  *  // to the standard output.
@@ -19854,7 +22456,47 @@ public:
  *    }
  *  }
  * \endcode
- *  \endif
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ *  // This code fragment will print result of measurement using all modes on all sources
+ *  // to the standard output.
+ *  DigitalIOMeasurementControl iomc = new DigitalIOMeasurementControl(getDevicePointerFromSomewhere());
+ *  if( iomc.digitalIOMeasurementMode.isValid() && iomc.digitalIOMeasurementSource.isValid() )
+ *  {
+ *    StringIntVector modeDict = new StringIntVector();
+ *    iomc.digitalIOMeasurementMode.getTranslationDict( modeDict );
+ *    final int modeCnt = iomc.digitalIOMeasurementMode.dictSize();
+ *    StringIntVector srcDict = new StringIntVector();
+ *    iomc.digitalIOMeasurementSource.getTranslationDict( srcDict );
+ *    final int srcCnt = iomc.digitalIOMeasurementSource.dictSize();
+ *    for( int i=0; i<modeCnt; i++ )
+ *    {
+ *      iomc.digitalIOMeasurementMode.write( modeDict.get( i ).getSecond() );
+ *      for( int j=0; j<srcCnt; j++ )
+ *      {
+ *        iomc.digitalIOMeasurementSource.write( srcDict.get( j ).getSecond() );
+ *        System.out.println( String.format( "Digital I/O measurement result using mode '%s' at source '%s': %s\n", iomc.digitalIOMeasurementMode.readS(), iomc.digitalIOMeasurementSource.readS(), iomc.digitalIOMeasurementResult.readS() ) );
+ *      }
+ *    }
+ *  }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ *  modeDict = []
+ *  srcDict = []
+ *  iomc = acquire.DigitalIOMeasurementControl(pDev)
+ *  if iomc.digitalIOMeasurementMode.isValid and iomc.digitalIOMeasurementSource.isValid:
+ *      iomc.digitalIOMeasurementMode.getTranslationDict(modeDict)
+ *      modeCnt = iomc.digitalIOMeasurementMode.dictSize()
+ *      iomc.digitalIOMeasurementSource.getTranslationDict(srcDict);
+ *      srcCnt = iomc.digitalIOMeasurementSource.dictSize();
+ *      for i in range(modeCnt):
+ *          iomc.digitalIOMeasurementMode.write(modeDict[i].second);
+ *          for j in range(srcCnt):
+ *              iomc.digitalIOMeasurementSource.write(srcDict[j].second);
+ *              print("Digital I/O measurement result using mode '" +  iomc.digitalIOMeasurementMode.readS() + "' at source '" +  iomc.digitalIOMeasurementSource.readS() + "': " + iomc.digitalIOMeasurementResult.readS())
+ * \endcode
+ * \endif
  *
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
@@ -19882,7 +22524,7 @@ public:
         }
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the type of measurement to perform.
     /**
@@ -19905,7 +22547,7 @@ public:
      */
     PropertyF digitalIOMeasurementResult;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -19935,12 +22577,12 @@ public:
         /// \b mvIMPACT::acquire::FunctionInterface::createSetting
         const std::string& name = "Base" ) : FullSettingsBase( pDev, name ), cameraSetting( pDev, name ) {}
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief Camera related settings.
     CameraSettingsBlueFOX cameraSetting;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
@@ -19972,19 +22614,20 @@ public:
         /// \b mvIMPACT::acquire::FunctionInterface::createSetting
         const std::string& name = "Base" ) : FullSettingsBase( pDev, name ), cameraSetting( pDev, name ), connector( pDev, name ) {}
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief Camera related settings.
     CameraSettingsFrameGrabber cameraSetting;
     /// \brief Input channel related properties.
     Connector connector;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 #   ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+#       ifndef WRAP_ANY
 /// \brief \b deprecated. Use the class \b mvIMPACT::acquire::SystemSettings instead(\b Device specific interface layout only).
 /**
  *  \deprecated
@@ -19995,9 +22638,8 @@ public:
  *  \note This class will only be available if \b mvIMPACT::acquire::Device::interfaceLayout is set to
  *  \b mvIMPACT::acquire::dilDeviceSpecific before the device is opened.
  */
-#       ifndef WRAP_PYTHON
 typedef SystemSettings MVIMPACT_DEPRECATED_CPP( SystemBlueCOUGAR );
-#       endif // #  ifndef WRAP_PYTHON
+#       endif // #  ifndef WRAP_ANY
 #   endif // #ifndef IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 
 #   ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
@@ -20026,7 +22668,7 @@ public:
         locator.bindComponent( footerCheckEnable, "FooterCheckEnable" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property defining the block size of the image data blocks transferred from the device.
     /**
@@ -20057,7 +22699,7 @@ public:
      *  \note
      *  Do \b NOT modify this property when images are acquired in parallel. Switching off or on the power
      *  for a device that is capturing images at the same time will result in incorrect images! Therefore
-     *  always make sure to stop image acquisition \b BEFORE modifying this property.
+     *  always make sure to stop image acquisition and clean up \b BEFORE modifying this property.
      *
      *  Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TDevicePowerMode.
      */
@@ -20073,7 +22715,7 @@ public:
      */
     PropertyIBoolean statusLEDEnable;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 #   endif // #ifndef IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
@@ -20107,7 +22749,7 @@ public:
         locator.bindComponent( loudness, "Loudness" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief If V4L2 device supports audio, this integer property adjusts the audio volume.
     /**
@@ -20149,7 +22791,7 @@ public:
      *  values too large or too small will raise an exception.
      */
     PropertyI treble;
-    /// \brief If V4L2 device supports audio, this enumerated integer property sets audio mute on/off
+    /// \brief If V4L2 device supports audio, this enumerated integer property sets audio mute on/off.
     /**
      *  This property represents a boolean-valued V4L2-control ID. Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
      *
@@ -20166,7 +22808,7 @@ public:
      */
     PropertyIBoolean loudness;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 
 };
@@ -20191,11 +22833,11 @@ inline void ExceptionFactory::raiseException( const char* pFunctionName, int lin
     case PROPHANDLING_NO_READ_RIGHTS:
         throw ENoReadRights( Component( objectHandle ).name(), oss.str() );
     case PROPHANDLING_NO_WRITE_RIGHTS:
-        throw ENoWriteRights( getLastErrorString(), oss.str() );
+        throw ENoWriteRights( Component( objectHandle ).name(), oss.str() );
     case PROPHANDLING_NO_MODIFY_SIZE_RIGHTS:
         throw ENoModifySizeRights( Component( objectHandle ).name(), oss.str() );
     case PROPHANDLING_INCOMPATIBLE_COMPONENTS:
-        throw EIncompatibleComponents( getLastErrorString(), oss.str() );
+        throw EIncompatibleComponents( getLastErrorString(), oss.str(), false );
     case PROPHANDLING_UNSUPPORTED_PARAMETER:
         throw EUnsupportedParameter( oss.str() );
     case PROPHANDLING_SIZE_MISMATCH:
@@ -20203,11 +22845,11 @@ inline void ExceptionFactory::raiseException( const char* pFunctionName, int lin
     case PROPHANDLING_IMPLEMENTATION_MISSING:
         throw EImplementationMissing( getLastErrorString(), oss.str() );
     case PROPHANDLING_INVALID_PROP_VALUE:
-        throw EInvalidValue( getLastErrorString(), oss.str() );
+        throw EInvalidValue( getLastErrorString(), oss.str(), false );
     case PROPHANDLING_PROP_TRANSLATION_TABLE_CORRUPTED:
         throw ETranslationTableCorrupted( Component( objectHandle ).name(), oss.str() );
     case PROPHANDLING_PROP_VAL_ID_OUT_OF_BOUNDS:
-        throw EValIDOutOfBounds( getLastErrorString(), oss.str() );
+        throw EValIDOutOfBounds( getLastErrorString(), oss.str(), false );
     case PROPHANDLING_PROP_TRANSLATION_TABLE_NOT_DEFINED:
         throw ETranslationTableNotDefined( Component( objectHandle ).name(), oss.str() );
     case PROPHANDLING_INVALID_PROP_VALUE_TYPE:
@@ -20296,15 +22938,1720 @@ inline void ExceptionFactory::raiseException( const char* pFunctionName, int lin
     case DEV_REQUEST_BUFFER_MISALIGNED:
     case DEV_ACCESS_DENIED:
     case DMR_PRELOAD_CHECK_FAILED:
+    case DMR_FILE_ACCESS_ERROR:
     case DMR_CAMERA_DESCRIPTION_INVALID_PARAMETER:
+    case DMR_INVALID_QUEUE_SELECTION:
+    case DMR_ACQUISITION_ENGINE_BUSY:
+    case DMR_BUSY:
+    case DMR_OUT_OF_MEMORY:
         throw EDeviceManager( getLastErrorString(), oss.str(), static_cast<TDMR_ERROR>( errorCode ) );
     default:
         throw ImpactAcquireException( "Unknown error(" + getLastErrorString() + ")", oss.str(), errorCode );
     }
 }
 
+namespace GenICam
+{
+
+class GenTLDriverConfigurator;
+
+//-----------------------------------------------------------------------------
+/// \brief A class that contains items to configure the behaviour of the GenICam GenTL driver stack.
+/**
+ * This class contains items to configure the enumeration behaviour of a third party GenTL producer library.
+ *
+*  \note
+ * Instances of this class cannot be constructed directly. To get access the functions \b mvIMPACT::acquire::GenICam::GenTLDriverConfigurator::createProducerConfiguration,
+ * \b mvIMPACT::acquire::GenICam::GenTLDriverConfigurator::getProducerConfigurations
+ * or \b mvIMPACT::acquire::GenICam::GenTLDriverConfigurator::getProducerConfiguration must be used.
+ * must be used.
+ *
+ * For a comprehensive usage example see the description of the class \b mvIMPACT::acquire::GenICam::GenTLDriverConfigurator.
+ *
+ * \sa
+ * \ref CommonCases_mvGenTLConsumerSetup
+ *
+ * \since 2.34.0
+ * \ingroup GenICamInterfaceProducer
+ */
+class GenTLProducerConfiguration : public mvIMPACT::acquire::ComponentCollection
+//-----------------------------------------------------------------------------
+{
+    friend class GenTLDriverConfigurator;
+
+    Method createProducerInterfaceConfigurationEntry_;
+    Method deleteProducerInterfaceConfigurationEntry_;
+
+    void bindProperties( HLIST hList )
+    {
+        {
+            Component it( hList );
+            ComponentLocator locator( it.parent().parent().hObj() );
+            locator.bindComponent( createProducerInterfaceConfigurationEntry_, "CreateProducerInterfaceConfigurationEntry@iss" );
+            locator.bindComponent( deleteProducerInterfaceConfigurationEntry_, "DeleteProducerInterfaceConfigurationEntry@iss" );
+        }
+        {
+            ComponentLocator locator( hList );
+            locator.bindComponent( enumerationEnable, "EnumerationEnable" );
+        }
+    }
+    explicit GenTLProducerConfiguration( HLIST hList ) : mvIMPACT::acquire::ComponentCollection( hList ),
+        createProducerInterfaceConfigurationEntry_(), deleteProducerInterfaceConfigurationEntry_(),
+        enumerationEnable()
+    {
+        bindProperties( hList );
+    }
+public:
+    /// \brief Constructs a new \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration from an existing one.
+    GenTLProducerConfiguration(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration object, this object shall be created from
+        const GenTLProducerConfiguration& src ) : ComponentCollection( src.hObj() ),
+        createProducerInterfaceConfigurationEntry_( src.createProducerInterfaceConfigurationEntry_ ),
+        deleteProducerInterfaceConfigurationEntry_( src.deleteProducerInterfaceConfigurationEntry_ ),
+        enumerationEnable( src.enumerationEnable ) {}
+    /// \brief Allows assignments of \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration objects.
+    GenTLProducerConfiguration& operator=( const GenTLProducerConfiguration& rhs )
+    {
+        if( this != &rhs )
+        {
+            ComponentCollection::operator=( rhs );
+            bindProperties( rhs.hObj() );
+        }
+        return *this;
+    }
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %immutable; )
+    // *INDENT-ON*
+    /// \brief An enumerated integer property defining the enumeration behavior this particular GenTL producer.
+    /**
+     * If this property is set to \b mvIMPACT::acquire::bTrue ALL interfaces of this producer will be enumerated
+     * unless a specific interface enumeration behaviour has been set to \b mvIMPACT::acquire::iebForceIgnore.
+     *
+     * Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TBoolean.
+     */
+    PropertyIBoolean enumerationEnable;
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %mutable; )
+    // *INDENT-ON*
+    /// \brief Returns the interface enumeration behaviour property for the specified interface ID for this particular GenTL producer.
+    /**
+     *
+     * Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TInterfaceEnumerationBehaviour.
+     *
+     * \note If no entry for the specified interface ID exists an exception will be thrown.
+     *
+     * \return The enumeration behaviour configuration property for the specified interface
+     */
+    PropertyIInterfaceEnumerationBehaviour getInterfaceEnumerationBehaviour(
+        /// [in] The interface ID previously passed e.g. to the \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration::createProducerInterfaceConfigurationEntry function.
+        const std::string& interfaceID ) const
+    {
+        ComponentLocator locator( hObj(), "Interfaces" );
+        const HOBJ hObj = locator.findComponent( interfaceID, 0, 1 );
+        if( hObj == INVALID_ID )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, static_cast<TDMR_ERROR>( PROPHANDLING_COMPONENT_NOT_FOUND ), "Couldn't find 'InterfaceEnumerationBehaviour' for interface '" + interfaceID + "' of producer '" + getProducerName() + "'" );
+        }
+        return PropertyIInterfaceEnumerationBehaviour( hObj );
+    }
+    /// \brief Returns a map containing all the configured interface IDs and their corresponding enumeration behaviour properties for this particular GenTL producer.
+    /**
+     * The returned map will only contain interface IDs which have explicitly been configured (e.g. by a previous call to
+     * \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration::createProducerInterfaceConfigurationEntry. Certain third party
+     * interfaces might also have an entry in this map (e.g. if there is a MATRIX VISION producer supporting the same technology present
+     * on the system).
+     *
+     * Valid values for the properties are defined by the enumeration \b mvIMPACT::acquire::TInterfaceEnumerationBehaviour.
+     *
+     * \return A map containing all the configured interface IDs and their corresponding enumeration behaviour properties for this particular GenTL producer
+     */
+    std::map<std::string, PropertyIInterfaceEnumerationBehaviour> getInterfaceEnumerationBehaviours( void ) const
+    {
+        std::map<std::string, PropertyIInterfaceEnumerationBehaviour> m;
+        ComponentLocator locator( hObj(), "Interfaces" );
+        Component it( locator.searchbase_id() );
+        it = it.firstChild();
+        while( it.isValid() )
+        {
+            m.insert( make_pair( it.name(), PropertyIInterfaceEnumerationBehaviour( it.hObj() ) ) );
+            it++;
+        }
+        return m;
+    }
+    /// \brief Creates a new interface configuration entry for this producers configuration.
+    /**
+     * Usually the parameter passed to this function will be one of the interface IDs of the producers list of reported interfaces
+     * in order to configure this particular interface. However it can also be an identifier for an interface not yet connected to the
+     * system or not yet available to the producer. No internal checks are performed regarding the validity of the given interface ID.
+     *
+     * \note If an entry with the same interface ID already exists an exception will be thrown.
+     */
+    PropertyIInterfaceEnumerationBehaviour createProducerInterfaceConfigurationEntry(
+        /// [in] The interface ID to create the configuration entry for.
+        const std::string& interfaceID )
+    {
+        Component it( hObj() );
+        std::vector<std::string> parameters;
+        parameters.push_back( it.name() );
+        parameters.push_back( interfaceID );
+        const int result = createProducerInterfaceConfigurationEntry_.call( parameters );
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, static_cast<TDMR_ERROR>( result ), "Failed to create interface configuration entry" );
+        }
+        ComponentLocator locator( hObj(), "Interfaces" );
+        return PropertyIInterfaceEnumerationBehaviour( locator.findComponent( interfaceID ) );
+    }
+    /// \brief Deletes an interface configuration entry from this producers configuration.
+    /**
+     * \note If no entry for the specified interface can be found an exception will be thrown.
+     */
+    void deleteProducerInterfaceConfigurationEntry(
+        /// [in] The exact interface ID of the producers list of reported interfaces to delete the configuration entry for.
+        const std::string& interfaceID )
+    {
+        Component it( hObj() );
+        std::vector<std::string> parameters;
+        parameters.push_back( it.name() );
+        parameters.push_back( interfaceID );
+        const int result = deleteProducerInterfaceConfigurationEntry_.call( parameters );
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, static_cast<TDMR_ERROR>( result ), "Failed to delete interface configuration entry" );
+        }
+    }
+    /// \brief Returns the name of the GenTL producer associated with this configuration object.
+    /**
+     * \return The name of the GenTL producer associated with this configuration object.
+     */
+    std::string getProducerName( void ) const
+    {
+        return Component( hObj() ).name();
+    }
+};
+
+//-----------------------------------------------------------------------------
+/// \brief A class that contains items to configure the behaviour of the GenICam GenTL driver stack.
+/**
+ * This class contains items e.g. to configure the enumeration behaviour of third party GenTL producer libraries.
+ *
+ * Since version 2.32.0 mvIMPACT Acquire has built-in support for third party GenTL producer libraries.
+ * The latest version of the GenTL specification can be found here: https://www.emva.org/standards-technology/genicam/.
+ *
+ * Detection of GenTL producer libraries works by evaluating the \c GENICAM_GENTL32_PATH environment variable
+ * within a 32-bit process or the \c GENICAM_GENTL64_PATH variable in a 64-bit process. This variable contains
+ * a list of directories that might potentially contain GenTL producer libraries. These libraries use a
+ * the file extension \c .cti and export a defined interface.
+ *
+ * All libraries that fulfill these requirements will be loaded into the mvIMPACT Acquire process. By default
+ * all these libraries will then also be enumerated for connected/bound devices. The only exception will be
+ * if a third party producer is found that reports an interface supporting the same technology as one delivered
+ * by mvIMPACT Acquire (e.g. for the GigE Vision or USB3 Vision standard). These interfaces by default will not
+ * be enumerated.
+ *
+ * The purpose of this class now is to allow an application to modify this behaviour. This might be beneficial for
+ * several reasons:
+ *
+ * - a certain third party library on the system has negative impact on the overall stability of the process
+ * - there are so many third party libraries on the system that enumeration takes a very long time but the application does not want to access devices reported by these third party libraries
+ * - multiple producers support the same device resulting in very long and confusing device lists
+ * - etc.
+ *
+ * To exclude a certain producer from enumeration first a mvIMPACT::acquire::GenICam::GenTLProducerConfiguration entry for that
+ * producer must be created and then the \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration::enumerationEnable
+ * property for this producer must be set to \b mvIMPACT::acquire::bFalse.
+ *
+ * \if DOXYGEN_CPP_DOCUMENTATION
+ * \code
+ * // Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH.
+ * GenTLDriverConfigurator driverConfigurator;
+ * if( !driverConfigurator.hasProducerConfiguration( "ACME.producer.cti" ) )
+ * {
+ *   driverConfigurator.createProducerConfiguration( "ACME.producer.cti" ); // the 'enumerationEnable' will be false by default!
+ * }
+ * else
+ * {
+ *   driverConfigurator.getProducerConfiguration( "ACME.producer.cti" ).enumerationEnable.write( bFalse );
+ * }
+ * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ * // Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH.
+ * GenTLDriverConfigurator driverConfigurator = new GenTLDriverConfigurator();
+ * if( !driverConfigurator.hasProducerConfiguration( "ACME.producer.cti" ) )
+ * {
+ *   driverConfigurator.createProducerConfiguration( "ACME.producer.cti" ); // the 'enumerationEnable' will be false by default!
+ * }
+ * else
+ * {
+ *    driverConfigurator.getProducerConfiguration( "ACME.producer.cti" ).enumerationEnable.write( TBoolean.bFalse );
+ * }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ * # Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH.
+ * driverConfigurator = acquire.GenTLDriverConfigurator()
+ * if driverConfigurator.hasProducerConfiguration("ACME.producer.cti") == False:
+ *   driverConfigurator.createProducerConfiguration("ACME.producer.cti") # the 'enumerationEnable' will be false by default!
+ * else:
+ *    driverConfigurator.getProducerConfiguration("ACME.producer.cti").enumerationEnable.write(acquire.bFalse)
+ * \endcode
+ * \endif
+ *
+ * To exclude a certain interface from a producer from enumeration an \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration::enumerationEnable
+ * property for this producer can be set to \b mvIMPACT::acquire::bFalse and the interface enumeration behaviour should be set to
+ * \b mvIMPACT::acquire::iebForceEnumerate.
+ *
+ * \if DOXYGEN_CPP_DOCUMENTATION
+ * \code
+ * // Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH.
+ * GenTLDriverConfigurator driverConfigurator;
+ * GenTLProducerConfiguration configuration( driverConfigurator.hasProducerConfiguration( "ACME.producer.cti" ) ? driverConfigurator.getProducerConfiguration( "ACME.producer.cti" ) : driverConfigurator.createProducerConfiguration( "ACME.producer.cti" ) );
+ * configuration.enumerationEnable.write( bTrue ); // switch on ALL interfaces...
+ * configuration.createProducerInterfaceConfigurationEntry( "ACME.interface0.ID" ).write( iebForceIgnore ); // ... except this one
+ * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ * // Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH.
+ * GenTLDriverConfigurator driverConfigurator = new GenTLDriverConfigurator();
+ * GenTLProducerConfiguration configuration = null;
+ * if( driverConfigurator.hasProducerConfiguration( "ACME.producer.cti" ) )
+ * {
+ *   configuration = driverConfigurator.getProducerConfiguration( "ACME.producer.cti" );
+ * }
+ * else
+ * {
+ *   configuration = driverConfigurator.createProducerConfiguration( "ACME.producer.cti" );
+ * }
+ * configuration.getEnumerationEnable().write( TBoolean.bTrue ); // switch on ALL interfaces...
+ * configuration.createProducerInterfaceConfigurationEntry( "ACME.interface0.ID" ).write( TInterfaceEnumerationBehaviour.iebForceIgnore ); // ... except this one
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ * # Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH.
+ * driverConfigurator = acquire.GenTLDriverConfigurator()
+ * GenTLProducerConfiguration configuration = None
+ * if driverConfigurator.hasProducerConfiguration("ACME.producer.cti"):
+ *   configuration = driverConfigurator.getProducerConfiguration("ACME.producer.cti")
+ * else:
+ *   configuration = driverConfigurator.createProducerConfiguration("ACME.producer.cti")
+ * configuration.enumerationEnable.write(acquire.bTrue) # switch on ALL interfaces...
+ * configuration.createProducerInterfaceConfigurationEntry("ACME.interface0.ID").write(acquire.iebForceIgnore) # ... except this one
+ * \endcode
+ * \endif
+ *
+ * The same thing can be done the other way round:
+ *
+ * \if DOXYGEN_CPP_DOCUMENTATION
+ * \code
+ * // Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH and only a certain interface shall be enumerated.
+ * GenTLDriverConfigurator driverConfigurator;
+ * GenTLProducerConfiguration configuration( driverConfigurator.hasProducerConfiguration( "ACME.producer.cti" ) ? driverConfigurator.getProducerConfiguration( "ACME.producer.cti" ) : driverConfigurator.createProducerConfiguration( "ACME.producer.cti" ) );
+ * configuration.enumerationEnable.write( bFalse ); // switch off ALL interfaces...
+ * configuration.createProducerInterfaceConfigurationEntry( "ACME.interface0.ID" ).write( iebForceEnumerate ); // ... except this one
+ * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * \code
+ * GenTLDriverConfigurator driverConfigurator = new GenTLDriverConfigurator();
+ * GenTLProducerConfiguration configuration = null;
+ * if( driverConfigurator.hasProducerConfiguration( "ACME.producer.cti" ) )
+ * {
+ *   configuration = driverConfigurator.getProducerConfiguration( "ACME.producer.cti" );
+ * }
+ * else
+ * {
+ *   configuration = driverConfigurator.createProducerConfiguration( "ACME.producer.cti" );
+ * }
+ * configuration.getEnumerationEnable().write( TBoolean.bFalse ); // switch on ALL interfaces...
+ * configuration.createProducerInterfaceConfigurationEntry( "ACME.interface0.ID" ).write( TInterfaceEnumerationBehaviour.iebForceEnumerate ); // ... except this one
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ * \code
+ * # Assuming a certain 'ACME.producer.cti' producer has been found somewhere in the GENICAM_GENTLXY_PATH.
+ * driverConfigurator = acquire.GenTLDriverConfigurator()
+ * GenTLProducerConfiguration configuration = None
+ * if driverConfigurator.hasProducerConfiguration("ACME.producer.cti"):
+ *   configuration = driverConfigurator.getProducerConfiguration("ACME.producer.cti")
+ * else:
+ *   configuration = driverConfigurator.createProducerConfiguration("ACME.producer.cti")
+ * configuration.enumerationEnable.write(acquire.bFalse) # switch on ALL interfaces...
+ * configuration.createProducerInterfaceConfigurationEntry("ACME.interface0.ID").write(acquire.iebForceEnumerate) # ... except this one
+ * \endcode
+ * \endif
+ * \sa
+ * \ref CommonCases_mvGenTLConsumerSetup
+ *
+ * \since 2.34.0
+ * \ingroup GenICamInterfaceProducer
+ */
+class GenTLDriverConfigurator : public mvIMPACT::acquire::ComponentCollection
+//-----------------------------------------------------------------------------
+{
+private:
+    Method createProducerConfigurationEntry_;
+    Method deleteProducerConfigurationEntry_;
+    Method createProducerInterfaceConfigurationEntry_;
+
+    void bindProperties( void )
+    {
+        HLIST hList;
+        TDMR_ERROR result;
+        if( ( result = DMR_FindList( INVALID_ID, "mvGenTLConsumer", dmltDeviceDriverLib, 0, &hList ) ) != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, "Couldn't find list 'mvGenTLConsumer'(type: dmltDeviceDriverLib)" );
+        }
+        mvIMPACT::acquire::ComponentLocator locator( hList, "GenTL" );
+        hList = locator.findComponent( "ProducersConfiguration", 0, 1 );
+        if( hList == INVALID_ID )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, DMR_NEWER_LIBRARY_REQUIRED, "Couldn't find list 'ProducersConfiguration'. An update of the GenTL Acquire package might fix this!" );
+        }
+        locator.bindComponent( masterEnumerationBehaviour, "MasterEnumerationBehaviour" );
+        locator.bindComponent( createProducerConfigurationEntry_, "CreateProducerConfigurationEntry@is" );
+        locator.bindComponent( deleteProducerConfigurationEntry_, "DeleteProducerConfigurationEntry@is" );
+        locator.bindComponent( createProducerInterfaceConfigurationEntry_, "CreateProducerInterfaceConfigurationEntry@iss" );
+        locator.bindSearchBase( hList );
+        m_hRoot = locator.searchbase_id();
+    }
+public:
+    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::GenTLDriverConfigurator</b> object.
+    explicit GenTLDriverConfigurator() : mvIMPACT::acquire::ComponentCollection( INVALID_ID ),
+        createProducerConfigurationEntry_(), deleteProducerConfigurationEntry_(),
+        createProducerInterfaceConfigurationEntry_(),
+        masterEnumerationBehaviour()
+    {
+        bindProperties();
+    }
+    /// \brief Constructs a new \b mvIMPACT::acquire::GenICam::GenTLDriverConfigurator from an existing one.
+    GenTLDriverConfigurator(
+        /// [in] A constant reference to the \b mvIMPACT::acquire::GenICam::GenTLDriverConfigurator object, this object shall be created from
+        const GenTLDriverConfigurator& src ) : ComponentCollection( src.hObj() ),
+        createProducerConfigurationEntry_( src.createProducerConfigurationEntry_ ),
+        deleteProducerConfigurationEntry_( src.deleteProducerConfigurationEntry_ ),
+        createProducerInterfaceConfigurationEntry_( src.createProducerInterfaceConfigurationEntry_ ),
+        masterEnumerationBehaviour( src.masterEnumerationBehaviour ) {}
+    /// \brief Allows assignments of \b mvIMPACT::acquire::GenICam::GenTLDriverConfigurator objects.
+    GenTLDriverConfigurator& operator=( const GenTLDriverConfigurator& rhs )
+    {
+        if( this != &rhs )
+        {
+            ComponentCollection::operator=( rhs );
+            bindProperties();
+        }
+        return *this;
+    }
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %immutable; )
+    // *INDENT-ON*
+    /// \brief An enumerated integer property defining the master enumeration mode for all GenTL producer detected in the current session.
+    /**
+     * Valid values for this property are defined by the enumeration \b mvIMPACT::acquire::TInterfaceEnumerationBehaviour.
+     */
+    PropertyIInterfaceEnumerationBehaviour masterEnumerationBehaviour;
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %mutable; )
+    // *INDENT-ON*
+    /// \brief Creates a new \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration object for the desired interface reported by the specified producer.
+    /**
+     * Calling this function will creates a new \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration object for the desired interface
+     * reported by the specified producer.
+     *
+     * \note If a configuration entry for the specified interface does already exist an exception will be thrown.
+     */
+    GenTLProducerConfiguration createProducerConfiguration(
+        /// [in] The exact name of the producer library without the path to create the entry for.
+        const std::string& producerName,
+        /// [in] The interface ID to create the configuration entry for.
+        const std::string& interfaceID = "" )
+    {
+        int result = DMR_NO_ERROR;
+        if( interfaceID.empty() )
+        {
+            result = createProducerConfigurationEntry_.call( producerName );
+        }
+        else
+        {
+            std::vector<std::string> parameters;
+            parameters.push_back( producerName );
+            parameters.push_back( interfaceID );
+            result = createProducerInterfaceConfigurationEntry_.call( parameters );
+        }
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, static_cast<TDMR_ERROR>( result ), "Failed to create entry '" + producerName + "'" + ( interfaceID.empty() ? "" : " with interface entry '" + interfaceID + "'" ) );
+        }
+        ComponentLocator locator( hObj(), "ConfigurationData" );
+        return GenTLProducerConfiguration( locator.findComponent( producerName, 0, 1 ) );
+    }
+    /// \brief Deletes a \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration objects.
+    /**
+     * Calling this function will delete the \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration object for the referenced producer.
+     *
+     * \note If no entry for the specified producer can be found an exception will be thrown.
+     */
+    void deleteProducerConfiguration(
+        /// [in] The exact name of the producer library without the path to delete the entry from.
+        const std::string& producerName )
+    {
+        const int result = deleteProducerConfigurationEntry_.call( producerName );
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, static_cast<TDMR_ERROR>( result ), "Failed to delete entry '" + producerName + "'" );
+        }
+    }
+    /// \brief Deletes all \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration objects.
+    /**
+     * Calling this function will result in all \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration objects to be deleted. When the next
+     * mvIMPACT Acquire process will be started after shutting down the current one all producer libraries found on the system will be processed. By default only interfaces reporting
+     * types/technologies (e.g. GigE Vision) also supported by MATRIX VISION will be ignored (will not enumerate devices) then.
+     */
+    void deleteAllProducerConfigurations( void )
+    {
+        std::vector<GenTLProducerConfiguration> data( getProducerConfigurations() );
+        std::vector<GenTLProducerConfiguration>::size_type cnt = data.size();
+        for( std::vector<GenTLProducerConfiguration>::size_type i = 0; i < cnt; i++ )
+        {
+            deleteProducerConfiguration( data[i].getProducerName() );
+        }
+    }
+    /// \brief Checks if a certain producer library has been associated with a \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration.
+    /**
+     * \return
+     * - true if a \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration is currently associated with the referenced producer library
+     * - false otherwise
+     */
+    bool hasProducerConfiguration(
+        /// [in] The exact name of the producer library without the path.
+        const std::string& producerName ) const
+    {
+        ComponentLocator locator( hObj(), "ConfigurationData" );
+        return locator.findComponent( producerName, 0, 1 ) != INVALID_ID;
+    }
+    /// \brief Returns the \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration associated with the referenced producer library.
+    /**
+     *
+     * \note If no entry for the specified producer can be found an exception will be thrown.
+     *
+     * \return The \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration associated with the referenced producer library.
+     */
+    GenTLProducerConfiguration getProducerConfiguration(
+        /// [in] The exact name of the producer library without the path.
+        const std::string& producerName ) const
+    {
+        ComponentLocator locator( hObj(), "ConfigurationData" );
+        const HLIST hList = locator.findComponent( producerName, 0, 1 );
+        if( hList == INVALID_ID )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, static_cast<TDMR_ERROR>( PROPHANDLING_COMPONENT_NOT_FOUND ), "Couldn't find configuration for producer '" + producerName + "'" );
+        }
+        return GenTLProducerConfiguration( hList );
+    }
+    /// \brief Returns a vector containing all \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration objects currently defined.
+    /**
+     * \return A vector containing all \b mvIMPACT::acquire::GenICam::GenTLProducerConfiguration objects currently defined.
+     */
+    std::vector<GenTLProducerConfiguration> getProducerConfigurations( void ) const
+    {
+        ComponentLocator locator( hObj(), "ConfigurationData" );
+        Component it( locator.searchbase_id() );
+        it = it.firstChild();
+        std::vector<GenTLProducerConfiguration> data;
+        while( it.isValid() )
+        {
+            data.push_back( GenTLProducerConfiguration( it.hObj() ) );
+            it++;
+        }
+        return data;
+    }
+};
+
+} // namespace GenICam
+
+/// \namespace mvIMPACT::acquire::labs This namespace contains classes and functions belonging to the general part of this SDK that
+/// are not yet final and might change in the future without further notice. Yet still we think code within this namespace
+/// might prove useful thus we encourage you to use it if beneficial for your application. However be prepared to apply changes when needed.
+/// Feedback that helps to improve or finalize code from this namespace will be highly appreciated! A migration guide will be provided and we will
+/// perform changes only if they make sense and improve the code.
+namespace labs
+{
+
+//-----------------------------------------------------------------------------
+/// \brief A class to create compressed video stream from images captured or loaded using the %mvIMPACT Acquire API.
+/**
+ * This class heavily depends on the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg). Without the
+ * libraries belonging to this project being present on the target system video streams cannot be created.
+ *
+ * Because of what is stated in the above section %mvIMPACT Acquire is \b NOT shipped with the FFmpeg binaries required to use
+ * this class!
+ *
+ * On Windows the \a FFmpeg-share package matching the platform the application shall run with (32- or 64-bit) is needed. This
+ * can either be extracted into the installation folder of %mvIMPACT Acquire e.g. into <b>\$(MVIMPACT_ACQUIRE_DIR)/Toolkits/ffmpeg-4.2.2-win64-shared</b> or
+ * <b>\$(MVIMPACT_ACQUIRE_DIR)/Toolkits/ffmpeg-4.2.2-win32-shared</b> (Works only for this versions) \b OR at the location pointed to by \b MVIMPACT_ACQUIRE_FFMPEG_DIR (see below)
+ * \b OR anywhere into the systems search path.
+ *
+ * On Linux the package \a ffmpeg must be installed and if e.g. H.264 support is needed the libavcodec-extra package as well.
+ *
+ * \attention Please carefully read and understand the legal implications coming with the use of FFmpeg in a commercial product: http://ffmpeg.org/legal.html
+ *
+ * %mvIMPACT Acquire is capable of communicating with FFmpeg 4.x right now. This means that the following libraries will be recognized:
+ * - libavcodec-58, libavformat-58 and libavutil-56 (FFmpeg 4.0 was released on 20.04.2018)
+ *
+ * In order to load the FFmpeg libraries
+ * from a custom location the environment variable \b MVIMPACT_ACQUIRE_FFMPEG_DIR can be defined before creating the first
+ * \b mvIMPACT::acquire::labs::VideoStream instance after loading the mvDeviceManager library into the current processes address space.
+ * Without this environment variable only the systems default search path will be used to locate it and (Windows only) the \a Toolkits
+ * folder of the installation directory. This is how the search algorithm will operate:
+ *
+ * \code
+ * if isEnvironmentVariableDefined( MVIMPACT_ACQUIRE_FFMPEG_DIR )
+ *   if tryToLoadFFmpegVersion4Succeeded
+ *     return
+ *   if tryToLoadFFmpegVersion3Succeeded
+ *     return
+ * if isWindowsSystem
+ *   if tryToLoadFFmpegVersionFromToolkits4Succeeded
+ *     return
+ * if tryToLoadFFmpegVersion4Succeeded
+ *   return
+ * if tryToLoadFFmpegVersion3Succeeded
+ *   return
+ * ReportError
+ * \endcode
+ *
+ * \note
+ * Currently video streams can only be created for a limited number of pixel formats. Which codec supports which input formats is described at the corresponding
+ * \b mvIMPACT::acquire::TVideoCodec value. Make sure to use one of these formats either by setting up your device accordingly or by using
+ * the \b mvIMPACT::acquire::ImageDestination::pixelFormat property of the \ref Image_Format_Converter.
+ *
+ * \attention
+ * - You have to feed one of the supported pixel formats depending on the video codecs requirements into the stream! The video stream API will NOT perform internal conversion. If you need to convert
+ *  (most likely you will be!) use the \ref Image_Format_Converter to achieve that. It will get the job done!
+ * - When not providing timestamps together with the images that are fed into the encoder the resulting video stream can still be used, but the playback speed will differ from the acquisition speed then.
+ *   When providing the timestamps coming with the requests the playback speed will resemble exactly the acquisition speed. Most codecs even support variable playback speeds so dynamic changes in the
+ *   frame rate will be reflected during playback.
+ * \since 2.39.0
+ * \ingroup CommonInterface
+ */
+class VideoStream
+//-----------------------------------------------------------------------------
+{
+    HDMR_VIDEO_STREAM hStream_;
+    std::string fileName_;
+    TVideoCodec videoCodec_;
+
+    void create( const std::string& fileName, const unsigned int imageWidth, const unsigned int imageHeight, const TVideoCodec codec, const unsigned int quality_pc, const unsigned int bitrate )
+    {
+        const TDMR_ERROR result = DMR_OpenVideoStream( fileName.c_str(), imageWidth, imageHeight, codec, quality_pc, bitrate, &hStream_ );
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result );
+        }
+    }
+public:
+/// \brief Creates a new video stream file.
+    /**
+     * \note
+     * Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section) is used for this operation. If the corresponding libraries
+     * cannot be located in one of the supported versions on the host system calling this constructor will raise an exception.
+     */
+    explicit VideoStream(
+        /// [in] The name or full path of the file to create. The recommended file extensions for files can be found where the
+        /// \b mvIMPACT::acquire::TVideoCodec enumeration is documented
+        const std::string& fileName,
+        /// [in] An image buffer containing the layout of the images that are about to get stored in the stream. This structure can be
+        /// extracted from a real \b mvIMPACT::acquire::Request object captured previously but \b NOT by calling the
+        /// \b mvIMPACT::acquire::FunctionInterface::getCurrentCaptureBufferLayout function after setting up the device
+        /// completely.The latter one will not contain all the information needed for a successful stream creation. You could even create a stream from a list of files e.g. on a hard-disc using the
+        /// \b mvIMPACT::acquire::ImageBufferDesc constructor accepting a file name. If you want to use the \b mvIMPACT::acquire::Request
+        /// object obtained from a call to \b mvIMPACT::acquire::FunctionInterface::getCurrentCaptureBufferLayout use the constructor accepting
+        /// a \b mvIMPACT::acquire::Request pointer!
+        const ImageBuffer* pBuffer,
+        /// [in] The codec that shall be used while encoding the images into the stream.
+        const TVideoCodec codec = vcH264,
+        /// [in] The quality of the resulting video stream in percent. The higher this value the larger the file will get. This value is only taken into
+        /// account for the following codecs: \b mvIMPACT::acquire::vcH264, \b mvIMPACT::acquire::vcH265
+        const unsigned int quality_pc = 60,
+        /// [in] The bitrate of the resulting video stream in kBit/s. The higher this value the larger the file will get. This value is only taken into
+        /// account for the following codecs: \b mvIMPACT::acquire::vcMPEG2.
+        const unsigned int bitrate = 6000 ) : hStream_( 0 ), fileName_( fileName ), videoCodec_( codec )
+    {
+        create( fileName, pBuffer->iWidth, pBuffer->iHeight, codec, quality_pc, bitrate );
+    }
+    /// \brief Creates a new video stream file.
+    /**
+     * \note
+     * Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section) is used for this operation. If the corresponding libraries
+     * cannot be located in one of the supported versions on the host system calling this constructor will raise an exception.
+     */
+    explicit VideoStream(
+        /// [in] The name or full path of the file to create. The recommended file extensions for files can be found where the
+        /// \b mvIMPACT::acquire::TVideoCodec enumeration is documented
+        const std::string& fileName,
+        /// [in] The input image width in pixels
+        const unsigned int imageWidth,
+        /// [in] The input image height in pixels
+        const unsigned int imageHeight,
+        /// [in] The codec that shall be used while encoding the images into the stream.
+        const TVideoCodec codec = vcH264,
+        /// [in] The quality of the resulting video stream in percent. The higher this value the larger the file will get. This value is only taken into
+        /// account for the following codecs: \b mvIMPACT::acquire::vcH264, \b mvIMPACT::acquire::vcH265
+        const unsigned int quality_pc = 60,
+        /// [in] The bitrate of the resulting video stream in kBit/s. The higher this value the larger the file will get. This value is only taken into
+        /// account for the following codecs: \b mvIMPACT::acquire::vcMPEG2.
+        const unsigned int bitrate = 6000 ) : hStream_( 0 ), fileName_( fileName ), videoCodec_( codec )
+    {
+        create( fileName, imageWidth, imageHeight, codec, quality_pc, bitrate );
+    }
+    /// \brief Creates a new video stream file.
+    /**
+     * \note
+     * Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section) is used for this operation. If the corresponding libraries
+     * cannot be located in one of the supported versions on the host system calling this constructor will raise an exception.
+     */
+    explicit VideoStream(
+        /// [in] The name or full path of the file to create. The recommended file extensions for files can be found where the
+        /// \b mvIMPACT::acquire::TVideoCodec enumeration is documented.
+        const std::string& fileName,
+        /// [in] A \b mvIMPACT::acquire::Request object carrying the image related information that are about to get stored in the stream. This can either be
+        /// extracted from a real \b mvIMPACT::acquire::Request object captured previously or by calling the
+        /// \b mvIMPACT::acquire::FunctionInterface::getCurrentCaptureBufferLayout function after setting up the device
+        /// completely. To create a stream from a list of files e.g. on a hard-disc use the \b mvIMPACT::acquire::labs::VideoStream
+        /// constructor accepting a \b mvIMPACT::acquire::ImageBufferDesc instead! Create instances of b mvIMPACT::acquire::ImageBufferDesc
+        /// objects from files call the \b mvIMPACT::acquire::ImageBufferDesc constructor accepting a file name.
+        const Request* pRequest,
+        /// [in] The codec that shall be used while encoding the images into the stream.
+        const TVideoCodec codec = vcH264,
+        /// [in] The quality of the resulting video stream in percent. The higher this value the larger the file will get. This value is only taken into
+        /// account for the following codecs: \b mvIMPACT::acquire::vcH264, \b mvIMPACT::acquire::vcH265
+        const unsigned int quality_pc = 60,
+        /// [in] The bitrate of the resulting video stream in kBit/s. The higher this value the larger the file will get. This value is only taken into
+        /// account for the following codecs: \b mvIMPACT::acquire::vcMPEG2.
+        const unsigned int bitrate = 6000 ) : hStream_( 0 ), fileName_( fileName ), videoCodec_( codec )
+    {
+        create( fileName, pRequest->imageWidth.read(), pRequest->imageHeight.read(), codec, quality_pc, bitrate );
+    }
+    ~VideoStream()
+    {
+        DMR_CloseVideoStream( hStream_ );
+    }
+    /// \brief Returns the file name of this video stream.
+    /**
+     * This function returns the file name of this video stream.
+     *
+     * \since 2.39.0
+     *
+     *  \return The file name of this video stream.
+     */
+    const std::string& getFileName( void ) const
+    {
+        return fileName_;
+    }
+    /// \brief Returns the codec used by this video stream.
+    /**
+     * This function returns the codec used by this video stream.
+     *
+     * \since 2.39.0
+     *
+     *  \return The codec used by this video stream.
+     */
+    const TVideoCodec& getCodec( void ) const
+    {
+        return videoCodec_;
+    }
+    /// \brief Returns the a string representation for a video codec.
+    /**
+     * This function returns a string representation for a video codec.
+     *
+     * \since 2.39.0
+     *
+     *  \return A string representation for a video codec.
+     */
+    static std::string getCodecAsString( const TVideoCodec codec )
+    {
+        switch( codec )
+        {
+        case vcH264:
+            return "H.264";
+        case vcH265:
+            return "H.265";
+        case vcMPEG2:
+            return "MPEG-2";
+        }
+        return "INVALID VIDEO CODEC";
+    }
+    /// \brief Returns the codec used by this video stream as a string.
+    /**
+     * This function returns the codec used by this video stream as a string.
+     *
+     * \since 2.39.0
+     *
+     *  \return The codec used by this video stream as a string.
+     */
+    std::string getCodecAsString( void ) const
+    {
+        return getCodecAsString( getCodec() );
+    }
+    /// \brief Checks if the video stream API is available.
+    /**
+     * This function checks if the video stream API is available.
+     *
+     * \since 2.39.0
+     *
+     * \return
+     *  - true if the video stream API is available thus video streams can be created
+     *  - false otherwise.
+     */
+    static bool isAPIAvailable( void )
+    {
+        return DMR_InitVideoStreamAPI( 0, 0 ) == DMR_NO_ERROR;
+    }
+    /// \brief Stores an image into the video stream.
+    /**
+     *  This function stores an image into the video stream.
+     *
+     *  \note
+     *  Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section as well as the remarks made here: \b mvIMPACT::acquire::labs::VideoStream) is used for this operation. If the corresponding libraries
+     *  cannot be located in one of the supported versions on the host system calling this function will fail.
+     *
+     * \since 2.39.0
+     *
+     *  \return
+     *  - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+     *  - <b>mvIMPACT::acquire::DMR_LIBRARY_NOT_FOUND</b> if no compatible version of the FFmpeg libraries could be located on the host system.
+     *  - <b>mvIMPACT::acquire::DEV_UNSUPPORTED_PARAMETER</b> if a pixel format has been passed to the function that is not supported by the internal algorithms.
+     *  - <b>mvIMPACT::acquire::DEV_INPUT_PARAM_INVALID</b> e.g. if a pixel format has been passed to the function that is not supported by the FFmpeg libraries.
+     *  - A negative error code of type <b>::TDMR_ERROR</b> otherwise.
+     */
+    int saveImage(
+        /// [in] The image to encode and store.
+        const ImageBuffer* pBuffer,
+        /// [in] A timestamp(in us) to associate this image with. This can be 0 if no timestamp is available.
+        int64_type timestamp_us = 0LL )
+    {
+        return DMR_SaveImageBufferToVideoStream( hStream_, pBuffer, timestamp_us );
+    }
+    /// \brief Encodes and stores the image associated with the \b mvIMPACT::acquire::Request object into the stream.
+    /**
+     *  This function stores the image associated with an \b mvIMPACT::acquire::Request object into the video stream.
+     *
+     *  \note
+     *  Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section as well as the remarks made here: \b mvIMPACT::acquire::labs::VideoStream) is used for this operation. If the corresponding libraries
+     *  cannot be located in one of the supported versions on the host system calling this function will fail.
+     *
+     * \since 2.39.0
+     *
+     *  \sa
+     *  \b mvIMPACT::acquire::labs::VideoStream::pause, \n
+     *  \b mvIMPACT::acquire::labs::VideoStream::isPaused, \n
+     *  \b mvIMPACT::acquire::labs::VideoStream::resume \n
+     *
+     *  \return
+     *  - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+     *  - <b>mvIMPACT::acquire::DMR_LIBRARY_NOT_FOUND</b> if no compatible version of the FFmpeg libraries could be located on the host system.
+     *  - <b>mvIMPACT::acquire::DEV_UNSUPPORTED_PARAMETER</b> if a pixel format has been passed to the function that is not supported by the internal algorithms.
+     *  - <b>mvIMPACT::acquire::DEV_INPUT_PARAM_INVALID</b> e.g. if a pixel format has been passed to the function that is not supported by the FFmpeg libraries.
+     *  - A negative error code of type <b>::TDMR_ERROR</b> otherwise.
+     */
+    int saveImage(
+        /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from
+        /// a \b mvIMPACT::acquire::DeviceManager object.
+        Device* pDev,
+        /// [in] A pointer to the \b mvIMPACT::acquire::Request object carrying the image to encode and store.
+        const Request* pRequest )
+    {
+        return DMR_ImageRequestSaveToVideoStream( pDev->hDrv(), pRequest->getNumber(), hStream_ );
+    }
+    /// \brief Pauses this video stream.
+    /**
+     *  This function pauses this video stream. While paused no images can be written into the stream. Pausing internally simply starts a timer
+     *  and all accumulated pause times will be subtracted from images that will be written into the stream after the pause has been ended effectively
+     *  allowing to remove inactive sections from the video stream.
+     *
+     *  \note
+     *  Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section as well as the remarks made here: \b mvIMPACT::acquire::labs::VideoStream) is used for this operation. If the corresponding libraries
+     *  cannot be located in one of the supported versions on the host system calling this function will fail.
+     *
+     * \since 2.41.0
+     *
+     *  \sa
+     *  \b mvIMPACT::acquire::labs::VideoStream::resume, \n
+     *  \b mvIMPACT::acquire::labs::VideoStream::isPaused
+     *
+     *  \return
+     *  - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+     *  - <b>mvIMPACT::acquire::DMR_BUSY</b> if this stream has been paused already.
+     *  - A negative error code of type <b>::TDMR_ERROR</b> otherwise.
+     */
+    int pause( void ) const
+    {
+        return DMR_PauseVideoStream( hStream_ );
+    }
+    /// \brief Checks is this video stream is currently paused.
+    /**
+     *
+     *  \note
+     *  Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section as well as the remarks made here: \b mvIMPACT::acquire::labs::VideoStream) is used for this operation. If the corresponding libraries
+     *  cannot be located in one of the supported versions on the host system calling this function will fail.
+     *
+     * \since 2.41.0
+     *
+     *  \sa
+     *  \b mvIMPACT::acquire::labs::VideoStream::pause, \n
+     *  \b mvIMPACT::acquire::labs::VideoStream::resume
+     *
+     *  \return
+     *  - true if this video stream is currently paused.
+     *  - false otherwise.
+     */
+    bool isPaused( void ) const
+    {
+        return DMR_IsVideoStreamPaused( hStream_ ) == DMR_NO_ERROR;
+    }
+    /// \brief Resumes this video stream.
+    /**
+     *  This function resumes this previously paused video stream. While paused no images can be written into the stream. Pausing internally simply starts a timer
+     *  and all accumulated pause times will be subtracted from images that will be written into the stream after the pause has been ended effectively
+     *  allowing to remove inactive sections from the video stream.
+     *
+     *  \note
+     *  Internally the FFmpeg project (see \ref LegalNotice_UsedThirdPartySoftware_FFmpeg section as well as the remarks made here: \b mvIMPACT::acquire::labs::VideoStream) is used for this operation. If the corresponding libraries
+     *  cannot be located in one of the supported versions on the host system calling this function will fail.
+     *
+     * \since 2.41.0
+     *
+     *  \sa
+     *  \b mvIMPACT::acquire::labs::VideoStream::pause, \n
+     *  \b mvIMPACT::acquire::labs::VideoStream::isPaused
+     *
+     *  \return
+     *  - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+     *  - <b>mvIMPACT::acquire::DMR_EXECUTION_PROHIBITED</b> if this stream has been paused already.
+     *  - A negative error code of type <b>::TDMR_ERROR</b> otherwise.
+     */
+    int resume( void ) const
+    {
+        return DMR_ResumeVideoStream( hStream_ );
+    }
+};
+
+//-----------------------------------------------------------------------------
+/// \brief A smaller helper class for pausing a video stream for a defined time.
+/**
+ * This class uses a RAII pattern to pause an instance of <b>mvIMPACT::acquire::labs::VideoStream</b>
+ * \since 2.41.0
+ * \ingroup CommonInterface
+ */
+class VideoStreamPauseScope
+//-----------------------------------------------------------------------------
+{
+    VideoStream& stream_;
+    bool boPausedWithinScope_;
+public:
+    /// \brief Creates a new <b>mvIMPACT::acquire::labs::VideoStreamPauseScope</b> object.
+    /**
+     * Trying to pause a stream that is paused already or trying to resume a stream that is not paused will raise an exception!
+     * When this object goes out of scope the previous state will be restored automatically.
+     */
+    explicit VideoStreamPauseScope(
+        /// [in] The video stream that shall be configured.
+        VideoStream& stream,
+        /// [in] The mode the selected video stream shall have while this object is alive.
+        bool boPausedWithinScope = true ) : stream_( stream ), boPausedWithinScope_( boPausedWithinScope )
+    {
+        TDMR_ERROR result = DMR_NO_ERROR;
+        if( boPausedWithinScope_ )
+        {
+            result = static_cast<TDMR_ERROR>( stream_.pause() );
+        }
+        else
+        {
+            result = static_cast<TDMR_ERROR>( stream_.resume() );
+        }
+
+        if( result != DMR_NO_ERROR )
+        {
+            ExceptionFactory::raiseException( __FUNCTION__, __LINE__, result );
+        }
+    }
+    ~VideoStreamPauseScope()
+    {
+        if( boPausedWithinScope_ )
+        {
+            stream_.resume();
+        }
+        else
+        {
+            stream_.pause();
+        }
+    }
+};
+
+//-----------------------------------------------------------------------------
+/// \brief A class to perform a firmware update of a specific device.
+/**
+ * This class is intended to provide an ease of use possibility to update the firmware of specific devices. It is possible to
+ * specify the behavior of the class very detailed to make sure the update suits the users expectations. It is also possible to derive
+ * from this class and override various functions in order to get custom notifications e.g. to update a GUI application.
+ *
+ * \if DOXYGEN_CPP_DOCUMENTATION
+ * To start a firmware update for MATRIX VISION GenICam devices the following code will be sufficient:
+ * \code
+ * // force the update even if the version of the mvu-file is the same as the one on the device
+ * mvIMPACT::acquire::labs::FirmwareUpdater fwUpdater( pDev, true );
+ * try
+ * {
+ *     const string pathToFirmwareArchive( "someArchive.mvu" );
+ *     // start the whole update process
+ *     const int FWUpdateResult = fwUpdater.update( pathToFirmwareArchive );
+ *     cout << "Result of 'updateFirmware' call: " << ImpactAcquireException::getErrorCodeAsString( FWUpdateResult ) << "." << endl;
+ * }
+ * catch( const ImpactAcquireException& e )
+ * {
+ *     cout << "An error occurred while updating the firmware of the device " << pDev->serial.read()
+ *          << "(error code: " << e.getErrorCodeAsString() << ").";
+ *     // reading out potential issues
+ *     cout << "Status: " << fwUpdater.statusMessage() << endl;
+ *     return 1;
+ * }
+ * \endcode
+ *
+ * To start a firmware update for MATRIX VISION mvBlueFOX devices the following code will be sufficient:
+ * \code
+ * mvIMPACT::acquire::labs::FirmwareUpdater fwUpdater( pDev );
+ * // if necessary, a specific version for the update can be selected by using the firmwareVersionToUpload property
+ * try
+ * {
+ *     const int FWUpdateResult = fwUpdater.update();
+ *     cout << "Result of 'updateFirmware' call: " << ImpactAcquireException::getErrorCodeAsString( FWUpdateResult ) << "." << endl;
+ * }
+ * catch( const ImpactAcquireException& e )
+ * {
+ *     cout << "An error occurred while updating the firmware of the device " << pDev->serial.read()
+ *          << "(error code: " << e.getErrorCodeAsString() << ").";
+ *     return 1;
+ * }
+ * \endcode
+ *
+ * A more custom behavior can be accomplished by deriving from the mvIMPACT::acquire::labs::FirmwareUpdater class and re-implementing the various notification functions:
+ * \code
+ * //-----------------------------------------------------------------------------
+ * class MyFirmwareUpdater : public mvIMPACT::acquire::labs::FirmwareUpdater
+ * //-----------------------------------------------------------------------------
+ * {
+ * public:
+ *     explicit MyFirmwareUpdater( mvIMPACT::acquire::Device* pDev ) : mvIMPACT::acquire::labs::FirmwareUpdater( pDev ) {}
+ *     virtual int onErrorMessage( const double timeElapsed_s ) const
+ *     {
+ *         printf( "Error: %s @ %f [s]\n", statusMessage().c_str(), timeElapsed_s );
+ *         return fuaCancel;
+ *     }
+ *     virtual int onErasingFlash( const int currentProgress_pc, const double timeElapsed_s ) const
+ *     {
+ *         printf( "Erasing - Update progress: %d, time %f [s]\n", currentProgress_pc, timeElapsed_s );
+ *         return fuaContinue;
+ *     }
+ *     virtual int onUnzippingFirmwareArchive( const int currentProgress_pc, const double timeElapsed_s ) const
+ *     {
+ *         printf( "Unzipping firmware archive - Update progress: %d, time %f [s]\n", currentProgress_pc, timeElapsed_s );
+ *         return fuaContinue;
+ *     }
+ *     virtual int onUpdatingBootProgrammer( const int currentProgress_pc, const double timeElapsed_s ) const
+ *     {
+ *         printf( "Updating boot programmer - Update progress: %, time %f [s]\n", currentProgress_pc, timeElapsed_s );
+ *         return fuaContinue;
+ *     }
+ *     virtual int onUploadingImage( const int currentProgress_pc, const double timeElapsed_s ) const
+ *     {
+ *         printf( "Uploading - Update progress: %d, time %f [s]\n", currentProgress_pc, timeElapsed_s );
+ *         return fuaContinue;
+ *     }
+ *     virtual int onSavingUserSets( const int currentProgress_pc, const double timeElapsed_s ) const
+ *     {
+ *         printf( "Saving sets - Update progress: %d, time %f [s]\n", currentProgress_pc, timeElapsed_s );
+ *         return fuaContinue;
+ *     }
+ *     virtual int onLoadingUserSets( const int currentProgress_pc, const double timeElapsed_s ) const
+ *     {
+ *         printf( "Loading sets - Update progress: %d, time %f [s]\n", currentProgress_pc, timeElapsed_s );
+ *         return fuaContinue;
+ *     }
+ *     virtual int onRebooting( const int currentProgress_pc, const double timeElapsed_s ) const
+ *     {
+ *         printf( "Rebooting - Update progress: %d, time %f [s]\n", currentProgress_pc, timeElapsed_s );
+ *         return fuaContinue;
+ *     }
+ * };
+ * \endcode
+ * \elseif DOXYGEN_JAVA_DOCUMENTATION
+ * To start a firmware update for MATRIX VISION GenICam devices the following code will be sufficient:
+ * \code
+ * // force the update even if the version of the mvu-file is the same as the one on the device
+ * mvIMPACT.acquire.labs.FirmwareUpdater fwUpdater = new mvIMPACT.acquire.labs.FirmwareUpdater( pDev, true );
+ * try
+ * {
+ *     String pathToMVUfile = new String( "someArchive.mvu" );
+ *     // start the whole update process
+ *     System.out.println( "Result of firmware update call: " + ImpactAcquireException.getErrorCodeAsString( pFWU.update( pathToMVUfile ) ) );
+ * }
+ * catch( ImpactAcquireException e )
+ * {
+ *     System.out.println( "An error occured during the firmware update process. Error code: " + e.getErrorCodeAsString() );
+ *     System.out.println( "Status: " + pFWU.statusMessage() );
+ * }
+ * \endcode
+ *
+ * To start a firmware update for MATRIX VISION mvBlueFOX devices the following code will be sufficient:
+ * \code
+ * mvIMPACT.acquire.labs.FirmwareUpdater fwUpdater = new mvIMPACT.acquire.labs.FirmwareUpdater( pDev );
+ * // if necessary, a specific version for the update can be selected by using the firmwareVersionToUpload property
+ * try
+ * {
+ *     // start the whole update process
+ *     System.out.println( "Result of firmware update call: " + ImpactAcquireException.getErrorCodeAsString( pFWU.update() ) );
+ * }
+ * catch( ImpactAcquireException e )
+ * {
+ *     System.out.println( "An error occured during the firmware update process. Error code: " + e.getErrorCodeAsString() );
+ *     System.out.println( "Status: " + pFWU.statusMessage() );
+ * }
+ * \endcode
+ *
+ * A more custom behavior can be accomplished by deriving from the mvIMPACT.acquire.labs.FirmwareUpdater class and re-implementing the various notification functions:
+ * \code
+ * import mvIMPACT.acquire.*;
+ *
+ * public class MyFirmwareUpdater extends FirmwareUpdater
+ * {
+ *     public MyFirmwareUpdater( Device pDev, boolean boForceOverideSameVersion, boolean boForceDowngrade, boolean boKeepUserSets, boolean boForceBreakingChange )
+ *     {
+ *         super( pDev, boForceOverideSameVersion, boForceDowngrade, boKeepUserSets, boForceBreakingChange );
+ *     }
+ *     @Override
+ *     public int onErrorMessage( double timeElapsed_s )
+ *     {
+ *         System.out.println( "Error: " + statusMessage() + " @ " + timeElapsed_s + " [s]"  );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ *     @Override
+ *     public int onErasingFlash( int currentProgress_pc, double timeElapsed_s )
+ *     {
+ *         System.out.println( "Erasing - Update progress: " + currentProgress_pc + ", time " + timeElapsed_s + " [s]" );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ *     @Override
+ *     public int onUnzippingFirmwareArchive( int currentProgress_pc, double timeElapsed_s )
+ *     {
+ *         System.out.println( "Unzipping firmware archive - Update progress: " + currentProgress_pc + ", time " + timeElapsed_s + " [s]" );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ *     @Override
+ *     public int onUpdatingBootProgrammer( int currentProgress_pc, double timeElapsed_s )
+ *     {
+ *         System.out.println( "Updating boot programmer - Update progress: " + currentProgress_pc + ", time " + timeElapsed_s + " [s]" );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ *     @Override
+ *     public int onUploadingImage( int currentProgress_pc, double timeElapsed_s )
+ *     {
+ *         System.out.println( "Uploading - Update progress: " + currentProgress_pc + ", time " + timeElapsed_s + " [s]" );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ *     @Override
+ *     public int onSavingUserSets( int currentProgress_pc, double timeElapsed_s )
+ *     {
+ *         System.out.println( "Saving sets - Update progress: " + currentProgress_pc + ", time " + timeElapsed_s + " [s]" );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ *     @Override
+ *     public int onLoadingUserSets( int currentProgress_pc, double timeElapsed_s )
+ *     {
+ *         System.out.println( "Loading sets - Update progress: " + currentProgress_pc + ", time " + timeElapsed_s + " [s]" );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ *     @Override
+ *     public int onRebooting( int currentProgress_pc, double timeElapsed_s )
+ *     {
+ *         System.out.println( "Rebooting - Update progress: " + currentProgress_pc + ", time " + timeElapsed_s + " [s]" );
+ *         return mvIMPACT.acquire.TFirmwareUpdateAction.fuaContinue;
+ *     }
+ * }
+ * \endcode
+ * \elseif DOXYGEN_PYTHON_DOCUMENTATION
+ *
+ * To start a firmware update for MATRIX VISION mvBlueFOX devices the following code will be sufficient:
+ * \code
+ * fwUpdater = acquire.FirmwareUpdater( pDev, False, False, True, False )
+ * fwUpdateResult = fwUpdater.update( PATH_TO_FIRMWARE_ARCHIVE.mvu )
+ * if FWUpdateResult == 0:
+ *    print("Update successful!")
+ * else:
+ *    print( fwUpdater.statusMessage() )
+ * \endcode
+ * To start a firmware update for MATRIX VISION mvBlueFOX devices the following code will be sufficient:
+ * \code
+ * fwUpdater = acquire.FirmwareUpdater( pDev )
+ * fwUpdateResult = fwUpdater.update( 52 )
+ * if FWUpdateResult == 0:
+ *    print("Update successful!")
+ * else:
+ *    print( fwUpdater.statusMessage() )
+ * \endcode
+ * A more custom behavior can be accomplished by deriving from the acquire.FirmwareUpdater class and re-implementing the various notification functions:
+ * \code
+ * from mvIMPACT import acquire
+ *
+ *  class MyFirmwareUpdater( acquire.FirmwareUpdater ):
+ *    def __init__(self, *args):
+ *        super(MyFirmwareUpdater, self).__init__(*args)
+ *
+ *    def onErrorMessage( self, timeElapsed_s ):
+ *        print( "Error: " + statusMessage() + " @ " + str(timeElapsed_s) + " [s]"  )
+ *        return acquire.fuaContinue
+ *
+ *    def onErasingFlash( self, currentProgress_pc, timeElapsed_s ):
+ *        print( "Erasing - Update progress: " + str(currentProgress_pc) + ", time " + str(timeElapsed_s) + " [s]" )
+ *        return acquire.fuaContinue
+ *
+ *    def onUnzippingFirmwareArchive( self, currentProgress_pc, timeElapsed_s ):
+ *        print( "Unzipping firmware archive - Update progress: " + str(currentProgress_pc) + ", time " + str(timeElapsed_s) + " [s]" )
+ *        return acquire.fuaContinue
+ *
+ *    def onUpdatingBootProgrammer( self, currentProgress_pc, timeElapsed_s ):
+ *        print( "Updating boot programmer - Update progress: " + str(currentProgress_pc) + ", time " + str(timeElapsed_s) + " [s]" )
+ *        return acquire.fuaContinue
+ *
+ *    def onUploadingImage( self, currentProgress_pc, timeElapsed_s ):
+ *        print( "Uploading - Update progress: " + str(currentProgress_pc) + ", time " + str(timeElapsed_s) + " [s]" )
+ *        return acquire.fuaContinue
+ *
+ *    def onSavingUserSets( self, currentProgress_pc, timeElapsed_s ):
+ *        print( "Saving sets - Update progress: " + str(currentProgress_pc) + ", time " + str(timeElapsed_s) + " [s]" )
+ *        return acquire.fuaContinue
+ *
+ *    def onLoadingUserSets( self, currentProgress_pc, timeElapsed_s ):
+ *        print( "Loading sets - Update progress: " + str(currentProgress_pc) + ", time " + str(timeElapsed_s) + " [s]" )
+ *        return acquire.fuaContinue
+ *
+ *    def onRebooting( self, currentProgress_pc, timeElapsed_s ):
+ *        print( "Rebooting - Update progress: " + str(currentProgress_pc) + ", time " + str(timeElapsed_s) + " [s]" )
+ *        return acquire.fuaContinue
+ * \endcode
+
+ * \endif
+
+ * \note
+ * Currently supported are the following device families:
+ * \note
+ * GenICam compliant MATRIX VISION devices
+ *   - mvBlueCOUGAR-X
+ *   - mvBlueCOUGAR-XD
+ *   - mvBlueCOUGAR-XT
+ *   - mvBlueFOX3
+ * \note
+ * Other MATRIX VISION devices
+ *   - mvBlueFOX
+ *   - mvBlueFOX-MLC/IGC
+ *
+ * \attention
+ * It is important not to unplug the device during the update procedure.\n
+ * Once the firmwareUpdate method call returns an error call the mvIMPACT::acquire::labs::FirmwareUpdater::statusMessage function. It will return useful information about the current status (including issues) during the update procedure.
+ *
+ * \since 2.41.0
+ * \ingroup CommonInterface
+ */
+class FirmwareUpdater
+//-----------------------------------------------------------------------------
+{
+private:
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS)
+    PropertyS                                           firmwareUpdateFileName_;
+    PropertyPtr                                         firmwareUpdateProgressListenerAddress_;
+    PropertyPtr                                         firmwareUpdateProgressListenerUserDataAddress_;
+    PropertyIBoolean                                    firmwareUpdateKeepUserSets_;
+    PropertyIBoolean                                    firmwareUpdateForceBreakingChange_;
+    PropertyIBoolean                                    firmwareUpdateForceOverrideSameVersion_;
+    PropertyIBoolean                                    firmwareUpdateForceDowngrade_;
+    PropertyS                                           firmwareUpdateStatusMessage_;
+    Method                                              updateFirmware_;
+    double                                              timeElapsed_s_;
+
+    void registerFirmwareUpdateCallback( CBP_FIRMWARE_UPDATE pCB, void* pUserData )
+    {
+        if( firmwareUpdateProgressListenerAddress_.isValid() && firmwareUpdateProgressListenerUserDataAddress_.isValid() )
+        {
+            function_cast< CBP_FIRMWARE_UPDATE > pFunc;
+            pFunc.pO = pCB;
+            firmwareUpdateProgressListenerAddress_.write( pFunc.pI );
+            firmwareUpdateProgressListenerUserDataAddress_.write( pUserData );
+        }
+    }
+    void unregisterFirmwareUpdateCallback( void )
+    {
+        if( firmwareUpdateProgressListenerAddress_.isValid() && firmwareUpdateProgressListenerUserDataAddress_.isValid() )
+        {
+            firmwareUpdateProgressListenerAddress_.write( 0 );
+            firmwareUpdateProgressListenerUserDataAddress_.write( 0 );
+        }
+    }
+    static int infoCallback( void* pUserData, FirmwareUpdateStatusData* pFwUpdateData, unsigned long int /*fwUpdateDataSize*/ )
+    {
+        if( !pUserData )
+        {
+            return fuaContinue;
+        }
+        FirmwareUpdater* pFirmwareUpdater = reinterpret_cast<FirmwareUpdater*>( pUserData );
+        pFirmwareUpdater->setTimeElapsed( pFwUpdateData->timeElapsed_s );
+        switch ( pFwUpdateData->updateStep )
+        {
+        case fusErasingFlash:
+            return pFirmwareUpdater->onErasingFlash( pFwUpdateData->progressPercent, pFwUpdateData->timeElapsed_s );
+        case fusUpdatingBootProgrammer:
+            return pFirmwareUpdater->onUpdatingBootProgrammer( pFwUpdateData->progressPercent, pFwUpdateData->timeElapsed_s );
+        case fusUnzippingFirmwareArchive:
+            return pFirmwareUpdater->onUnzippingFirmwareArchive( pFwUpdateData->progressPercent, pFwUpdateData->timeElapsed_s );
+        case fusUploadingFirmware:
+            return pFirmwareUpdater->onUploadingImage( pFwUpdateData->progressPercent, pFwUpdateData->timeElapsed_s );
+        case fusRebootingDevice:
+            return pFirmwareUpdater->onRebooting( pFwUpdateData->progressPercent, pFwUpdateData->timeElapsed_s );
+        case fusSavingUserSets:
+            return pFirmwareUpdater->onSavingUserSets( pFwUpdateData->progressPercent, pFwUpdateData->timeElapsed_s );
+        case fusLoadingUserSets:
+            return pFirmwareUpdater->onLoadingUserSets( pFwUpdateData->progressPercent, pFwUpdateData->timeElapsed_s );
+        case fusErrorMessage:
+            return pFirmwareUpdater->onErrorMessage( pFwUpdateData->timeElapsed_s );
+        }
+        return fuaContinue;
+    }
+
+    // do not allow assignments
+    FirmwareUpdater& operator=( const FirmwareUpdater& );
+    // do not allow copy construction
+    FirmwareUpdater( const FirmwareUpdater& src );
+
+protected:
+    void setTimeElapsed( double time_s )
+    {
+        timeElapsed_s_ = time_s;
+    }
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS)
+public:
+    /// \brief Creates a new <b>mvIMPACT::acquire::labs::FirmwareUpdater</b> object.
+    explicit FirmwareUpdater(
+        /// [in] A pointer to a \b mvIMPACT::acquire::Device object obtained from a \b mvIMPACT::acquire::DeviceManager object.
+        mvIMPACT::acquire::Device* pDev,
+        /// [in] A boolean value which defines if updates using the same version as installed on the camera should be allowed.
+        bool boForceOverideSameVersion = false,
+        /// [in] A boolean value which defines if updates using an older version as installed on the camera should be allowed.
+        bool boForceDowngrade = false,
+        /// [in] A boolean value which defines if the user sets of the device will be kept or will be deleted during the update.
+        bool boKeepUserSets = true,
+        /// [in] A boolean value which defines if updates to versions which will deliver interface breaking changes will be allowed. Setting this value to \c true will also update a device which after the update
+        /// might have a different interface. See documentation for additional information about breaking changes in firmware versions(there are not too many)!
+        bool boForceBreakingChange = false ) : timeElapsed_s_( 0 )
+    {
+        ComponentLocator l( pDev->hDev() );
+        l.bindComponent( updateFirmware_, "UpdateFirmware@i" );
+        if( !updateFirmware_.isValid() )
+        {
+            if( !pDev->isOpen() )
+            {
+                pDev->open();
+            }
+            DeviceComponentLocator locator( pDev, dltSystemSettings );
+            locator.bindComponent( firmwareUpdateKeepUserSets_, "KeepUserSets" );
+            locator.bindComponent( firmwareUpdateForceBreakingChange_, "ForceBreakingChange" );
+            locator.bindComponent( firmwareUpdateForceOverrideSameVersion_, "ForceOverrideSameVersion" );
+            locator.bindComponent( firmwareUpdateForceDowngrade_, "ForceDowngrade" );
+            locator.bindComponent( firmwareUpdateFileName_, "FileName" );
+            locator.bindComponent( firmwareUpdateStatusMessage_, "UpdateStatusMessage" );
+            locator.bindComponent( firmwareUpdateProgressListenerAddress_, "ProgressListenerAddress" );
+            locator.bindComponent( firmwareUpdateProgressListenerUserDataAddress_, "ProgressListenerUserDataAddress" );
+            locator.bindComponent( updateFirmware_, "UpdateDeviceFirmware@i" );
+        }
+        else
+        {
+            l.bindComponent( firmwareVersionToUpload, "FirmwareVersionToUpload" );
+        }
+
+        if( firmwareUpdateForceOverrideSameVersion_.isValid() )
+        {
+            firmwareUpdateForceOverrideSameVersion_.write( boForceOverideSameVersion ? bTrue : bFalse );
+        }
+        if( firmwareUpdateForceDowngrade_.isValid() )
+        {
+            firmwareUpdateForceDowngrade_.write( boForceDowngrade ? bTrue : bFalse );
+        }
+        if( firmwareUpdateKeepUserSets_.isValid() )
+        {
+            firmwareUpdateKeepUserSets_.write( boKeepUserSets ? bTrue : bFalse );
+        }
+        if( firmwareUpdateForceBreakingChange_.isValid() )
+        {
+            firmwareUpdateForceBreakingChange_.write( boForceBreakingChange ? bTrue : bFalse );
+        }
+    }
+    virtual ~FirmwareUpdater() {}
+    /// \brief This function will be called once a message is waiting to be passed to the user.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onErrorMessage( const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief This function will be called once the devices flash memory is erased.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    *
+    * \note Only some device types require this step so this callback might not be called for every device type.
+    *
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onErasingFlash( const int /*currentProgress_pc*/, const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief This function will be called once firmware archive (*.mvu) is unzipped to provide the correct firmware file.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    *
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onUnzippingFirmwareArchive( const int /*currentProgress_pc*/, const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief This function will be called once the boot programmer of an mvBlueFOX3 camera is updated.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    *
+    * \note
+    * - Only mvBlueFOX3 cameras require this step so this callback might not be called in case of different device types.
+    * - BootProgrammer updates won't be necessary often, so this callback will not apply in every firmware update process.
+    *
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onUpdatingBootProgrammer( const int /*currentProgress_pc*/, const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief This function will be called once the actual firmware file is uploaded to the device's flash memory.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    *
+    * \note
+    * - Depending on the device type this step might take a few seconds up to a few minutes.
+    * - The callback will be called several times during the upload.
+    * - Each time there was a progress of 5 percent this callback will be called.
+    *
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onUploadingImage( const int /*currentProgress_pc*/, const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief This function will be called once the device reboots to make sure the new firmware is applied to the device.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    *
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onRebooting( const int /*currentProgress_pc*/, const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief This function will be called when the settings of the device are stored before updating the firmware.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    *
+    * This callback will only be called when user sets shall be available after the update. This can be specified by setting the \b boKeepUserSets flag upon construction of this object.
+    *
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onSavingUserSets( const int /*currentProgress_pc*/, const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief This function will be called when the settings of the device are written back after updating the firmware.
+    /**
+    * Re-implement this function in a derived class in order to implement a custom behaviour.
+    *
+    * This callback will only be called when user sets shall be available after the update. This can be specified by setting the \b boKeepUserSets flag upon construction of this object.
+    *
+    * \return
+    * - <b>mvIMPACT::acquire::fuaContinue</b> if the current update shall continue.
+    * - <b>mvIMPACT::acquire::fuaCancel</b> otherwise.
+    */
+    virtual int onLoadingUserSets( const int /*currentProgress_pc*/, const double /*timeElapsed*/ ) const
+    {
+        return fuaContinue;
+    }
+    /// \brief A function to start the firmware update process.
+    /**
+    * This function is intended to be used to update MATRIX VISION devices.
+    * \note
+    * The function needs to be called without any additional parameter in case of mvBlueFOX devices.
+    *
+    * \return
+    *  - <b>mvIMPACT::acquire::DMR_NO_ERROR</b> if successful.
+    *  - A negative error code of type <b>::TDMR_ERROR</b> otherwise.
+    */
+    TDMR_ERROR update(
+        /// [in] Path to the file which should be used to update the device. Can be empty if no update archives are needed for the device.
+        const std::string& archivePath = ""
+    )
+    {
+        if( !updateFirmware_.isValid() )
+        {
+            return DMR_FEATURE_NOT_AVAILABLE;
+        }
+        if( firmwareUpdateFileName_.isValid() )
+        {
+            firmwareUpdateFileName_.writeS( archivePath );
+        }
+        registerFirmwareUpdateCallback( infoCallback, this );
+        const TDMR_ERROR returnVal = static_cast<TDMR_ERROR>( updateFirmware_.call() );
+        unregisterFirmwareUpdateCallback();
+        return returnVal;
+    }
+    /// \brief Returns the current status from the status property
+    std::string statusMessage( void ) const
+    {
+        return firmwareUpdateStatusMessage_.isValid() ? firmwareUpdateStatusMessage_.readS() : "STATUS PROPERTY NOT AVAILABLE";
+    }
+    /// \brief A method to receive the time in seconds since the update process has been started
+    /**
+     * \return The time elapsed since the firmware update currently running has been started.
+     */
+    double getTimeElapsed( void ) const
+    {
+        return timeElapsed_s_;
+    }
+
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %immutable; )
+    // *INDENT-ON*
+    /// \brief An enumerated integer property containing a list of available firmware versions.
+    /**
+     * \note
+     * This feature currently is only available for \b mvBlueFOX devices since here the firmware is part of the driver library.
+     * So no additional archive is needed, but the desired firmware version to upload into the device's non-volatile memory can
+     * be selected by writing to this property before calling the \b mvIMPACT::acquire::labs::FirmwareUpdater::update function.
+     */
+    PropertyI firmwareVersionToUpload;
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %mutable; )
+    // *INDENT-OFF*
+};
+
+} // namespace labs
+
 } // namespace acquire
 } // namespace mvIMPACT
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyI, EnumPropertyI, int, ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAcquisitionField, EnumPropertyI, TAcquisitionField, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAcquisitionMode, EnumPropertyI, TAcquisitionMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAcquisitionStartStopBehaviour, EnumPropertyI, TAcquisitionStartStopBehaviour, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAoiMode, EnumPropertyI, TAoiMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoControlSpeed, EnumPropertyI, TAutoControlSpeed, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoControlMode, EnumPropertyI, TAutoControlMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoExposureControl, EnumPropertyI, TAutoExposureControl, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoGainControl, EnumPropertyI, TAutoGainControl, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIAutoOffsetCalibration, EnumPropertyI, TAutoOffsetCalibration, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBayerConversionMode, EnumPropertyI, TBayerConversionMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBayerMosaicParity, EnumPropertyI, TBayerMosaicParity, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBayerWhiteBalanceResult, EnumPropertyI, TBayerWhiteBalanceResult, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXDigitalInputThreshold, EnumPropertyI, TBlueFOXDigitalInputThreshold, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXFooterMode, EnumPropertyI, TBlueFOXFooterMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXInfoSensorCapabilities, EnumPropertyI, TBlueFOXInfoSensorCapabilities, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXOffsetAutoBlackSpeed, EnumPropertyI, TBlueFOXOffsetAutoBlackSpeed, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXSensorTiming, EnumPropertyI, TBlueFOXSensorTiming, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBlueFOXTransferSize, EnumPropertyI, TBlueFOXTransferSize, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIBoolean, EnumPropertyI, TBoolean, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraAoiMode, EnumPropertyI, TCameraAoiMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraBinningMode, EnumPropertyI, TCameraBinningMode, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraDataFormat, EnumPropertyI, TCameraDataFormat, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraExposeMode, EnumPropertyI, TCameraExposeMode, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraExternalSyncEdge, EnumPropertyI, TCameraExternalSyncEdge, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraExternalSyncOutput, EnumPropertyI, TCameraExternalSyncOutput, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraFlashMode, EnumPropertyI, TCameraFlashMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraFlashType, EnumPropertyI, TCameraFlashType, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraHDRMode, EnumPropertyI, TCameraHDRMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraInterlacedType, EnumPropertyI, TCameraInterlacedType, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraLinkDataValidMode, EnumPropertyI, TCameraLinkDataValidMode, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraOutput, EnumPropertyI, TCameraOutput, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraPixelClock, EnumPropertyI, TCameraPixelClock, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraScanMode, EnumPropertyI, TCameraScanMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraSerialPortBaudRate, EnumPropertyI, TCameraSerialPortBaudRate, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraShutterMode, EnumPropertyI, TCameraShutterMode, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTapsXGeometry, EnumPropertyI, TCameraTapsXGeometry, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTapsYGeometry, EnumPropertyI, TCameraTapsYGeometry, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTestMode, EnumPropertyI, TCameraTestMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTriggerMode, EnumPropertyI, TCameraTriggerMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyICameraTriggerSource, EnumPropertyI, TCameraTriggerSource, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIChannelSplitMode, EnumPropertyI, TChannelSplitMode, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIClampMode, EnumPropertyI, TClampMode, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIColorTwistInputCorrectionMatrixMode, EnumPropertyI, TColorTwistInputCorrectionMatrixMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIColorTwistOutputCorrectionMatrixMode, EnumPropertyI, TColorTwistOutputCorrectionMatrixMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIColorProcessingMode, EnumPropertyI, TColorProcessingMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDarkCurrentFilterMode, EnumPropertyI, TDarkCurrentFilterMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDefectivePixelsFilterMode, EnumPropertyI, TDefectivePixelsFilterMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceAccessMode, EnumPropertyI, TDeviceAccessMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceAdvancedOptions, EnumPropertyI, TDeviceAdvancedOptions, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceCapability, EnumPropertyI, TDeviceCapability, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceClass, EnumPropertyI, TDeviceClass, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceDigitalOutputMode, EnumPropertyI, TDeviceDigitalOutputMode, mvIMPACT::acquire:: ) )
+//PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceEventMode, EnumPropertyI, TDeviceEventMode, mvIMPACT::acquire:: ) ) // deprecated!
+//PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceEventType, EnumPropertyI, TDeviceEventType, mvIMPACT::acquire:: ) ) // deprecated!
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceImageTrigger, EnumPropertyI, TDeviceImageTrigger, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceInterfaceLayout, EnumPropertyI, TDeviceInterfaceLayout, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceLoadSettings, EnumPropertyI, TDeviceLoadSettings, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDevicePowerMode, EnumPropertyI, TDevicePowerMode, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceScanRateMode, EnumPropertyI, TDeviceScanRateMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceSignalOutputStartEvent, EnumPropertyI, TDeviceSignalOutputStartEvent, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceState, EnumPropertyI, TDeviceState, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceSyncOutMode, EnumPropertyI, TDeviceSyncOutMode, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceTriggerInterface, EnumPropertyI, TDeviceTriggerInterface, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDeviceTriggerMode, EnumPropertyI, TDeviceTriggerMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigIOState, EnumPropertyI, TDigIOState, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalIOMeasurementMode, EnumPropertyI, TDigitalIOMeasurementMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalIOMeasurementSource, EnumPropertyI, TDigitalIOMeasurementSource, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalOutputControlMode, EnumPropertyI, TDigitalOutputControlMode, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIDigitalSignal, EnumPropertyI, TDigitalSignal, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIFieldGateMode, EnumPropertyI, TFieldGateMode, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIFlatFieldFilterCorrectionMode, EnumPropertyI, TFlatFieldFilterCorrectionMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIFlatFieldFilterMode, EnumPropertyI, TFlatFieldFilterMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIHWUpdateResult, EnumPropertyI, THWUpdateResult, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyII2COperationMode, EnumPropertyI, TI2COperationMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyII2COperationStatus, EnumPropertyI, TI2COperationStatus, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageBufferPixelFormat, EnumPropertyI, TImageBufferPixelFormat, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageBufferFormatReinterpreterMode, EnumPropertyI, TImageBufferFormatReinterpreterMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageDestinationPixelFormat, EnumPropertyI, TImageDestinationPixelFormat, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingFilter, EnumPropertyI, TImageProcessingFilter, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingMode, EnumPropertyI, TImageProcessingMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingOptimization, EnumPropertyI, TImageProcessingOptimization, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageProcessingResult, EnumPropertyI, TImageProcessingResult, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIRequestImageMemoryMode, EnumPropertyI, TRequestImageMemoryMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIImageRequestControlMode, EnumPropertyI, TImageRequestControlMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIInfoSensorColorMode, EnumPropertyI, TInfoSensorColorMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIInfoSensorType, EnumPropertyI, TInfoSensorType, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIInterfaceEnumerationBehaviour, EnumPropertyI, TInterfaceEnumerationBehaviour, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIInterlacedMode, EnumPropertyI, TInterlacedMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyILineCounter, EnumPropertyI, TLineCounter, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTGammaMode, EnumPropertyI, TLUTGammaMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTImplementation, EnumPropertyI, TLUTImplementation, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTInterpolationMode, EnumPropertyI, TLUTInterpolationMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTMapping, EnumPropertyI, TLUTMapping, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyILUTMode, EnumPropertyI, TLUTMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIMemoryManagerMode, EnumPropertyI, TMemoryManagerMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIMemoryManagerPoolMode, EnumPropertyI, TMemoryManagerPoolMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIMirrorMode, EnumPropertyI, TMirrorMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIMirrorOperationMode, EnumPropertyI, TMirrorOperationMode, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIOnBoardMemoryMode, EnumPropertyI, TOnBoardMemoryMode, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIPolarizedDataExtractionMode, EnumPropertyI, TPolarizedDataExtractionMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIPolarizedDataExtractionInterpolationMode, EnumPropertyI, TPolarizedDataExtractionInterpolationMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIPulseStartTrigger, EnumPropertyI, TPulseStartTrigger, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIRequestResult, EnumPropertyI, TRequestResult, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIRequestState, EnumPropertyI, TRequestState, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIRTCtrlModes, EnumPropertyI, TRTCtrlModes, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIRTProgOpCodes, EnumPropertyI, TRTProgOpCodes, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIScalerMode, EnumPropertyI, TScalerMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIScalerInterpolationMode, EnumPropertyI, TScalerInterpolationMode, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIScanClock, EnumPropertyI, TScanClock, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIScanStandard, EnumPropertyI, TScanStandard, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyITriggerMoment, EnumPropertyI, TTriggerMoment, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIUserDataAccessRight, EnumPropertyI, TUserDataAccessRight, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIUserDataReconnectBehaviour, EnumPropertyI, TUserDataReconnectBehaviour, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIVideoStandard, EnumPropertyI, TVideoStandard, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIVirtualDeviceImageType, EnumPropertyI, TVirtualDeviceImageType, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIVirtualDeviceTestMode, EnumPropertyI, TVirtualDeviceTestMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIWhiteBalanceCalibrationMode, EnumPropertyI, TWhiteBalanceCalibrationMode, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyIWhiteBalanceParameter, EnumPropertyI, TWhiteBalanceParameter, mvIMPACT::acquire:: ) )
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyI64, EnumPropertyI64, int64_type, mvIMPACT::acquire:: ) )
+PYTHON_ONLY( ENUM_PROPERTY( PropertyI64BufferPartDataType, EnumPropertyI64, TBufferPartDataType, mvIMPACT::acquire:: ) )
+
+#ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+PYTHON_ONLY( ENUM_PROPERTY( PropertyI64DeviceTriggerOverlap, EnumPropertyI64, TDeviceTriggerOverlap, mvIMPACT::acquire:: ) )
+#endif // #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+PYTHON_ONLY( ENUM_PROPERTY( PropertyF, EnumPropertyF, double, ) )
 
 // restore Borland compiler switch 'force enums to the size of integer'
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
@@ -20315,11 +24662,11 @@ inline void ExceptionFactory::raiseException( const char* pFunctionName, int lin
 #   endif // _WIN32
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 
-#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_PYTHON)
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 #   ifndef MVIMPACT_USE_NAMESPACES
 using namespace mvIMPACT::acquire;
 #   endif // #ifndef MVIMPACT_USE_NAMESPACES
-#endif // DOXYGEN_SHOULD_SKIP_THIS && WRAP_PYTHON
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 
 #ifdef _MSC_VER // is Microsoft compiler?
 // restore old warning level

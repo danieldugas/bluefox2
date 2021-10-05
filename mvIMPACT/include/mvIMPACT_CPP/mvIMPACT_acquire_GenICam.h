@@ -1,4 +1,19 @@
 //-----------------------------------------------------------------------------
+// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
+//
+// This software is provided by MATRIX VISION GmbH "as is"
+// and any express or implied warranties, including, but not limited to, the
+// implied warranties of merchantability and fitness for a particular purpose
+// are disclaimed.
+//
+// In no event shall MATRIX VISION GmbH be liable for any direct,
+// indirect, incidental, special, exemplary, or consequential damages
+// (including, but not limited to, procurement of substitute goods or services;
+// loss of use, data, or profits; or business interruption) however caused and
+// on any theory of liability, whether in contract, strict liability, or tort
+// (including negligence or otherwise) arising in any way out of the use of
+// this software, even if advised of the possibility of such damage.
+//-----------------------------------------------------------------------------
 #ifndef mvIMPACT_acquire_GenICam_CPP_autogen_h
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define mvIMPACT_acquire_GenICam_CPP_autogen_h mvIMPACT_acquire_GenICam_CPP_autogen_h
@@ -28,7 +43,7 @@ namespace GenICam
 
 /// \defgroup GenICamInterface GenICam interface layout
 /// \brief Classes and functions that will be available if the device is used
-/// with the \a GenICam interface layout
+/// with the \a GenICam interface layout.
 /**
  *  This group contains classes and functions that will be available if the device is used
  *  with the <b>mvIMPACT::acquire::dilGenICam</b> interface layout.
@@ -36,7 +51,7 @@ namespace GenICam
 
 /** \defgroup GenICamInterfaceDevice GenICam interface layout(device)
  * \brief Classes and functions that will be available if the device is used
- * with the \a GenICam interface layout
+ * with the \a GenICam interface layout.
  *
  *  This group contains classes and functions that will be available for a device used
  *  with the <b>mvIMPACT::acquire::dilGenICam</b> interface layout.
@@ -46,7 +61,7 @@ namespace GenICam
 
 /** \defgroup GenICamInterfaceProducer GenICam interface layout(producer)
  * \brief Classes and functions that will be available if the device is used
- * with the \a GenICam interface layout
+ * with the \a GenICam interface layout.
  *
  *  This group contains classes and functions that will be available for a \a GenICam \a GenTL \a producer
  *
@@ -131,6 +146,7 @@ public:
         deviceRegistersStreamingEnd(),
         deviceRegistersCheck(),
         deviceRegistersValid(),
+        mvDeviceRegistersStatus(),
         deviceRegistersEndianness(),
         deviceTemperatureSelector(),
         deviceTemperature(),
@@ -147,8 +163,6 @@ public:
         mvDeviceTemperatureLowerLimit(),
         mvDeviceTemperatureLimitHysteresis(),
         mvDeviceClockFrequency(),
-        mvDeviceClockGranularity(),
-        mvDeviceSensorName(),
         mvDeviceSensorColorMode(),
         mvDeviceFPGAVersion(),
         mvDeviceFirmwareSource(),
@@ -162,7 +176,13 @@ public:
         mvCalculateHashCode(),
         mvDeviceFirmwareHashAlgorithm(),
         mvDeviceLaserCurrent(),
-        mvTimestampPPSSync()
+        mvTimestampPPSSync(),
+        mvTimestampPPSTriggerEdge(),
+        mvTimestampPPSPulsesMissed(),
+        mvTimestampPPSStatus(),
+        mvTimestampResetValue(),
+        mvTemperatureState(),
+        mvTemperatureStateCriticalThreshold()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
@@ -261,6 +281,7 @@ public:
         locator.bindComponent( deviceRegistersStreamingEnd, "DeviceRegistersStreamingEnd@i" );
         locator.bindComponent( deviceRegistersCheck, "DeviceRegistersCheck@i" );
         locator.bindComponent( deviceRegistersValid, "DeviceRegistersValid" );
+        locator.bindComponent( mvDeviceRegistersStatus, "mvDeviceRegistersStatus" );
         locator.bindComponent( deviceRegistersEndianness, "DeviceRegistersEndianness" );
         if( !deviceRegistersEndianness.isValid() )
         {
@@ -293,8 +314,6 @@ public:
         locator.bindComponent( mvDeviceTemperatureLowerLimit, "mvDeviceTemperatureLowerLimit" );
         locator.bindComponent( mvDeviceTemperatureLimitHysteresis, "mvDeviceTemperatureLimitHysteresis" );
         locator.bindComponent( mvDeviceClockFrequency, "mvDeviceClockFrequency" );
-        locator.bindComponent( mvDeviceClockGranularity, "mvDeviceClockGranularity" );
-        locator.bindComponent( mvDeviceSensorName, "mvDeviceSensorName" );
         locator.bindComponent( mvDeviceSensorColorMode, "mvDeviceSensorColorMode" );
         locator.bindComponent( mvDeviceFPGAVersion, "mvDeviceFPGAVersion" );
         locator.bindComponent( mvDeviceFirmwareSource, "mvDeviceFirmwareSource" );
@@ -317,9 +336,15 @@ public:
         {
             locator.bindComponent( mvTimestampPPSSync, "mvGevTimestampPPSSync" );
         }
+        locator.bindComponent( mvTimestampPPSTriggerEdge, "mvTimestampPPSTriggerEdge" );
+        locator.bindComponent( mvTimestampPPSPulsesMissed, "mvTimestampPPSPulsesMissed" );
+        locator.bindComponent( mvTimestampPPSStatus, "mvTimestampPPSStatus" );
+        locator.bindComponent( mvTimestampResetValue, "mvTimestampResetValue" );
+        locator.bindComponent( mvTemperatureState, "mvTemperatureState" );
+        locator.bindComponent( mvTemperatureStateCriticalThreshold, "mvTemperatureStateCriticalThreshold" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Returns the device type.
     /**
@@ -349,8 +374,8 @@ public:
      *  The following string values might be valid for this feature:
      *  - \b Areascan (Display string: 'Areascan'): 2D sensor.
      *  - \b Linescan (Display string: 'Linescan'): 1D sensor.
-     *  - \b Areascan3D (Display string: 'Areascan 3 D'): device outputs 2D range image.
-     *  - \b Linescan3D (Display string: 'Linescan 3 D'): device outputs 1D range image.
+     *  - \b Areascan3D (Display string: 'Areascan 3D'): device outputs 2D range image.
+     *  - \b Linescan3D (Display string: 'Linescan 3D'): device outputs 1D range image.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -606,9 +631,9 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 deviceStreamChannelType;
-    /// \brief An integer property. Index of device's Link to use for streaming the specifed stream channel.
+    /// \brief An integer property. Index of device's Link to use for streaming the specified stream channel.
     /**
-     *  Index of device's Link to use for streaming the specifed stream channel.
+     *  Index of device's Link to use for streaming the specified stream channel.
      */
     PropertyI64 deviceStreamChannelLink;
     /// \brief An enumerated integer property. Endianness of multi-byte pixel data for this stream.
@@ -639,9 +664,9 @@ public:
      *  This feature is deprecated (See DeviceEventChannelCount). It indicates the number of message/event channels supported by the device.
      */
     PropertyI64 deviceMessageChannelCount;
-    /// \brief An enumerated integer property. Character set used by the strings of the device's bootstrap registers.
+    /// \brief An enumerated integer property. Character set used by the strings of the device.
     /**
-     *  Character set used by the strings of the device's bootstrap registers.
+     *  Character set used by the strings of the device.
      *
      *  The following string values might be valid for this feature:
      *  - \b UTF8 (Display string: 'UTF 8'): Device use UTF8 character set.
@@ -699,6 +724,24 @@ public:
      *  Returns if the current register set is valid and consistent.
      */
     PropertyIBoolean deviceRegistersValid;
+    /// \brief An enumerated integer property. Will give a hint where to find the invalid register settings if any.
+    /**
+     *  Will give a hint where to find the invalid register settings if any.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Valid (Display string: 'Valid'): The current register settings are in a consistent state.
+     *  - \b Invalid (Display string: 'Invalid'): The current register settings are in an invalid and/or inconsistent state.
+     *  - \b BinningHorizontalValueInvalid (Display string: 'Binning Horizontal Value Invalid'): The current BinningHorizontal value is not supported.
+     *  - \b BinningVerticalValueInvalid (Display string: 'Binning Vertical Value Invalid'): The current BinningVertical value is not supported.
+     *  - \b DecimationHorizontalValueInvalid (Display string: 'Decimation Horizontal Value Invalid'): The current DecimationHorizontal value is not supported.
+     *  - \b DecimationVerticalValueInvalid (Display string: 'Decimation Vertical Value Invalid'): The current DecimationVertical value is not supported.
+     *  - \b BinningDecimationCombinationInvalid (Display string: 'Binning Decimation Combination Invalid'): The current combination of binning and decimation is not valid.
+     *  - \b BinningDecimationImageTooWide (Display string: 'Binning Decimation Image Too Wide'): The current Width is too wide for the BinningVertical and/or DecimationVertical settings. Please reduce the Width or add BinningHorizontal orDecimationHorizontal.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvDeviceRegistersStatus;
     /// \brief An enumerated integer property. Endianness of the registers of the device.
     /**
      *  Endianness of the registers of the device.
@@ -871,16 +914,6 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 mvDeviceClockFrequency;
-    /// \brief An integer property. Special register to configure the clock granularity for LUPA sensors.
-    /**
-     *  Special register to configure the clock granularity for LUPA sensors.
-     */
-    PropertyI64 mvDeviceClockGranularity;
-    /// \brief A string property. Shows the name of the sensor.
-    /**
-     *  Shows the name of the sensor.
-     */
-    PropertyS mvDeviceSensorName;
     /// \brief An enumerated integer property. Shows color mode of the sensor.
     /**
      *  Shows color mode of the sensor.
@@ -993,13 +1026,70 @@ public:
      *  - \b Off (Display string: 'Off')
      *  - \b Line4 (Display string: 'Line 4')
      *  - \b Line5 (Display string: 'Line 5')
+     *  - \b Line6 (Display string: 'Line 6')
+     *  - \b Line7 (Display string: 'Line 7')
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 mvTimestampPPSSync;
+    /// \brief An enumerated integer property. Selects the trigger edge on which the controller will be pulsed.
+    /**
+     *  Selects the trigger edge on which the controller will be pulsed.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b mvRisingEdge (Display string: 'mv Rising Edge'): Controller is pulsed on rising edges.
+     *  - \b mvFallingEdge (Display string: 'mv Falling Edge'): Controller is pulsed on falling edges.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvTimestampPPSTriggerEdge;
+    /// \brief An integer property. Shows the number of missed pulses since the last status latch.
+    /**
+     *  Shows the number of missed pulses since the last status latch.
+     */
+    PropertyI64 mvTimestampPPSPulsesMissed;
+    /// \brief An enumerated integer property. Shows the current status of the pulse per second controller.
+    /**
+     *  Shows the current status of the pulse per second controller.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Disabled (Display string: 'Disabled'): Controller is disabled.
+     *  - \b NoPulses (Display string: 'No Pulses'): Controller is enabled but pps pulses are missing.
+     *  - \b Unstable (Display string: 'Unstable'): Controller has not reached the steady state so far.
+     *  - \b Stable (Display string: 'Stable'): Controller has reached the range of steady state.
+     *  - \b Error (Display string: 'Error'): Controller is in faulty state and must be reenabled manually.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvTimestampPPSStatus;
+    /// \brief An integer property. Defines the initial value after the cameras timestamp timer has been reset.
+    /**
+     *  Defines the initial value after the cameras timestamp timer has been reset.
+     */
+    PropertyI64 mvTimestampResetValue;
+    /// \brief An enumerated integer property. Indicates the current temperature state of the camera
+    /**
+     *  Indicates the current temperature state of the camera
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Normal (Display string: 'Normal')
+     *  - \b Critical (Display string: 'Critical')
+     *  - \b OverTemperature (Display string: 'Over Temperature')
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvTemperatureState;
+    /// \brief An integer property. If the temperature of the camera exceeds this value mvTemperatureState switches from normal to critical
+    /**
+     *  If the temperature of the camera exceeds this value mvTemperatureState switches from normal to critical
+     */
+    PropertyI64 mvTemperatureStateCriticalThreshold;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -1025,6 +1115,9 @@ public:
         const std::string& settingName = "Base" ) :
         sensorWidth(),
         sensorHeight(),
+        sensorPixelWidth(),
+        sensorPixelHeight(),
+        sensorName(),
         sensorShutterMode(),
         sensorTaps(),
         sensorDigitizationTaps(),
@@ -1037,12 +1130,16 @@ public:
         componentSelector(),
         componentEnable(),
         componentIDValue(),
+        groupSelector(),
+        groupIDValue(),
         imageComponentSelector(),
         imageComponentEnable(),
         width(),
         height(),
         offsetX(),
         offsetY(),
+        mvBlockscanLinesPerBlock(),
+        mvBlockscanBlockCount(),
         mvMultiAreaMode(),
         mvAreaSelector(),
         mvAreaEnable(),
@@ -1082,13 +1179,30 @@ public:
         imageCompressionQuality(),
         imageCompressionBitrate(),
         imageCompressionJPEGFormatOption(),
-        mvSensorDigitizationBitDepth()
+        mvSensorDigitizationBitDepth(),
+        mvDualAdcMode(),
+        mvDualAdcCompression()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
         locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
         locator.bindComponent( sensorWidth, "SensorWidth" );
         locator.bindComponent( sensorHeight, "SensorHeight" );
+        locator.bindComponent( sensorPixelWidth, "SensorPixelWidth" );
+        if( !sensorPixelWidth.isValid() )
+        {
+            locator.bindComponent( sensorPixelWidth, "mvDeviceSensorPixelWidth" );
+        }
+        locator.bindComponent( sensorPixelHeight, "SensorPixelHeight" );
+        if( !sensorPixelHeight.isValid() )
+        {
+            locator.bindComponent( sensorPixelHeight, "mvDeviceSensorPixelHeight" );
+        }
+        locator.bindComponent( sensorName, "SensorName" );
+        if( !sensorName.isValid() )
+        {
+            locator.bindComponent( sensorName, "mvDeviceSensorName" );
+        }
         locator.bindComponent( sensorShutterMode, "SensorShutterMode" );
         locator.bindComponent( sensorTaps, "SensorTaps" );
         locator.bindComponent( sensorDigitizationTaps, "SensorDigitizationTaps" );
@@ -1101,12 +1215,16 @@ public:
         locator.bindComponent( componentSelector, "ComponentSelector" );
         locator.bindComponent( componentEnable, "ComponentEnable" );
         locator.bindComponent( componentIDValue, "ComponentIDValue" );
+        locator.bindComponent( groupSelector, "GroupSelector" );
+        locator.bindComponent( groupIDValue, "GroupIDValue" );
         locator.bindComponent( imageComponentSelector, "ImageComponentSelector" );
         locator.bindComponent( imageComponentEnable, "ImageComponentEnable" );
         locator.bindComponent( width, "Width" );
         locator.bindComponent( height, "Height" );
         locator.bindComponent( offsetX, "OffsetX" );
         locator.bindComponent( offsetY, "OffsetY" );
+        locator.bindComponent( mvBlockscanLinesPerBlock, "mvBlockscanLinesPerBlock" );
+        locator.bindComponent( mvBlockscanBlockCount, "mvBlockscanBlockCount" );
         locator.bindComponent( mvMultiAreaMode, "mvMultiAreaMode" );
         locator.bindComponent( mvAreaSelector, "mvAreaSelector" );
         locator.bindComponent( mvAreaEnable, "mvAreaEnable" );
@@ -1151,9 +1269,11 @@ public:
         locator.bindComponent( imageCompressionBitrate, "ImageCompressionBitrate" );
         locator.bindComponent( imageCompressionJPEGFormatOption, "ImageCompressionJPEGFormatOption" );
         locator.bindComponent( mvSensorDigitizationBitDepth, "mvSensorDigitizationBitDepth" );
+        locator.bindComponent( mvDualAdcMode, "mvDualAdcMode" );
+        locator.bindComponent( mvDualAdcCompression, "mvDualAdcCompression" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property. Effective width of the sensor in pixels.
     /**
@@ -1165,9 +1285,24 @@ public:
      *  Effective height of the sensor in pixels.
      */
     PropertyI64 sensorHeight;
-    /// \brief An enumerated integer property. Sets the shutter mode of the device.
+    /// \brief A floating point property. Physical size (pitch) in the x direction of a photo sensitive pixel unit.
     /**
-     *  Sets the shutter mode of the device.
+     *  Physical size (pitch) in the x direction of a photo sensitive pixel unit.
+     */
+    PropertyF sensorPixelWidth;
+    /// \brief A floating point property. Physical size (pitch) in the y direction of a photo sensitive pixel unit.
+    /**
+     *  Physical size (pitch) in the y direction of a photo sensitive pixel unit.
+     */
+    PropertyF sensorPixelHeight;
+    /// \brief A string property. Product name of the imaging Sensor.
+    /**
+     *  Product name of the imaging Sensor.
+     */
+    PropertyS sensorName;
+    /// \brief An enumerated integer property. Specifies the shutter mode of the device.
+    /**
+     *  Specifies the shutter mode of the device.
      *
      *  The following string values might be valid for this feature:
      *  - \b Global (Display string: 'Global'): The shutter opens and closes at the same time for all pixels. All the pixels are exposed for the same length of time at the same time.
@@ -1264,9 +1399,9 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 regionDestination;
-    /// \brief An integer property. Returns a unique Identifier value that correspond to the selected Region.
+    /// \brief An integer property. Returns a unique Identifier value that corresponds to the selected Region.
     /**
-     *  Returns a unique Identifier value that correspond to the selected Region.
+     *  Returns a unique Identifier value that corresponds to the selected Region.
      */
     PropertyI64 regionIDValue;
     /// \brief An enumerated integer property. Selects a component to activate/deactivate its data streaming.
@@ -1277,11 +1412,12 @@ public:
      *  - \b Intensity (Display string: 'Intensity'): The acquisition of intensity (monochrome or color) of the visible reflected light is controlled.
      *  - \b Infrared (Display string: 'Infrared'): The acquisition of non-visible infrared light is controlled.
      *  - \b Ultraviolet (Display string: 'Ultraviolet'): The acquisition of non-visible ultraviolet light is controlled.
-     *  - \b Range (Display string: 'Range'): The acquisition of range (distance) data is controlled. The data produced may be only range (2.5D) or a point cloud giving the 3D coordinates depending on the Scan3dControl.
+     *  - \b Range (Display string: 'Range'): The acquisition of range (distance) data is controlled. The data produced may be only range (2.5D) or a point cloud giving the 3D coordinates depending on the Scan3dControl features.
      *  - \b Reflectance (Display string: 'Reflectance'): The reflected intensity acquired together with Range in a Linescan3D sensor acquiring a single linescan profile for each exposure of the sensor.
      *  - \b Confidence (Display string: 'Confidence'): The acquisition of confidence map of the acquired image is controlled. Confidence data may be binary (0 - invalid) or an integer where 0 is invalid and increasing value is increased confidence in the data in the corresponding pixel. If floating point representation is used the confidence image is normalized to the range [0,1], for integer representation the maximum possible integer represents maximum confidence.
      *  - \b Disparity (Display string: 'Disparity'): The acquisition of stereo camera disparity data is controlled. Disparity is a more specific range format approximately inversely proportional to distance. Disparity is typically given in pixel units.
      *  - \b Scatter (Display string: 'Scatter'): The acquisition of data measuring how much light is scattered around the reflected light. In processing this is used as an additional intensity image, often together with the standard intensity or reflectance.
+     *  - \b Multispectral (Display string: 'Multispectral'): The acquisition of multiple spectral bands corresponding to various light wavelenghts is controlled.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -1292,11 +1428,31 @@ public:
      *  Controls if the selected component streaming is active.
      */
     PropertyIBoolean componentEnable;
-    /// \brief An integer property. Returns a unique Identifier value that correspond to the selected Component type.
+    /// \brief An integer property. Returns a unique Identifier value that corresponds to type of the component selected by ComponentSelector.
     /**
-     *  Returns a unique Identifier value that correspond to the selected Component type.
+     *  Returns a unique Identifier value that corresponds to type of the component selected by ComponentSelector.
      */
     PropertyI64 componentIDValue;
+    /// \brief An enumerated integer property. Selects a Group of component to control or inquire.
+    /**
+     *  Selects a Group of component to control or inquire. The GroupSelector determines which components Group will be used for the selected features.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Group0 (Display string: 'Group 0'): Group 0
+     *  - \b Group1 (Display string: 'Group 1'): Group 1
+     *  - \b Group2 (Display string: 'Group 2'): Group 2
+     *  - \b Group\#3\# (Display string: 'Group \#3\#'): Group \#3\#
+     *  - \b Group3 (Display string: 'Group 3'): Group 3
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 groupSelector;
+    /// \brief An integer property. Returns a unique Identifier value corresponding to the selected Group of Components.
+    /**
+     *  Returns a unique Identifier value corresponding to the selected Group of Components. If no grouping is required, this value should be set to 0.
+     */
+    PropertyI64 groupIDValue;
     /// \brief An enumerated integer property. This feature is deprecated (See ComponentSelector).
     /**
      *  \deprecated
@@ -1307,7 +1463,7 @@ public:
      *  - \b Color (Display string: 'Color'): The acquisition of color of the reflected light is controlled
      *  - \b Infrared (Display string: 'Infrared'): The acquisition of non-visible infrared light is controlled.
      *  - \b Ultraviolet (Display string: 'Ultraviolet'): The acquisition of non-visible ultraviolet light is controlled.
-     *  - \b Range (Display string: 'Range'): The acquisition of range (distance) data is controlled. The data produced may be only range (2.5D) or a point cloud 3D coordinates depending on the Scan3dControl.
+     *  - \b Range (Display string: 'Range'): The acquisition of range (distance) data is controlled. The data produced may be only range (2.5D) or a point cloud 3D coordinates depending on the Scan3dControl features.
      *  - \b Confidence (Display string: 'Confidence'): The acquisition of confidence map of the acquired image is controlled. Confidence data may be binary (0 - invalid) or an integer where 0 is invalid and increasing value is increased confidence in the data in the corresponding pixel. If floating point representation is used the confidence image is normalized to the range [0,1], for integer representation the maximum possible integer represents maximum confidence.
      *  - \b Disparity (Display string: 'Disparity'): The acquisition of stereo camera disparity data is controlled. Disparity is a more specific range format approximately inversely proportional to distance. Disparity is typically given in pixel units.
      *  - \b Scatter (Display string: 'Scatter'): The acquisition of data measuring how much light is scattered around the reflected light. In processing this is used as an additional intensity image, often together with the standard intensity.
@@ -1342,6 +1498,16 @@ public:
      *  Vertical offset from the origin to the region of interest (in pixels).
      */
     PropertyI64 offsetY;
+    /// \brief An integer property. Blockscan mode only: Number of lines per block.
+    /**
+     *  Blockscan mode only: Number of lines per block.
+     */
+    PropertyI64 mvBlockscanLinesPerBlock;
+    /// \brief An integer property. Blockscan mode only: Number of blocks combined to one frame.
+    /**
+     *  Blockscan mode only: Number of blocks combined to one frame
+     */
+    PropertyI64 mvBlockscanBlockCount;
     /// \brief An enumerated integer property. Selects the overall multi area mode.
     /**
      *  Selects the overall multi area mode.
@@ -1412,9 +1578,9 @@ public:
      *  This feature controls whether the LinePitch feature is writable. Otherwise LinePitch is implicitly controlled by the combination of features like Width, PixelFormat, etc...
      */
     PropertyIBoolean linePitchEnable;
-    /// \brief An integer property. Total number of bytes between the starts of  2 consecutive lines.
+    /// \brief An integer property. Total number of bytes between the starts of 2 consecutive lines.
     /**
-     *  Total number of bytes between the starts of  2 consecutive lines. This feature is used to facilitate alignment of image data.
+     *  Total number of bytes between the starts of 2 consecutive lines. This feature is used to facilitate alignment of image data.
      */
     PropertyI64 linePitch;
     /// \brief An enumerated integer property. Selects which binning engine is controlled by the BinningHorizontal and BinningVertical features.
@@ -1449,9 +1615,9 @@ public:
      *  Number of horizontal photo-sensitive cells to combine together. This reduces the horizontal resolution (width) of the image.
      */
     PropertyI64 binningHorizontal;
-    /// \brief An enumerated integer property. Sets the mode used to combine horizontal photo-sensitive cells together when BinningVertical is used.
+    /// \brief An enumerated integer property. Sets the mode to use to combine vertical photo-sensitive cells together when BinningVertical is used.
     /**
-     *  Sets the mode used to combine horizontal photo-sensitive cells together when BinningVertical is used.
+     *  Sets the mode to use to combine vertical photo-sensitive cells together when BinningVertical is used.
      *
      *  The following string values might be valid for this feature:
      *  - \b Sum (Display string: 'Sum'): The response from the combined cells will be added, resulting in increased sensitivity.
@@ -1472,7 +1638,7 @@ public:
      *
      *  The following string values might be valid for this feature:
      *  - \b Discard (Display string: 'Discard'): The value of every Nth pixel is kept, others are discarded.
-     *  - \b Average (Display string: 'Average'): The value of a group of N adjacent pixels are averaged.
+     *  - \b Average (Display string: 'Average'): The values of a group of N adjacent pixels are averaged.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -1489,7 +1655,7 @@ public:
      *
      *  The following string values might be valid for this feature:
      *  - \b Discard (Display string: 'Discard'): The value of every Nth pixel is kept, others are discarded.
-     *  - \b Average (Display string: 'Average'): The value of a group of N adjacent pixels are averaged.
+     *  - \b Average (Display string: 'Average'): The values of a group of N adjacent pixels are averaged.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -1588,6 +1754,16 @@ public:
      *  - \b Confidence8 (Display string: 'Confidence8'): Confidence data 8 bit.
      *  - \b Confidence16 (Display string: 'Confidence16'): Confidence data 16 bit.
      *  - \b Confidence32f (Display string: 'Confidence32f'): Confidence data 32 bit float.
+     *  - \b Data8 (Display string: 'Data8'): Generic non-pixel data 8 bit.
+     *  - \b Data8s (Display string: 'Data8s'): Generic non-pixel data 8 bit signed.
+     *  - \b Data16 (Display string: 'Data16'): Generic non-pixel data 16 bit.
+     *  - \b Data16s (Display string: 'Data16s'): Generic non-pixel data 16 bit signed.
+     *  - \b Data32 (Display string: 'Data32'): Generic non-pixel data 32 bit.
+     *  - \b Data32s (Display string: 'Data32s'): Generic non-pixel data 32 bit signed.
+     *  - \b Data32f (Display string: 'Data32f'): Generic non-pixel data 32 bit floating point.
+     *  - \b Data64 (Display string: 'Data64'): Generic non-pixel data 64 bit.
+     *  - \b Data64s (Display string: 'Data64s'): Generic non-pixel data 64 bit signed.
+     *  - \b Data64f (Display string: 'Data64f'): Generic non-pixel data 64 bit floating point.
      *  - \b Raw8 (Display string: 'Raw8'): Raw 8 bit.
      *  - \b Raw16 (Display string: 'Raw16'): Raw 16 bit.
      *  - \b Mono12Packed (Display string: 'Mono12Packed'): Mono 12 bit packed (GigE Vision Specific).
@@ -1600,7 +1776,6 @@ public:
      *  - \b BayerGB12Packed (Display string: 'BayerGB12Packed'): Bayer GB 12 bit packed (GigE Vision Specific).
      *  - \b BayerBG12Packed (Display string: 'BayerBG12Packed'): Bayer BG 12 bit packed (GigE Vision Specific).
      *  - \b RGB10V1Packed (Display string: 'RGB10V1Packed'): RGB 10 bit packed (GigE Vision Specific).
-     *  - \b BGR10V1Packed (Display string: 'BGR10V1Packed'): BGR 10 bit packed (GigE Vision Specific).
      *  - \b RGB12V1Packed (Display string: 'RGB12V1Packed'): RGB 12 bit packed (GigE Vision Specific).
      *  - \b Mono8Signed (Display string: 'Mono 8 Signed')
      *  - \b Mono10Packed (Display string: 'Mono 10 Packed')
@@ -1752,7 +1927,7 @@ public:
      *  - \b GreyHorizontalRamp (Display string: 'Grey Horizontal Ramp'): Image is filled horizontally with an image that goes from the darkest possible value to the brightest.
      *  - \b GreyVerticalRamp (Display string: 'Grey Vertical Ramp'): Image is filled vertically with an image that goes from the darkest possible value to the brightest.
      *  - \b GreyHorizontalRampMoving (Display string: 'Grey Horizontal Ramp Moving'): Image is filled horizontally with an image that goes from the darkest possible value to the brightest and that moves horizontally from left to right at each frame.
-     *  - \b GreyVerticalRampMoving (Display string: 'Grey Vertical Ramp Moving'): Image is filled vertically with an image that goes from the darkest possible value to the brightest and that moves verticaly from top to bottom at each frame.
+     *  - \b GreyVerticalRampMoving (Display string: 'Grey Vertical Ramp Moving'): Image is filled vertically with an image that goes from the darkest possible value to the brightest and that moves vertically from top to bottom at each frame.
      *  - \b HorizontalLineMoving (Display string: 'Horizontal Line Moving'): A moving horizontal line is superimposed on the live image.
      *  - \b VerticalLineMoving (Display string: 'Vertical Line Moving'): A moving vertical line is superimposed on the live image.
      *  - \b ColorBar (Display string: 'Color Bar'): Image is filled with stripes of color including White, Black, Red, Green, Blue, Cyan, Magenta and Yellow.
@@ -1780,7 +1955,7 @@ public:
      *  - \b GreyHorizontalRamp (Display string: 'Grey Horizontal Ramp'): Image is filled horizontally with an image that goes from the darkest possible value to the brightest.
      *  - \b GreyVerticalRamp (Display string: 'Grey Vertical Ramp'): Image is filled vertically with an image that goes from the darkest possible value to the brightest.
      *  - \b GreyHorizontalRampMoving (Display string: 'Grey Horizontal Ramp Moving'): Image is filled horizontally with an image that goes from the darkest possible value to the brightest and that moves horizontally from left to right at each frame.
-     *  - \b GreyVerticalRampMoving (Display string: 'Grey Vertical Ramp Moving'): Image is filled vertically with an image that goes from the darkest possible value to the brightest and that moves verticaly from top to bottom at each frame.
+     *  - \b GreyVerticalRampMoving (Display string: 'Grey Vertical Ramp Moving'): Image is filled vertically with an image that goes from the darkest possible value to the brightest and that moves vertically from top to bottom at each frame.
      *  - \b HorizontalLineMoving (Display string: 'Horizontal Line Moving'): A moving horizontal line is superimposed on the live image.
      *  - \b VerticalLineMoving (Display string: 'Vertical Line Moving'): A moving vertical line is superimposed on the live image.
      *  - \b ColorBar (Display string: 'Color Bar'): Image is filled with stripes of color including White, Black, Red, Green, Blue, Cyan, Magenta and Yellow.
@@ -1811,7 +1986,7 @@ public:
     PropertyI64 deinterlacing;
     /// \brief An enumerated integer property. Enable a specific image compression mode as the base mode for image transfer.
     /**
-     *  Enable a specific image compression mode as the base mode for image transfer. Optionally, chunk data can be appended to the compressed image (See the Chunk Data Control chapter).
+     *  Enable a specific image compression mode as the base mode for image transfer. Optionally, chunk data can be appended to the compressed image (See the  REF _Ref397502619 \h  chapter).
      *
      *  The following string values might be valid for this feature:
      *  - \b Off (Display string: 'Off'): Default value. Image compression is disabled. Images are transmitted uncompressed.
@@ -1874,8 +2049,18 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 mvSensorDigitizationBitDepth;
+    /// \brief A boolean property. Use this mode for a higher dynamic range. The maximum frame rate will be halved then. Using this mode only makes sense when used with pixel formats >= 14 bits. For mv Gen 4 sensors, both high and low level gain pixels are combined internally in the sensor.
+    /**
+     *  Use this mode for a higher dynamic range. The maximum frame rate will be halved then. Using this mode only makes sense when used with pixel formats >= 14 bits.  For mv Gen 4 sensors, both high and low level gain pixels are combined internally in the sensor.
+     */
+    PropertyIBoolean mvDualAdcMode;
+    /// \brief An integer property. After the internal combination of both high and low gain pixels, the output data is compressed to fit 12-bits. This feature sets the compression characteristic of the Dual Adc (different kneepoints of the compression curve). 0 means compression is off.
+    /**
+     *  After the internally combination of both high and low gain pixels, the output data is compressed to fit 12-bits. This feature sets the compression characteristic of the Dual Adc (different kneepoints of the compression curve). 0 means compression is off.
+     */
+    PropertyI64 mvDualAdcCompression;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -1900,6 +2085,10 @@ public:
         /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
         const std::string& settingName = "Base" ) :
         acquisitionMode(),
+        acquisitionStart(),
+        acquisitionStop(),
+        acquisitionStopMode(),
+        acquisitionAbort(),
         acquisitionArm(),
         acquisitionFrameCount(),
         acquisitionBurstFrameCount(),
@@ -1958,12 +2147,18 @@ public:
         mvAcquisitionMemoryAOIParameterChanged(),
         mvFeatureMode(),
         mvSmartFrameRecallEnable(),
+        mvSmartFrameRecallTimestampLookupAccuracy(),
+        mvSmartFrameRecallFrameSkipRatio(),
         mvLensCalibrationEnable()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
         locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
         locator.bindComponent( acquisitionMode, "AcquisitionMode" );
+        locator.bindComponent( acquisitionStart, "AcquisitionStart@i" );
+        locator.bindComponent( acquisitionStop, "AcquisitionStop@i" );
+        locator.bindComponent( acquisitionStopMode, "AcquisitionStopMode" );
+        locator.bindComponent( acquisitionAbort, "AcquisitionAbort@i" );
         locator.bindComponent( acquisitionArm, "AcquisitionArm@i" );
         locator.bindComponent( acquisitionFrameCount, "AcquisitionFrameCount" );
         locator.bindComponent( acquisitionBurstFrameCount, "AcquisitionBurstFrameCount" );
@@ -2038,10 +2233,12 @@ public:
         locator.bindComponent( mvAcquisitionMemoryAOIParameterChanged, "mvAcquisitionMemoryAOIParameterChanged" );
         locator.bindComponent( mvFeatureMode, "mvFeatureMode" );
         locator.bindComponent( mvSmartFrameRecallEnable, "mvSmartFrameRecallEnable" );
+        locator.bindComponent( mvSmartFrameRecallTimestampLookupAccuracy, "mvSmartFrameRecallTimestampLookupAccuracy" );
+        locator.bindComponent( mvSmartFrameRecallFrameSkipRatio, "mvSmartFrameRecallFrameSkipRatio" );
         locator.bindComponent( mvLensCalibrationEnable, "mvLensCalibrationEnable" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Sets the acquisition mode of the device.
     /**
@@ -2056,6 +2253,34 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 acquisitionMode;
+    /// \brief A method object. Starts the Acquisition of the device.
+    /**
+     *  Starts the Acquisition of the device. The number of frames captured is specified by AcquisitionMode.
+     */
+    Method acquisitionStart;
+    /// \brief A method object. Stops the Acquisition of the device at the end of the current Frame.
+    /**
+     *  Stops the Acquisition of the device at the end of the current Frame. It is mainly used when AcquisitionMode is Continuous but can be used in any acquisition mode.
+     */
+    Method acquisitionStop;
+    /// \brief An enumerated integer property. Controls how the AcquisitionStop command and the acquisition stopped using a trigger (e.g.
+    /**
+     *  Controls how the AcquisitionStop command and the acquisition stopped using a trigger (e.g. AcquisitionActive, FrameBurstActive, FrameActive or FrameEnd trigger), ends an ongoing frame. This feature is mainly used in Linescan devices where each line in a frame is acquired sequentially.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Complete (Display string: 'Complete'): When stopped during a frame, the device will continue acquisition of lines until the specified Height is reached to deliver a complete default size frame. Note that if each line is triggered from an external source and this line trigger stops no frame is delivered, and an AcquisitionAbort is needed.
+     *  - \b Immediate (Display string: 'Immediate'): Acquisition stops immediately even during a frame and only the lines acquired at the time  are delivered.
+     *  - \b ImmediateWithPadding (Display string: 'Immediate With Padding'): Acquisition stops immediately even during a frame but the remaining of the frame will be padded with data to deliver a complete default Height frame.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 acquisitionStopMode;
+    /// \brief A method object. Aborts the Acquisition immediately.
+    /**
+     *  Aborts the Acquisition immediately. This will end the capture without completing the current Frame or waiting on a trigger. If no Acquisition is in progress, the command is ignored.
+     */
+    Method acquisitionAbort;
     /// \brief A method object. Arms the device before an AcquisitionStart command.
     /**
      *  Arms the device before an AcquisitionStart command. This optional command validates all the current features for consistency and prepares the device for a fast start of the Acquisition.
@@ -2383,7 +2608,7 @@ public:
     PropertyI64 triggerDivider;
     /// \brief An integer property. Specifies a multiplication factor for the incoming trigger pulses.
     /**
-     *  Specifies a multiplication factor for the incoming trigger pulses. It is used generally used in conjunction with TriggerDivider to control the ratio of triggers that are accepted.
+     *  Specifies a multiplication factor for the incoming trigger pulses. It is generally used in conjunction with TriggerDivider to control the ratio of triggers that are accepted.
      */
     PropertyI64 triggerMultiplier;
     /// \brief An enumerated integer property. Sets the operation mode of the Exposure.
@@ -2710,13 +2935,23 @@ public:
      *  When active in addition to the processed image data (e.g. after binning, decimation, de-Bayering, LUT etc. applied inside the device) also the unprocessed image is stored inside the devices RAM allowing to request the transmission of these images by an application as well. This will effectively reduce the number of images that can be stored inside the frame buffer.
      */
     PropertyIBoolean mvSmartFrameRecallEnable;
+    /// \brief An integer property. This value defines the strictness of the timestamp-check for the recalled image (given in us).
+    /**
+     *  This value defines the strictness of the timestamp-check for the recalled image (given in us).
+     */
+    PropertyI64 mvSmartFrameRecallTimestampLookupAccuracy;
+    /// \brief An integer property. When set to a value != 0, the smaller frames get thinned out. AOI requests can still be done for all frames.
+    /**
+     *  The number of processed images to drop, i.e. skip. This can be used to reduce the frame rate even further. AOIs for unsent images can still be requested - the timestamps for these dropped images must be interpolated.
+     */
+    PropertyI64 mvSmartFrameRecallFrameSkipRatio;
     /// \brief A boolean property. Enables or disables lens calibration.
     /**
      *  When active lens calibration will be applied to the image. The calibration data must have been correctly calculated for the scene and loaded into device memory using, for example, the file interface with filename 'mvLensCalibrationBlocks' and 'mvLensCalibrationPixels'. This will effectively reduce the number of images that can be stored inside the frame buffer.
      */
     PropertyIBoolean mvLensCalibrationEnable;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -2756,7 +2991,6 @@ public:
         balanceRatioSelector(),
         balanceRatio(),
         balanceWhiteAuto(),
-        gamma(),
         mvGainAutoDelayImages(),
         mvGainAutoUpperLimit(),
         mvGainAutoLowerLimit(),
@@ -2779,7 +3013,10 @@ public:
         mvVRamp(),
         mvLinearLogarithmicMode(),
         mvDigitalGainOffset(),
-        mvSaveCalibrationData()
+        mvSaveCalibrationData(),
+        mvGammaEnable(),
+        mvGammaSelector(),
+        gamma()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
@@ -2816,7 +3053,6 @@ public:
             locator.bindComponent( balanceRatio, "BalanceRatioAbs" );
         }
         locator.bindComponent( balanceWhiteAuto, "BalanceWhiteAuto" );
-        locator.bindComponent( gamma, "Gamma" );
         locator.bindComponent( mvGainAutoDelayImages, "mvGainAutoDelayImages" );
         locator.bindComponent( mvGainAutoUpperLimit, "mvGainAutoUpperLimit" );
         locator.bindComponent( mvGainAutoLowerLimit, "mvGainAutoLowerLimit" );
@@ -2840,9 +3076,12 @@ public:
         locator.bindComponent( mvLinearLogarithmicMode, "mvLinearLogarithmicMode" );
         locator.bindComponent( mvDigitalGainOffset, "mvDigitalGainOffset" );
         locator.bindComponent( mvSaveCalibrationData, "mvSaveCalibrationData@i" );
+        locator.bindComponent( mvGammaEnable, "mvGammaEnable" );
+        locator.bindComponent( mvGammaSelector, "mvGammaSelector" );
+        locator.bindComponent( gamma, "Gamma" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Where do the tap balancing calibration data come from?
     /**
@@ -3154,11 +3393,6 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 balanceWhiteAuto;
-    /// \brief A floating point property. Controls the gamma correction of pixel intensity.
-    /**
-     *  Controls the gamma correction of pixel intensity. This is typically used to compensate for non-linearity of the display system (such as CRT).
-     */
-    PropertyF gamma;
     /// \brief An integer property. The number of frames that the AEC must skip before updating the exposure register
     /**
      *  The number of frames that the AEC must skip before updating the exposure register
@@ -3319,8 +3553,37 @@ public:
      *  Saves the calibration data to non-volatile memory.
      */
     Method mvSaveCalibrationData;
+    /// \brief A boolean property. Enables Gamma correction. All other LUT will be disabled.
+    /**
+     *  Enables gamma correction. All other LUT will be disabled.
+     */
+    PropertyIBoolean mvGammaEnable;
+    /// \brief An enumerated integer property. Sets the type of Gamma to be used.
+    /**
+     *  Sets the type of Gamma to be used.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b mvSRGB (Display string: 'mv SRGB'): Gamma curve is fixed to a sRGB curve.
+     *  - \b mvUser (Display string: 'mv User'): Gamma curve can be configured by user.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvGammaSelector;
+    /// \brief A floating point property. Controls the gamma correction of pixel intensity.
+    /**
+     *  Controls the gamma correction of pixel intensity.
+     *  Since the human eye perceives light similar to a logarithm of real light intensity it's characteristic curve is
+     *  non-linear. It follows the rule of (intensity ^ gamma) with a gamma value between 0.3-0.5.
+     *  To provide as much useful information as possible, the image is converted from 12-bit acquired by the sensor to 8-bit utilizing
+     *  this characteristic curve. The result is a linearized image optimized for the human eye's non-linear behavior which allows
+     *  to perceive as much intensity differences as possible.
+     *  \image html Gamma_correction_camera.png
+     <center>Conversion from 12- to 8-bit utilizing the gamma function</center>
+     */
+    PropertyF gamma;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -3348,7 +3611,10 @@ public:
         LUTEnable(),
         LUTIndex(),
         LUTValue(),
-        LUTValueAll()
+        LUTValueAll(),
+        mvLUTType(),
+        mvLUTInputData(),
+        mvLUTMapping()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
@@ -3358,9 +3624,12 @@ public:
         locator.bindComponent( LUTIndex, "LUTIndex" );
         locator.bindComponent( LUTValue, "LUTValue" );
         locator.bindComponent( LUTValueAll, "LUTValueAll" );
+        locator.bindComponent( mvLUTType, "mvLUTType" );
+        locator.bindComponent( mvLUTInputData, "mvLUTInputData" );
+        locator.bindComponent( mvLUTMapping, "mvLUTMapping" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects which LUT to control.
     /**
@@ -3396,8 +3665,51 @@ public:
      *  Accesses all the LUT coefficients in a single access without using individual LUTIndex.
      */
     PropertyS LUTValueAll;
+    /// \brief An enumerated integer property. Describes the type of LUT used.
+    /**
+     *  Describes the type of LUT used.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Direct (Display string: 'Direct'): The user can define an output value for each input value of the LUT.
+     *  - \b Interpolated (Display string: 'Interpolated'): The user can define the output values for equidistant nodes in the LUT. Linear interpolation is used to determine the output values for input values that lie in between the given nodes.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvLUTType;
+    /// \brief An enumerated integer property. Describes the data the LUT is operating on
+    /**
+     *  Describes the data the LUT is operating on
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Bayer (Display string: 'Bayer'): The LUT is operating on raw Bayer data (i.e. before debayering)
+     *  - \b Gray (Display string: 'Gray'): The LUT is operating on gray data
+     *  - \b RGB (Display string: 'RGB'): The LUT is operating on RGB data (i.e. after debayering)
+     *  - \b DeviceSpecific (Display string: 'Device Specific'): The LUT is operating on device specific data
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvLUTInputData;
+    /// \brief An enumerated integer property. Describes mapping of the LUT
+    /**
+     *  Describes the mapping of the LUT
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b map_8To12 (Display string: 'map 8 To 12'): The LUT maps 8 bit input data to 12 bit output data.
+     *  - \b map_10To12 (Display string: 'map 10 To 12'): The LUT maps 10 bit input data to 12 bit output data.
+     *  - \b map_10To10 (Display string: 'map 10 To 10'): The LUT maps 10 bit input data to 10 bit output data.
+     *  - \b map_8To10 (Display string: 'map 8 To 10'): The LUT maps 8 bit input data to 12 bit output data.
+     *  - \b map_12To10 (Display string: 'map 12 To 10'): The LUT maps 12 bit input data to 10 bit output data.
+     *  - \b map_10To9 (Display string: 'map 10 To 9'): The LUT maps 10 bit input data to 9 bit output data.
+     *  - \b map_12To9 (Display string: 'map 12 To 9'): The LUT maps 12 bit input data to 9 bit output data.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvLUTMapping;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -3435,7 +3747,7 @@ public:
         locator.bindComponent( colorTransformationValue, "ColorTransformationValue" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects which Color Transformation module is controlled by the various Color Transformation features.
     /**
@@ -3482,7 +3794,7 @@ public:
      */
     PropertyF colorTransformationValue;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -3521,7 +3833,8 @@ public:
         mvLineDebounceTimeFallingEdge(),
         mvRTMInputSelector(),
         mvRTMSource(),
-        mvLineLED()
+        mvLineLED(),
+        mvEnable12VPowerOut()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
@@ -3542,9 +3855,10 @@ public:
         locator.bindComponent( mvRTMInputSelector, "mvRTMInputSelector" );
         locator.bindComponent( mvRTMSource, "mvRTMSource" );
         locator.bindComponent( mvLineLED, "mvLineLED" );
+        locator.bindComponent( mvEnable12VPowerOut, "mvEnable12VPowerOut" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects the physical line (or pin) of the external device connector or the virtual line of the Transport Layer to configure.
     /**
@@ -3622,35 +3936,6 @@ public:
     /// \brief An integer property. Returns the current status of all available Line signals at time of polling in a single bitfield.
     /**
      *  Returns the current status of all available Line signals at time of polling in a single bitfield.
-     *
-     *  The following table documents which bit in this property represents the state of which digital I/O for \b mvBlueLYNX-M7 devices:
-     *
-     *  <table>
-     *  <tr><td class="header">bit</td><td class="header">IO</td></tr>
-     *  <tr><td class="indexvalue">0</td><td class="indexvalue">out 0</td></tr>
-     *  <tr><td class="indexvalue">1</td><td class="indexvalue">out 1</td></tr>
-     *  <tr><td class="indexvalue">2</td><td class="indexvalue">in 0</td></tr>
-     *  <tr><td class="indexvalue">3</td><td class="indexvalue">in 1</td></tr>
-     *  <tr><td class="indexvalue">4</td><td class="indexvalue">out 2</td></tr>
-     *  <tr><td class="indexvalue">5</td><td class="indexvalue">out 3</td></tr>
-     *  <tr><td class="indexvalue">6</td><td class="indexvalue">in 2</td></tr>
-     *  <tr><td class="indexvalue">7</td><td class="indexvalue">in 3</td></tr>
-     *  <tr><td class="indexvalue">8</td><td class="indexvalue">in 4</td></tr>
-     *  <tr><td class="indexvalue">9</td><td class="indexvalue">out 4</td></tr>
-     *  <tr><td class="indexvalue">10</td><td class="indexvalue">out 5</td></tr>
-     *  </table>
-     *
-     *  The following table documents which bit in this property represents the state of which digital I/O for \b mvBlueCOUGAR-P devices:
-     *
-     *  <table>
-     *  <tr><td class="header">bit</td><td class="header">IO</td></tr>
-     *  <tr><td class="indexvalue">0</td><td class="indexvalue">out 0</td></tr>
-     *  <tr><td class="indexvalue">1</td><td class="indexvalue">out 1</td></tr>
-     *  <tr><td class="indexvalue">2</td><td class="indexvalue">in 0</td></tr>
-     *  <tr><td class="indexvalue">3</td><td class="indexvalue">in 1</td></tr>
-     *  <tr><td class="indexvalue">4</td><td class="indexvalue">out 2</td></tr>
-     *  <tr><td class="indexvalue">5</td><td class="indexvalue">out 3</td></tr>
-     *  </table>
      *
      *  The following table documents which bit in this property represents the state of which digital I/O for \b mvBlueCOUGAR-X and \b mvBlueFOX3 devices:
      *
@@ -3893,8 +4178,13 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 mvLineLED;
+    /// \brief A boolean property. Enable 12V power out on MultipurposeIO POWER_OUT pin.
+    /**
+     *  Enable 12V power out on MultipurposeIO POWER_OUT pin.
+     */
+    PropertyIBoolean mvEnable12VPowerOut;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -3937,7 +4227,8 @@ public:
         timerValue(),
         timerStatus(),
         timerTriggerSource(),
-        timerTriggerActivation()
+        timerTriggerActivation(),
+        timerTriggerArmDelay()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
@@ -3974,9 +4265,10 @@ public:
         locator.bindComponent( timerStatus, "TimerStatus" );
         locator.bindComponent( timerTriggerSource, "TimerTriggerSource" );
         locator.bindComponent( timerTriggerActivation, "TimerTriggerActivation" );
+        locator.bindComponent( timerTriggerArmDelay, "TimerTriggerArmDelay" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects which Counter to configure.
     /**
@@ -4064,10 +4356,14 @@ public:
      *  - \b Action1 (Display string: 'Action 1'): Counts the number of assertions of the chosen action signal.
      *  - \b Action2 (Display string: 'Action 2'): Counts the number of assertions of the chosen action signal.
      *  - \b Action\#3\# (Display string: 'Action \#3\#'): Counts the number of assertions of the chosen action signal.
-     *  - \b LinkTrigger0 (Display string: 'Link Trigger 0'): Counts the number of  Link Trigger.
-     *  - \b LinkTrigger1 (Display string: 'Link Trigger 1'): Counts the number of  Link Trigger.
-     *  - \b LinkTrigger2 (Display string: 'Link Trigger 2'): Counts the number of  Link Trigger.
-     *  - \b LinkTrigger\#3\# (Display string: 'Link Trigger \#3\#'): Counts the number of  Link Trigger.
+     *  - \b LinkTrigger0 (Display string: 'Link Trigger 0'): Counts the number of  Link Triggers.
+     *  - \b LinkTrigger1 (Display string: 'Link Trigger 1'): Counts the number of  Link Triggers.
+     *  - \b LinkTrigger2 (Display string: 'Link Trigger 2'): Counts the number of  Link Triggers.
+     *  - \b LinkTrigger\#3\# (Display string: 'Link Trigger \#3\#'): Counts the number of  Link Triggers.
+     *  - \b LinkTriggerMissed0 (Display string: 'Link Trigger Missed 0'): Counts the number of Link Triggers missed.
+     *  - \b LinkTriggerMissed1 (Display string: 'Link Trigger Missed 1'): Counts the number of Link Triggers missed.
+     *  - \b LinkTriggerMissed2 (Display string: 'Link Trigger Missed 2'): Counts the number of Link Triggers missed.
+     *  - \b LinkTriggerMissed\#3\# (Display string: 'Link Trigger Missed \#3\#'): Counts the number of Link Triggers missed.
      *  - \b TimestampTick (Display string: 'Timestamp Tick'): Counts the number of clock ticks of the Timestamp clock. Can be used to create a programmable timer.
      *  - \b Line3 (Display string: 'Line 3'): Counts the number of transitions on the chosen I/O Line.
      *  - \b Line4 (Display string: 'Line 4'): Counts the number of transitions on the chosen I/O Line.
@@ -4729,8 +5025,13 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 timerTriggerActivation;
+    /// \brief A floating point property. Sets the minimum period between two valid timer triggers.
+    /**
+     *  Sets the minimum period between two valid timer triggers.
+     */
+    PropertyF timerTriggerArmDelay;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -4766,7 +5067,8 @@ public:
         encoderResetActivation(),
         encoderReset(),
         encoderValue(),
-        encoderValueAtReset()
+        encoderValueAtReset(),
+        encoderResolution()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
@@ -4784,9 +5086,10 @@ public:
         locator.bindComponent( encoderReset, "EncoderReset@i" );
         locator.bindComponent( encoderValue, "EncoderValue" );
         locator.bindComponent( encoderValueAtReset, "EncoderValueAtReset" );
+        locator.bindComponent( encoderResolution, "EncoderResolution" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects which Encoder to configure.
     /**
@@ -4844,9 +5147,9 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 encoderMode;
-    /// \brief An integer property. Sets how many Encoder increment/decrements are needed to generate an Encoder output pulse signal.
+    /// \brief An integer property. Sets how many Encoder increments/decrements are needed to generate an Encoder output pulse signal.
     /**
-     *  Sets how many Encoder increment/decrements are needed to generate an Encoder output pulse signal.
+     *  Sets how many Encoder increments/decrements are needed to generate an Encoder output pulse signal.
      */
     PropertyI64 encoderDivider;
     /// \brief An enumerated integer property. Selects the conditions for the Encoder interface to generate a valid Encoder output signal.
@@ -4983,8 +5286,13 @@ public:
      *  Reads the value of the of the position counter of the selected Encoder when it was reset by a signal or by an explicit EncoderReset command.
      */
     PropertyI64 encoderValueAtReset;
+    /// \brief A floating point property. Defines the resolution of one encoder step.
+    /**
+     *  Defines the resolution of one encoder step.
+     */
+    PropertyF encoderResolution;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -5034,7 +5342,7 @@ public:
         locator.bindComponent( logicBlockLUTSelector, "LogicBlockLUTSelector" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Specifies the Logic Block to configure.
     /**
@@ -5175,7 +5483,7 @@ public:
      */
     PropertyI64 logicBlockLUTSelector;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -5209,7 +5517,7 @@ public:
         locator.bindComponent( softwareSignalPulse, "SoftwareSignalPulse@i" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects which Software Signal features to control.
     /**
@@ -5231,7 +5539,7 @@ public:
      */
     Method softwareSignalPulse;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -5273,7 +5581,7 @@ public:
         locator.bindComponent( actionGroupKey, "ActionGroupKey" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Enables the unconditional action command mode where action commands are processed even when the primary control channel is closed.
     /**
@@ -5313,7 +5621,7 @@ public:
      */
     PropertyI64 actionGroupKey;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -5590,6 +5898,96 @@ public:
         eventTimer14End(),
         eventTimer14EndTimestamp(),
         eventTimer14EndFrameID(),
+        eventEncoder0Stopped(),
+        eventEncoder0StoppedTimestamp(),
+        eventEncoder0StoppedFrameID(),
+        eventEncoder1Stopped(),
+        eventEncoder1StoppedTimestamp(),
+        eventEncoder1StoppedFrameID(),
+        eventEncoder2Stopped(),
+        eventEncoder2StoppedTimestamp(),
+        eventEncoder2StoppedFrameID(),
+        eventEncoder3Stopped(),
+        eventEncoder3StoppedTimestamp(),
+        eventEncoder3StoppedFrameID(),
+        eventEncoder4Stopped(),
+        eventEncoder4StoppedTimestamp(),
+        eventEncoder4StoppedFrameID(),
+        eventEncoder5Stopped(),
+        eventEncoder5StoppedTimestamp(),
+        eventEncoder5StoppedFrameID(),
+        eventEncoder6Stopped(),
+        eventEncoder6StoppedTimestamp(),
+        eventEncoder6StoppedFrameID(),
+        eventEncoder7Stopped(),
+        eventEncoder7StoppedTimestamp(),
+        eventEncoder7StoppedFrameID(),
+        eventEncoder8Stopped(),
+        eventEncoder8StoppedTimestamp(),
+        eventEncoder8StoppedFrameID(),
+        eventEncoder9Stopped(),
+        eventEncoder9StoppedTimestamp(),
+        eventEncoder9StoppedFrameID(),
+        eventEncoder10Stopped(),
+        eventEncoder10StoppedTimestamp(),
+        eventEncoder10StoppedFrameID(),
+        eventEncoder11Stopped(),
+        eventEncoder11StoppedTimestamp(),
+        eventEncoder11StoppedFrameID(),
+        eventEncoder12Stopped(),
+        eventEncoder12StoppedTimestamp(),
+        eventEncoder12StoppedFrameID(),
+        eventEncoder13Stopped(),
+        eventEncoder13StoppedTimestamp(),
+        eventEncoder13StoppedFrameID(),
+        eventEncoder14Stopped(),
+        eventEncoder14StoppedTimestamp(),
+        eventEncoder14StoppedFrameID(),
+        eventEncoder0Restarted(),
+        eventEncoder0RestartedTimestamp(),
+        eventEncoder0RestartedFrameID(),
+        eventEncoder1Restarted(),
+        eventEncoder1RestartedTimestamp(),
+        eventEncoder1RestartedFrameID(),
+        eventEncoder2Restarted(),
+        eventEncoder2RestartedTimestamp(),
+        eventEncoder2RestartedFrameID(),
+        eventEncoder3Restarted(),
+        eventEncoder3RestartedTimestamp(),
+        eventEncoder3RestartedFrameID(),
+        eventEncoder4Restarted(),
+        eventEncoder4RestartedTimestamp(),
+        eventEncoder4RestartedFrameID(),
+        eventEncoder5Restarted(),
+        eventEncoder5RestartedTimestamp(),
+        eventEncoder5RestartedFrameID(),
+        eventEncoder6Restarted(),
+        eventEncoder6RestartedTimestamp(),
+        eventEncoder6RestartedFrameID(),
+        eventEncoder7Restarted(),
+        eventEncoder7RestartedTimestamp(),
+        eventEncoder7RestartedFrameID(),
+        eventEncoder8Restarted(),
+        eventEncoder8RestartedTimestamp(),
+        eventEncoder8RestartedFrameID(),
+        eventEncoder9Restarted(),
+        eventEncoder9RestartedTimestamp(),
+        eventEncoder9RestartedFrameID(),
+        eventEncoder10Restarted(),
+        eventEncoder10RestartedTimestamp(),
+        eventEncoder10RestartedFrameID(),
+        eventEncoder11Restarted(),
+        eventEncoder11RestartedTimestamp(),
+        eventEncoder11RestartedFrameID(),
+        eventEncoder12Restarted(),
+        eventEncoder12RestartedTimestamp(),
+        eventEncoder12RestartedFrameID(),
+        eventEncoder13Restarted(),
+        eventEncoder13RestartedTimestamp(),
+        eventEncoder13RestartedFrameID(),
+        eventEncoder14Restarted(),
+        eventEncoder14RestartedTimestamp(),
+        eventEncoder14RestartedFrameID(),
         eventLine0RisingEdge(),
         eventLine0RisingEdgeTimestamp(),
         eventLine0RisingEdgeFrameID(),
@@ -5725,6 +6123,51 @@ public:
         eventLine14AnyEdge(),
         eventLine14AnyEdgeTimestamp(),
         eventLine14AnyEdgeFrameID(),
+        eventLinkTrigger0(),
+        eventLinkTrigger0Timestamp(),
+        eventLinkTrigger0FrameID(),
+        eventLinkTrigger1(),
+        eventLinkTrigger1Timestamp(),
+        eventLinkTrigger1FrameID(),
+        eventLinkTrigger2(),
+        eventLinkTrigger2Timestamp(),
+        eventLinkTrigger2FrameID(),
+        eventLinkTrigger3(),
+        eventLinkTrigger3Timestamp(),
+        eventLinkTrigger3FrameID(),
+        eventLinkTrigger4(),
+        eventLinkTrigger4Timestamp(),
+        eventLinkTrigger4FrameID(),
+        eventLinkTrigger5(),
+        eventLinkTrigger5Timestamp(),
+        eventLinkTrigger5FrameID(),
+        eventLinkTrigger6(),
+        eventLinkTrigger6Timestamp(),
+        eventLinkTrigger6FrameID(),
+        eventLinkTrigger7(),
+        eventLinkTrigger7Timestamp(),
+        eventLinkTrigger7FrameID(),
+        eventLinkTrigger8(),
+        eventLinkTrigger8Timestamp(),
+        eventLinkTrigger8FrameID(),
+        eventLinkTrigger9(),
+        eventLinkTrigger9Timestamp(),
+        eventLinkTrigger9FrameID(),
+        eventLinkTrigger10(),
+        eventLinkTrigger10Timestamp(),
+        eventLinkTrigger10FrameID(),
+        eventLinkTrigger11(),
+        eventLinkTrigger11Timestamp(),
+        eventLinkTrigger11FrameID(),
+        eventLinkTrigger12(),
+        eventLinkTrigger12Timestamp(),
+        eventLinkTrigger12FrameID(),
+        eventLinkTrigger13(),
+        eventLinkTrigger13Timestamp(),
+        eventLinkTrigger13FrameID(),
+        eventLinkTrigger14(),
+        eventLinkTrigger14Timestamp(),
+        eventLinkTrigger14FrameID(),
         eventError(),
         eventErrorTimestamp(),
         eventErrorFrameID(),
@@ -5986,6 +6429,96 @@ public:
         locator.bindComponent( eventTimer14End, "EventTimer14End" );
         locator.bindComponent( eventTimer14EndTimestamp, "EventTimer14EndTimestamp" );
         locator.bindComponent( eventTimer14EndFrameID, "EventTimer14EndFrameID" );
+        locator.bindComponent( eventEncoder0Stopped, "EventEncoder0Stopped" );
+        locator.bindComponent( eventEncoder0StoppedTimestamp, "EventEncoder0StoppedTimestamp" );
+        locator.bindComponent( eventEncoder0StoppedFrameID, "EventEncoder0StoppedFrameID" );
+        locator.bindComponent( eventEncoder1Stopped, "EventEncoder1Stopped" );
+        locator.bindComponent( eventEncoder1StoppedTimestamp, "EventEncoder1StoppedTimestamp" );
+        locator.bindComponent( eventEncoder1StoppedFrameID, "EventEncoder1StoppedFrameID" );
+        locator.bindComponent( eventEncoder2Stopped, "EventEncoder2Stopped" );
+        locator.bindComponent( eventEncoder2StoppedTimestamp, "EventEncoder2StoppedTimestamp" );
+        locator.bindComponent( eventEncoder2StoppedFrameID, "EventEncoder2StoppedFrameID" );
+        locator.bindComponent( eventEncoder3Stopped, "EventEncoder3Stopped" );
+        locator.bindComponent( eventEncoder3StoppedTimestamp, "EventEncoder3StoppedTimestamp" );
+        locator.bindComponent( eventEncoder3StoppedFrameID, "EventEncoder3StoppedFrameID" );
+        locator.bindComponent( eventEncoder4Stopped, "EventEncoder4Stopped" );
+        locator.bindComponent( eventEncoder4StoppedTimestamp, "EventEncoder4StoppedTimestamp" );
+        locator.bindComponent( eventEncoder4StoppedFrameID, "EventEncoder4StoppedFrameID" );
+        locator.bindComponent( eventEncoder5Stopped, "EventEncoder5Stopped" );
+        locator.bindComponent( eventEncoder5StoppedTimestamp, "EventEncoder5StoppedTimestamp" );
+        locator.bindComponent( eventEncoder5StoppedFrameID, "EventEncoder5StoppedFrameID" );
+        locator.bindComponent( eventEncoder6Stopped, "EventEncoder6Stopped" );
+        locator.bindComponent( eventEncoder6StoppedTimestamp, "EventEncoder6StoppedTimestamp" );
+        locator.bindComponent( eventEncoder6StoppedFrameID, "EventEncoder6StoppedFrameID" );
+        locator.bindComponent( eventEncoder7Stopped, "EventEncoder7Stopped" );
+        locator.bindComponent( eventEncoder7StoppedTimestamp, "EventEncoder7StoppedTimestamp" );
+        locator.bindComponent( eventEncoder7StoppedFrameID, "EventEncoder7StoppedFrameID" );
+        locator.bindComponent( eventEncoder8Stopped, "EventEncoder8Stopped" );
+        locator.bindComponent( eventEncoder8StoppedTimestamp, "EventEncoder8StoppedTimestamp" );
+        locator.bindComponent( eventEncoder8StoppedFrameID, "EventEncoder8StoppedFrameID" );
+        locator.bindComponent( eventEncoder9Stopped, "EventEncoder9Stopped" );
+        locator.bindComponent( eventEncoder9StoppedTimestamp, "EventEncoder9StoppedTimestamp" );
+        locator.bindComponent( eventEncoder9StoppedFrameID, "EventEncoder9StoppedFrameID" );
+        locator.bindComponent( eventEncoder10Stopped, "EventEncoder10Stopped" );
+        locator.bindComponent( eventEncoder10StoppedTimestamp, "EventEncoder10StoppedTimestamp" );
+        locator.bindComponent( eventEncoder10StoppedFrameID, "EventEncoder10StoppedFrameID" );
+        locator.bindComponent( eventEncoder11Stopped, "EventEncoder11Stopped" );
+        locator.bindComponent( eventEncoder11StoppedTimestamp, "EventEncoder11StoppedTimestamp" );
+        locator.bindComponent( eventEncoder11StoppedFrameID, "EventEncoder11StoppedFrameID" );
+        locator.bindComponent( eventEncoder12Stopped, "EventEncoder12Stopped" );
+        locator.bindComponent( eventEncoder12StoppedTimestamp, "EventEncoder12StoppedTimestamp" );
+        locator.bindComponent( eventEncoder12StoppedFrameID, "EventEncoder12StoppedFrameID" );
+        locator.bindComponent( eventEncoder13Stopped, "EventEncoder13Stopped" );
+        locator.bindComponent( eventEncoder13StoppedTimestamp, "EventEncoder13StoppedTimestamp" );
+        locator.bindComponent( eventEncoder13StoppedFrameID, "EventEncoder13StoppedFrameID" );
+        locator.bindComponent( eventEncoder14Stopped, "EventEncoder14Stopped" );
+        locator.bindComponent( eventEncoder14StoppedTimestamp, "EventEncoder14StoppedTimestamp" );
+        locator.bindComponent( eventEncoder14StoppedFrameID, "EventEncoder14StoppedFrameID" );
+        locator.bindComponent( eventEncoder0Restarted, "EventEncoder0Restarted" );
+        locator.bindComponent( eventEncoder0RestartedTimestamp, "EventEncoder0RestartedTimestamp" );
+        locator.bindComponent( eventEncoder0RestartedFrameID, "EventEncoder0RestartedFrameID" );
+        locator.bindComponent( eventEncoder1Restarted, "EventEncoder1Restarted" );
+        locator.bindComponent( eventEncoder1RestartedTimestamp, "EventEncoder1RestartedTimestamp" );
+        locator.bindComponent( eventEncoder1RestartedFrameID, "EventEncoder1RestartedFrameID" );
+        locator.bindComponent( eventEncoder2Restarted, "EventEncoder2Restarted" );
+        locator.bindComponent( eventEncoder2RestartedTimestamp, "EventEncoder2RestartedTimestamp" );
+        locator.bindComponent( eventEncoder2RestartedFrameID, "EventEncoder2RestartedFrameID" );
+        locator.bindComponent( eventEncoder3Restarted, "EventEncoder3Restarted" );
+        locator.bindComponent( eventEncoder3RestartedTimestamp, "EventEncoder3RestartedTimestamp" );
+        locator.bindComponent( eventEncoder3RestartedFrameID, "EventEncoder3RestartedFrameID" );
+        locator.bindComponent( eventEncoder4Restarted, "EventEncoder4Restarted" );
+        locator.bindComponent( eventEncoder4RestartedTimestamp, "EventEncoder4RestartedTimestamp" );
+        locator.bindComponent( eventEncoder4RestartedFrameID, "EventEncoder4RestartedFrameID" );
+        locator.bindComponent( eventEncoder5Restarted, "EventEncoder5Restarted" );
+        locator.bindComponent( eventEncoder5RestartedTimestamp, "EventEncoder5RestartedTimestamp" );
+        locator.bindComponent( eventEncoder5RestartedFrameID, "EventEncoder5RestartedFrameID" );
+        locator.bindComponent( eventEncoder6Restarted, "EventEncoder6Restarted" );
+        locator.bindComponent( eventEncoder6RestartedTimestamp, "EventEncoder6RestartedTimestamp" );
+        locator.bindComponent( eventEncoder6RestartedFrameID, "EventEncoder6RestartedFrameID" );
+        locator.bindComponent( eventEncoder7Restarted, "EventEncoder7Restarted" );
+        locator.bindComponent( eventEncoder7RestartedTimestamp, "EventEncoder7RestartedTimestamp" );
+        locator.bindComponent( eventEncoder7RestartedFrameID, "EventEncoder7RestartedFrameID" );
+        locator.bindComponent( eventEncoder8Restarted, "EventEncoder8Restarted" );
+        locator.bindComponent( eventEncoder8RestartedTimestamp, "EventEncoder8RestartedTimestamp" );
+        locator.bindComponent( eventEncoder8RestartedFrameID, "EventEncoder8RestartedFrameID" );
+        locator.bindComponent( eventEncoder9Restarted, "EventEncoder9Restarted" );
+        locator.bindComponent( eventEncoder9RestartedTimestamp, "EventEncoder9RestartedTimestamp" );
+        locator.bindComponent( eventEncoder9RestartedFrameID, "EventEncoder9RestartedFrameID" );
+        locator.bindComponent( eventEncoder10Restarted, "EventEncoder10Restarted" );
+        locator.bindComponent( eventEncoder10RestartedTimestamp, "EventEncoder10RestartedTimestamp" );
+        locator.bindComponent( eventEncoder10RestartedFrameID, "EventEncoder10RestartedFrameID" );
+        locator.bindComponent( eventEncoder11Restarted, "EventEncoder11Restarted" );
+        locator.bindComponent( eventEncoder11RestartedTimestamp, "EventEncoder11RestartedTimestamp" );
+        locator.bindComponent( eventEncoder11RestartedFrameID, "EventEncoder11RestartedFrameID" );
+        locator.bindComponent( eventEncoder12Restarted, "EventEncoder12Restarted" );
+        locator.bindComponent( eventEncoder12RestartedTimestamp, "EventEncoder12RestartedTimestamp" );
+        locator.bindComponent( eventEncoder12RestartedFrameID, "EventEncoder12RestartedFrameID" );
+        locator.bindComponent( eventEncoder13Restarted, "EventEncoder13Restarted" );
+        locator.bindComponent( eventEncoder13RestartedTimestamp, "EventEncoder13RestartedTimestamp" );
+        locator.bindComponent( eventEncoder13RestartedFrameID, "EventEncoder13RestartedFrameID" );
+        locator.bindComponent( eventEncoder14Restarted, "EventEncoder14Restarted" );
+        locator.bindComponent( eventEncoder14RestartedTimestamp, "EventEncoder14RestartedTimestamp" );
+        locator.bindComponent( eventEncoder14RestartedFrameID, "EventEncoder14RestartedFrameID" );
         locator.bindComponent( eventLine0RisingEdge, "EventLine0RisingEdge" );
         locator.bindComponent( eventLine0RisingEdgeTimestamp, "EventLine0RisingEdgeTimestamp" );
         locator.bindComponent( eventLine0RisingEdgeFrameID, "EventLine0RisingEdgeFrameID" );
@@ -6121,13 +6654,58 @@ public:
         locator.bindComponent( eventLine14AnyEdge, "EventLine14AnyEdge" );
         locator.bindComponent( eventLine14AnyEdgeTimestamp, "EventLine14AnyEdgeTimestamp" );
         locator.bindComponent( eventLine14AnyEdgeFrameID, "EventLine14AnyEdgeFrameID" );
+        locator.bindComponent( eventLinkTrigger0, "EventLinkTrigger0" );
+        locator.bindComponent( eventLinkTrigger0Timestamp, "EventLinkTrigger0Timestamp" );
+        locator.bindComponent( eventLinkTrigger0FrameID, "EventLinkTrigger0FrameID" );
+        locator.bindComponent( eventLinkTrigger1, "EventLinkTrigger1" );
+        locator.bindComponent( eventLinkTrigger1Timestamp, "EventLinkTrigger1Timestamp" );
+        locator.bindComponent( eventLinkTrigger1FrameID, "EventLinkTrigger1FrameID" );
+        locator.bindComponent( eventLinkTrigger2, "EventLinkTrigger2" );
+        locator.bindComponent( eventLinkTrigger2Timestamp, "EventLinkTrigger2Timestamp" );
+        locator.bindComponent( eventLinkTrigger2FrameID, "EventLinkTrigger2FrameID" );
+        locator.bindComponent( eventLinkTrigger3, "EventLinkTrigger3" );
+        locator.bindComponent( eventLinkTrigger3Timestamp, "EventLinkTrigger3Timestamp" );
+        locator.bindComponent( eventLinkTrigger3FrameID, "EventLinkTrigger3FrameID" );
+        locator.bindComponent( eventLinkTrigger4, "EventLinkTrigger4" );
+        locator.bindComponent( eventLinkTrigger4Timestamp, "EventLinkTrigger4Timestamp" );
+        locator.bindComponent( eventLinkTrigger4FrameID, "EventLinkTrigger4FrameID" );
+        locator.bindComponent( eventLinkTrigger5, "EventLinkTrigger5" );
+        locator.bindComponent( eventLinkTrigger5Timestamp, "EventLinkTrigger5Timestamp" );
+        locator.bindComponent( eventLinkTrigger5FrameID, "EventLinkTrigger5FrameID" );
+        locator.bindComponent( eventLinkTrigger6, "EventLinkTrigger6" );
+        locator.bindComponent( eventLinkTrigger6Timestamp, "EventLinkTrigger6Timestamp" );
+        locator.bindComponent( eventLinkTrigger6FrameID, "EventLinkTrigger6FrameID" );
+        locator.bindComponent( eventLinkTrigger7, "EventLinkTrigger7" );
+        locator.bindComponent( eventLinkTrigger7Timestamp, "EventLinkTrigger7Timestamp" );
+        locator.bindComponent( eventLinkTrigger7FrameID, "EventLinkTrigger7FrameID" );
+        locator.bindComponent( eventLinkTrigger8, "EventLinkTrigger8" );
+        locator.bindComponent( eventLinkTrigger8Timestamp, "EventLinkTrigger8Timestamp" );
+        locator.bindComponent( eventLinkTrigger8FrameID, "EventLinkTrigger8FrameID" );
+        locator.bindComponent( eventLinkTrigger9, "EventLinkTrigger9" );
+        locator.bindComponent( eventLinkTrigger9Timestamp, "EventLinkTrigger9Timestamp" );
+        locator.bindComponent( eventLinkTrigger9FrameID, "EventLinkTrigger9FrameID" );
+        locator.bindComponent( eventLinkTrigger10, "EventLinkTrigger10" );
+        locator.bindComponent( eventLinkTrigger10Timestamp, "EventLinkTrigger10Timestamp" );
+        locator.bindComponent( eventLinkTrigger10FrameID, "EventLinkTrigger10FrameID" );
+        locator.bindComponent( eventLinkTrigger11, "EventLinkTrigger11" );
+        locator.bindComponent( eventLinkTrigger11Timestamp, "EventLinkTrigger11Timestamp" );
+        locator.bindComponent( eventLinkTrigger11FrameID, "EventLinkTrigger11FrameID" );
+        locator.bindComponent( eventLinkTrigger12, "EventLinkTrigger12" );
+        locator.bindComponent( eventLinkTrigger12Timestamp, "EventLinkTrigger12Timestamp" );
+        locator.bindComponent( eventLinkTrigger12FrameID, "EventLinkTrigger12FrameID" );
+        locator.bindComponent( eventLinkTrigger13, "EventLinkTrigger13" );
+        locator.bindComponent( eventLinkTrigger13Timestamp, "EventLinkTrigger13Timestamp" );
+        locator.bindComponent( eventLinkTrigger13FrameID, "EventLinkTrigger13FrameID" );
+        locator.bindComponent( eventLinkTrigger14, "EventLinkTrigger14" );
+        locator.bindComponent( eventLinkTrigger14Timestamp, "EventLinkTrigger14Timestamp" );
+        locator.bindComponent( eventLinkTrigger14FrameID, "EventLinkTrigger14FrameID" );
         locator.bindComponent( eventError, "EventError" );
         locator.bindComponent( eventErrorTimestamp, "EventErrorTimestamp" );
         locator.bindComponent( eventErrorFrameID, "EventErrorFrameID" );
         locator.bindComponent( eventErrorCode, "EventErrorCode" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects which Event to signal to the host application.
     /**
@@ -6198,8 +6776,8 @@ public:
      *  - \b LinkTrigger\#2\# (Display string: 'Link Trigger \#2\#'): The event will be generated when a Rising Edge is detected on the LinkTrigger \#2\#.
      *  - \b LinkSpeedChange (Display string: 'Link Speed Change'): The event will be generated when the link speed has changed.
      *  - \b ActionLate (Display string: 'Action Late'): The event will be generated when a valid scheduled action command is received and is scheduled to be executed at a time that is already past.
-     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b Error (Display string: 'Error'): Device just detected an error during the active Acquisition.
+     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b PrimaryApplicationSwitch (Display string: 'Primary Application Switch'): The event will be generated when a primary application switchover has been granted (GigE Vision Specific).
      *  - \b Counter2Start (Display string: 'Counter 2 Start'): The event will be generated when counter 2 starts counting.
      *  - \b Counter3Start (Display string: 'Counter 3 Start'): The event will be generated when counter 3 starts counting.
@@ -6257,6 +6835,34 @@ public:
      *  - \b Timer13End (Display string: 'Timer 13 End'): The event will be generated when Timer 13 ends counting.
      *  - \b Timer14End (Display string: 'Timer 14 End'): The event will be generated when Timer 14 ends counting.
      *  - \b Timer15End (Display string: 'Timer 15 End'): The event will be generated when Timer 15 ends counting.
+     *  - \b Encoder2Stopped (Display string: 'Encoder 2 Stopped'): The event will be generated when the Encoder 2 stops for longer than EncoderTimeout.
+     *  - \b Encoder3Stopped (Display string: 'Encoder 3 Stopped'): The event will be generated when the Encoder 3 stops for longer than EncoderTimeout.
+     *  - \b Encoder4Stopped (Display string: 'Encoder 4 Stopped'): The event will be generated when the Encoder 4 stops for longer than EncoderTimeout.
+     *  - \b Encoder5Stopped (Display string: 'Encoder 5 Stopped'): The event will be generated when the Encoder 5 stops for longer than EncoderTimeout.
+     *  - \b Encoder6Stopped (Display string: 'Encoder 6 Stopped'): The event will be generated when the Encoder 6 stops for longer than EncoderTimeout.
+     *  - \b Encoder7Stopped (Display string: 'Encoder 7 Stopped'): The event will be generated when the Encoder 7 stops for longer than EncoderTimeout.
+     *  - \b Encoder8Stopped (Display string: 'Encoder 8 Stopped'): The event will be generated when the Encoder 8 stops for longer than EncoderTimeout.
+     *  - \b Encoder9Stopped (Display string: 'Encoder 9 Stopped'): The event will be generated when the Encoder 9 stops for longer than EncoderTimeout.
+     *  - \b Encoder10Stopped (Display string: 'Encoder 10 Stopped'): The event will be generated when the Encoder 10 stops for longer than EncoderTimeout.
+     *  - \b Encoder11Stopped (Display string: 'Encoder 11 Stopped'): The event will be generated when the Encoder 11 stops for longer than EncoderTimeout.
+     *  - \b Encoder12Stopped (Display string: 'Encoder 12 Stopped'): The event will be generated when the Encoder 12 stops for longer than EncoderTimeout.
+     *  - \b Encoder13Stopped (Display string: 'Encoder 13 Stopped'): The event will be generated when the Encoder 13 stops for longer than EncoderTimeout.
+     *  - \b Encoder14Stopped (Display string: 'Encoder 14 Stopped'): The event will be generated when the Encoder 14 stops for longer than EncoderTimeout.
+     *  - \b Encoder15Stopped (Display string: 'Encoder 15 Stopped'): The event will be generated when the Encoder 15 stops for longer than EncoderTimeout.
+     *  - \b Encoder2Restarted (Display string: 'Encoder 2 Restarted'): The event will be generated when the Encoder 2 restarts moving.
+     *  - \b Encoder3Restarted (Display string: 'Encoder 3 Restarted'): The event will be generated when the Encoder 3 restarts moving.
+     *  - \b Encoder4Restarted (Display string: 'Encoder 4 Restarted'): The event will be generated when the Encoder 4 restarts moving.
+     *  - \b Encoder5Restarted (Display string: 'Encoder 5 Restarted'): The event will be generated when the Encoder 5 restarts moving.
+     *  - \b Encoder6Restarted (Display string: 'Encoder 6 Restarted'): The event will be generated when the Encoder 6 restarts moving.
+     *  - \b Encoder7Restarted (Display string: 'Encoder 7 Restarted'): The event will be generated when the Encoder 7 restarts moving.
+     *  - \b Encoder8Restarted (Display string: 'Encoder 8 Restarted'): The event will be generated when the Encoder 8 restarts moving.
+     *  - \b Encoder9Restarted (Display string: 'Encoder 9 Restarted'): The event will be generated when the Encoder 9 restarts moving.
+     *  - \b Encoder10Restarted (Display string: 'Encoder 10 Restarted'): The event will be generated when the Encoder 10 restarts moving.
+     *  - \b Encoder11Restarted (Display string: 'Encoder 11 Restarted'): The event will be generated when the Encoder 11 restarts moving.
+     *  - \b Encoder12Restarted (Display string: 'Encoder 12 Restarted'): The event will be generated when the Encoder 12 restarts moving.
+     *  - \b Encoder13Restarted (Display string: 'Encoder 13 Restarted'): The event will be generated when the Encoder 13 restarts moving.
+     *  - \b Encoder14Restarted (Display string: 'Encoder 14 Restarted'): The event will be generated when the Encoder 14 restarts moving.
+     *  - \b Encoder15Restarted (Display string: 'Encoder 15 Restarted'): The event will be generated when the Encoder 15 restarts moving.
      *  - \b Line2RisingEdge (Display string: 'Line 2 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 2.
      *  - \b Line3RisingEdge (Display string: 'Line 3 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 3.
      *  - \b Line4RisingEdge (Display string: 'Line 4 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 4.
@@ -6299,6 +6905,22 @@ public:
      *  - \b Line13AnyEdge (Display string: 'Line 13 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 13.
      *  - \b Line14AnyEdge (Display string: 'Line 14 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 14.
      *  - \b Line15AnyEdge (Display string: 'Line 15 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 15.
+     *  - \b Link0Trigger (Display string: 'Link 0 Trigger')
+     *  - \b Link1Trigger (Display string: 'Link 1 Trigger')
+     *  - \b Link2Trigger (Display string: 'Link 2 Trigger')
+     *  - \b Link3Trigger (Display string: 'Link 3 Trigger')
+     *  - \b Link4Trigger (Display string: 'Link 4 Trigger')
+     *  - \b Link5Trigger (Display string: 'Link 5 Trigger')
+     *  - \b Link6Trigger (Display string: 'Link 6 Trigger')
+     *  - \b Link7Trigger (Display string: 'Link 7 Trigger')
+     *  - \b Link8Trigger (Display string: 'Link 8 Trigger')
+     *  - \b Link9Trigger (Display string: 'Link 9 Trigger')
+     *  - \b Link10Trigger (Display string: 'Link 10 Trigger')
+     *  - \b Link11Trigger (Display string: 'Link 11 Trigger')
+     *  - \b Link12Trigger (Display string: 'Link 12 Trigger')
+     *  - \b Link13Trigger (Display string: 'Link 13 Trigger')
+     *  - \b Link14Trigger (Display string: 'Link 14 Trigger')
+     *  - \b Link15Trigger (Display string: 'Link 15 Trigger')
      *  - \b InterfaceListChanged (Display string: 'Interface List Changed'): This enumeration value indicates an event that is fired when the list of interfaces has been updated.
      *  - \b InterfaceLost (Display string: 'Interface Lost'): This enumeration value indicates an event that is raised when the interface connection is lost.
      *  - \b DeviceListChanged (Display string: 'Device List Changed'): This enumeration value indicates an event that is fired when the list of devices has been updated.
@@ -6461,19 +7083,19 @@ public:
      *  Returns the unique Identifier of the Frame (or image) that generated the Frame Burst End Event.
      */
     PropertyI64 eventFrameBurstEndFrameID;
-    /// \brief An integer property. Returns the unique Identifier of the FrameTrigger type of Event.
+    /// \brief An integer property. Returns the unique Identifier of the Frame Trigger type of Event.
     /**
-     *  Returns the unique Identifier of the FrameTrigger type of Event. It can be used to register a callback function to be notified of the event occurrence. Its value uniquely identifies the type event received.
+     *  Returns the unique Identifier of the Frame Trigger type of Event.
      */
     PropertyI64 eventFrameTrigger;
-    /// \brief An integer property. Returns the Timestamp of the FrameTrigger Event.
+    /// \brief An integer property. Returns the Timestamp of the Frame Trigger Event.
     /**
-     *  Returns the Timestamp of the FrameTrigger Event. It can be used to determine precisely when the event occurred.
+     *  Returns the Timestamp of the Frame Trigger Event.
      */
     PropertyI64 eventFrameTriggerTimestamp;
-    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the FrameTrigger Event.
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Frame Trigger Event.
     /**
-     *  Returns the unique Identifier of the Frame (or image) that generated the FrameTrigger Event.
+     *  Returns the unique Identifier of the Frame (or image) that generated the Frame Trigger Event.
      */
     PropertyI64 eventFrameTriggerFrameID;
     /// \brief An integer property. Returns the unique Identifier of the Frame Trigger Missed type of Event.
@@ -6626,19 +7248,19 @@ public:
      *  Returns the unique Identifier of the Frame (or image) that generated the Exposure Start Event.
      */
     PropertyI64 eventExposureStartFrameID;
-    /// \brief An integer property. Returns the unique identifier of the ExposureEnd type of Event.
+    /// \brief An integer property. Returns the unique Identifier of the Exposure End type of Event.
     /**
-     *  Returns the unique identifier of the ExposureEnd type of Event. This feature can be used to register a callback function to be notified of the event occurrence. Its value uniquely identifies the type of event that will be received.
+     *  Returns the unique Identifier of the Exposure End type of Event.
      */
     PropertyI64 eventExposureEnd;
-    /// \brief An integer property. Returns the Timestamp of the ExposureEnd Event.
+    /// \brief An integer property. Returns the Timestamp of the Exposure End Event.
     /**
-     *  Returns the Timestamp of the ExposureEnd Event. It can be used to determine precisely when the event occurred.
+     *  Returns the Timestamp of the Exposure End Event.
      */
     PropertyI64 eventExposureEndTimestamp;
-    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the ExposureEnd Event.
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Exposure End Event.
     /**
-     *  Returns the unique Identifier of the Frame (or image) that generated the ExposureEnd Event.
+     *  Returns the unique Identifier of the Frame (or image) that generated the Exposure End Event.
      */
     PropertyI64 eventExposureEndFrameID;
     /// \brief An integer property. Returns the unique Identifier of the Action Late type of Event.
@@ -7581,6 +8203,456 @@ public:
      *  Returns the unique Identifier of the Frame (or image) that generated the Timer 14 End Event.
      */
     PropertyI64 eventTimer14EndFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 0 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 0 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder0Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 0 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 0 Stopped Event.
+     */
+    PropertyI64 eventEncoder0StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 0 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 0 Stopped Event.
+     */
+    PropertyI64 eventEncoder0StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 1 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 1 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder1Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 1 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 1 Stopped Event.
+     */
+    PropertyI64 eventEncoder1StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 1 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 1 Stopped Event.
+     */
+    PropertyI64 eventEncoder1StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 2 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 2 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder2Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 2 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 2 Stopped Event.
+     */
+    PropertyI64 eventEncoder2StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 2 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 2 Stopped Event.
+     */
+    PropertyI64 eventEncoder2StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 3 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 3 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder3Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 3 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 3 Stopped Event.
+     */
+    PropertyI64 eventEncoder3StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 3 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 3 Stopped Event.
+     */
+    PropertyI64 eventEncoder3StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 4 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 4 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder4Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 4 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 4 Stopped Event.
+     */
+    PropertyI64 eventEncoder4StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 4 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 4 Stopped Event.
+     */
+    PropertyI64 eventEncoder4StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 5 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 5 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder5Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 5 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 5 Stopped Event.
+     */
+    PropertyI64 eventEncoder5StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 5 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 5 Stopped Event.
+     */
+    PropertyI64 eventEncoder5StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 6 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 6 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder6Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 6 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 6 Stopped Event.
+     */
+    PropertyI64 eventEncoder6StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 6 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 6 Stopped Event.
+     */
+    PropertyI64 eventEncoder6StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 7 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 7 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder7Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 7 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 7 Stopped Event.
+     */
+    PropertyI64 eventEncoder7StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 7 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 7 Stopped Event.
+     */
+    PropertyI64 eventEncoder7StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 8 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 8 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder8Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 8 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 8 Stopped Event.
+     */
+    PropertyI64 eventEncoder8StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 8 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 8 Stopped Event.
+     */
+    PropertyI64 eventEncoder8StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 9 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 9 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder9Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 9 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 9 Stopped Event.
+     */
+    PropertyI64 eventEncoder9StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 9 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 9 Stopped Event.
+     */
+    PropertyI64 eventEncoder9StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 10 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 10 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder10Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 10 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 10 Stopped Event.
+     */
+    PropertyI64 eventEncoder10StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 10 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 10 Stopped Event.
+     */
+    PropertyI64 eventEncoder10StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 11 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 11 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder11Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 11 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 11 Stopped Event.
+     */
+    PropertyI64 eventEncoder11StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 11 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 11 Stopped Event.
+     */
+    PropertyI64 eventEncoder11StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 12 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 12 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder12Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 12 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 12 Stopped Event.
+     */
+    PropertyI64 eventEncoder12StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 12 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 12 Stopped Event.
+     */
+    PropertyI64 eventEncoder12StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 13 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 13 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder13Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 13 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 13 Stopped Event.
+     */
+    PropertyI64 eventEncoder13StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 13 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 13 Stopped Event.
+     */
+    PropertyI64 eventEncoder13StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 14 Stopped type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 14 Stopped type of Event.
+     */
+    PropertyI64 eventEncoder14Stopped;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 14 Stopped Event.
+    /**
+     *  Returns the Timestamp of the Encoder 14 Stopped Event.
+     */
+    PropertyI64 eventEncoder14StoppedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 14 Stopped Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 14 Stopped Event.
+     */
+    PropertyI64 eventEncoder14StoppedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 0 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 0 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder0Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 0 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 0 Restarted Event.
+     */
+    PropertyI64 eventEncoder0RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 0 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 0 Restarted Event.
+     */
+    PropertyI64 eventEncoder0RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 1 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 1 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder1Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 1 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 1 Restarted Event.
+     */
+    PropertyI64 eventEncoder1RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 1 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 1 Restarted Event.
+     */
+    PropertyI64 eventEncoder1RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 2 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 2 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder2Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 2 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 2 Restarted Event.
+     */
+    PropertyI64 eventEncoder2RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 2 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 2 Restarted Event.
+     */
+    PropertyI64 eventEncoder2RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 3 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 3 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder3Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 3 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 3 Restarted Event.
+     */
+    PropertyI64 eventEncoder3RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 3 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 3 Restarted Event.
+     */
+    PropertyI64 eventEncoder3RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 4 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 4 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder4Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 4 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 4 Restarted Event.
+     */
+    PropertyI64 eventEncoder4RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 4 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 4 Restarted Event.
+     */
+    PropertyI64 eventEncoder4RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 5 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 5 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder5Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 5 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 5 Restarted Event.
+     */
+    PropertyI64 eventEncoder5RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 5 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 5 Restarted Event.
+     */
+    PropertyI64 eventEncoder5RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 6 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 6 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder6Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 6 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 6 Restarted Event.
+     */
+    PropertyI64 eventEncoder6RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 6 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 6 Restarted Event.
+     */
+    PropertyI64 eventEncoder6RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 7 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 7 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder7Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 7 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 7 Restarted Event.
+     */
+    PropertyI64 eventEncoder7RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 7 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 7 Restarted Event.
+     */
+    PropertyI64 eventEncoder7RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 8 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 8 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder8Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 8 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 8 Restarted Event.
+     */
+    PropertyI64 eventEncoder8RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 8 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 8 Restarted Event.
+     */
+    PropertyI64 eventEncoder8RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 9 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 9 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder9Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 9 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 9 Restarted Event.
+     */
+    PropertyI64 eventEncoder9RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 9 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 9 Restarted Event.
+     */
+    PropertyI64 eventEncoder9RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 10 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 10 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder10Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 10 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 10 Restarted Event.
+     */
+    PropertyI64 eventEncoder10RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 10 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 10 Restarted Event.
+     */
+    PropertyI64 eventEncoder10RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 11 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 11 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder11Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 11 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 11 Restarted Event.
+     */
+    PropertyI64 eventEncoder11RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 11 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 11 Restarted Event.
+     */
+    PropertyI64 eventEncoder11RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 12 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 12 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder12Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 12 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 12 Restarted Event.
+     */
+    PropertyI64 eventEncoder12RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 12 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 12 Restarted Event.
+     */
+    PropertyI64 eventEncoder12RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 13 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 13 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder13Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 13 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 13 Restarted Event.
+     */
+    PropertyI64 eventEncoder13RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 13 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 13 Restarted Event.
+     */
+    PropertyI64 eventEncoder13RestartedFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Encoder 14 Restarted type of Event.
+    /**
+     *  Returns the unique Identifier of the Encoder 14 Restarted type of Event.
+     */
+    PropertyI64 eventEncoder14Restarted;
+    /// \brief An integer property. Returns the Timestamp of the Encoder 14 Restarted Event.
+    /**
+     *  Returns the Timestamp of the Encoder 14 Restarted Event.
+     */
+    PropertyI64 eventEncoder14RestartedTimestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Encoder 14 Restarted Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Encoder 14 Restarted Event.
+     */
+    PropertyI64 eventEncoder14RestartedFrameID;
     /// \brief An integer property. Returns the unique Identifier of the Line 0 Rising Edge type of Event.
     /**
      *  Returns the unique Identifier of the Line 0 Rising Edge type of Event.
@@ -8256,6 +9328,231 @@ public:
      *  Returns the unique Identifier of the Frame (or image) that generated the Line 14 Any Edge Event.
      */
     PropertyI64 eventLine14AnyEdgeFrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 0 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 0 type of Event.
+     */
+    PropertyI64 eventLinkTrigger0;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 0 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 0 Event.
+     */
+    PropertyI64 eventLinkTrigger0Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 0 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 0 Event.
+     */
+    PropertyI64 eventLinkTrigger0FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 1 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 1 type of Event.
+     */
+    PropertyI64 eventLinkTrigger1;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 1 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 1 Event.
+     */
+    PropertyI64 eventLinkTrigger1Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 1 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 1 Event.
+     */
+    PropertyI64 eventLinkTrigger1FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 2 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 2 type of Event.
+     */
+    PropertyI64 eventLinkTrigger2;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 2 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 2 Event.
+     */
+    PropertyI64 eventLinkTrigger2Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 2 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 2 Event.
+     */
+    PropertyI64 eventLinkTrigger2FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 3 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 3 type of Event.
+     */
+    PropertyI64 eventLinkTrigger3;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 3 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 3 Event.
+     */
+    PropertyI64 eventLinkTrigger3Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 3 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 3 Event.
+     */
+    PropertyI64 eventLinkTrigger3FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 4 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 4 type of Event.
+     */
+    PropertyI64 eventLinkTrigger4;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 4 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 4 Event.
+     */
+    PropertyI64 eventLinkTrigger4Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 4 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 4 Event.
+     */
+    PropertyI64 eventLinkTrigger4FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 5 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 5 type of Event.
+     */
+    PropertyI64 eventLinkTrigger5;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 5 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 5 Event.
+     */
+    PropertyI64 eventLinkTrigger5Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 5 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 5 Event.
+     */
+    PropertyI64 eventLinkTrigger5FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 6 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 6 type of Event.
+     */
+    PropertyI64 eventLinkTrigger6;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 6 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 6 Event.
+     */
+    PropertyI64 eventLinkTrigger6Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 6 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 6 Event.
+     */
+    PropertyI64 eventLinkTrigger6FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 7 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 7 type of Event.
+     */
+    PropertyI64 eventLinkTrigger7;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 7 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 7 Event.
+     */
+    PropertyI64 eventLinkTrigger7Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 7 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 7 Event.
+     */
+    PropertyI64 eventLinkTrigger7FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 8 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 8 type of Event.
+     */
+    PropertyI64 eventLinkTrigger8;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 8 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 8 Event.
+     */
+    PropertyI64 eventLinkTrigger8Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 8 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 8 Event.
+     */
+    PropertyI64 eventLinkTrigger8FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 9 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 9 type of Event.
+     */
+    PropertyI64 eventLinkTrigger9;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 9 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 9 Event.
+     */
+    PropertyI64 eventLinkTrigger9Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 9 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 9 Event.
+     */
+    PropertyI64 eventLinkTrigger9FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 10 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 10 type of Event.
+     */
+    PropertyI64 eventLinkTrigger10;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 10 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 10 Event.
+     */
+    PropertyI64 eventLinkTrigger10Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 10 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 10 Event.
+     */
+    PropertyI64 eventLinkTrigger10FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 11 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 11 type of Event.
+     */
+    PropertyI64 eventLinkTrigger11;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 11 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 11 Event.
+     */
+    PropertyI64 eventLinkTrigger11Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 11 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 11 Event.
+     */
+    PropertyI64 eventLinkTrigger11FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 12 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 12 type of Event.
+     */
+    PropertyI64 eventLinkTrigger12;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 12 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 12 Event.
+     */
+    PropertyI64 eventLinkTrigger12Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 12 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 12 Event.
+     */
+    PropertyI64 eventLinkTrigger12FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 13 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 13 type of Event.
+     */
+    PropertyI64 eventLinkTrigger13;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 13 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 13 Event.
+     */
+    PropertyI64 eventLinkTrigger13Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 13 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 13 Event.
+     */
+    PropertyI64 eventLinkTrigger13FrameID;
+    /// \brief An integer property. Returns the unique Identifier of the Link Trigger 14 type of Event.
+    /**
+     *  Returns the unique Identifier of the Link Trigger 14 type of Event.
+     */
+    PropertyI64 eventLinkTrigger14;
+    /// \brief An integer property. Returns the Timestamp of the Link Trigger 14 Event.
+    /**
+     *  Returns the Timestamp of the Link Trigger 14 Event.
+     */
+    PropertyI64 eventLinkTrigger14Timestamp;
+    /// \brief An integer property. Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 14 Event.
+    /**
+     *  Returns the unique Identifier of the Frame (or image) that generated the Link Trigger 14 Event.
+     */
+    PropertyI64 eventLinkTrigger14FrameID;
     /// \brief An integer property. Returns the unique identifier of the Error type of Event.
     /**
      *  Returns the unique identifier of the Error type of Event. It can be used to register a callback function to be notified of the Error event occurrence. Its value uniquely identifies that the event received was an Error.
@@ -8277,7 +9574,7 @@ public:
      */
     PropertyI64 eventErrorCode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -8302,6 +9599,7 @@ public:
         /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
         const std::string& settingName = "Base" ) :
         userSetSelector(),
+        userSetDescription(),
         userSetLoad(),
         userSetSave(),
         userSetDefault(),
@@ -8314,6 +9612,7 @@ public:
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
         locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
         locator.bindComponent( userSetSelector, "UserSetSelector" );
+        locator.bindComponent( userSetDescription, "UserSetDescription" );
         locator.bindComponent( userSetLoad, "UserSetLoad@i" );
         locator.bindComponent( userSetSave, "UserSetSave@i" );
         locator.bindComponent( userSetDefault, "UserSetDefault" );
@@ -8327,7 +9626,7 @@ public:
         locator.bindComponent( mvUserData, "mvUserData" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects the feature User Set to load, save or configure.
     /**
@@ -8358,6 +9657,11 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 userSetSelector;
+    /// \brief A string property. Description of the selected User Set content.
+    /**
+     *  Description of the selected User Set content.
+     */
+    PropertyS userSetDescription;
     /// \brief A method object. Loads the User Set specified by UserSetSelector to the device and makes it active.
     /**
      *  Loads the User Set specified by UserSetSelector to the device and makes it active.
@@ -8443,13 +9747,13 @@ public:
      *  Enables the selected feature and make it active in all the UserSets.
      */
     PropertyIBoolean userSetFeatureEnable;
-    /// \brief A string property. A register to store arbitrary user data into the devices non-volatile memory.
+    /// \brief A string property. A register to store arbitrary user data into the devices non-volatile memory. The data is stored as binary data encoded in Base64 see mvIMPACT::acquire::PropertyS::writeBinary/mvIMPACT::acquire::PropertyS::readBinary for more details.
     /**
-     *  A register to store arbitrary user data into the devices non-volatile memory
+     *  A register to store arbitrary user data into the devices non-volatile memory. The data is stored as binary data encoded in Base64 see mvIMPACT::acquire::PropertyS::writeBinary/mvIMPACT::acquire::PropertyS::readBinary for more details.
      */
     PropertyS mvUserData;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -8505,7 +9809,7 @@ public:
         locator.bindComponent( sequencerTriggerActivation, "SequencerTriggerActivation" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Controls if the sequencer mechanism is active.
     /**
@@ -8539,7 +9843,7 @@ public:
      *  - \b Device-Specific (Display string: 'Device - Specific'): Device - Specific
      *  - \b ExposureTime (Display string: 'Exposure Time')
      *  - \b CounterDuration (Display string: 'Counter Duration')
-     *  - \b mvImagePositionAndSize (Display string: 'mv Image Position And Size'): This value selects whether features affecting the image position and size shall be controlled by the sequencer
+     *  - \b mvImagePositionAndSize (Display string: 'mv Image Position And Size'): This value selects whether features affecting the image position and size shall be controlled by the sequencer.
      *  - \b Width (Display string: 'Width')
      *  - \b Height (Display string: 'Height')
      *  - \b OffsetX (Display string: 'Offset X')
@@ -8549,6 +9853,9 @@ public:
      *  - \b DecimationHorizontal (Display string: 'Decimation Horizontal')
      *  - \b DecimationVertical (Display string: 'Decimation Vertical')
      *  - \b Gain (Display string: 'Gain')
+     *  - \b UserOutputValueAll (Display string: 'User Output Value All')
+     *  - \b UserOutputValueAllMask (Display string: 'User Output Value All Mask')
+     *  - \b mvUserOutput (Display string: 'mv User Output'): This value selects whether features affecting the user outputs shall be controlled by the sequencer.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -8640,10 +9947,10 @@ public:
      *  - \b Encoder1 (Display string: 'Encoder 1'): Starts with the reception of the Encoder output signal.
      *  - \b Encoder2 (Display string: 'Encoder 2'): Starts with the reception of the Encoder output signal.
      *  - \b Encoder\#3\# (Display string: 'Encoder \#3\#'): Starts with the reception of the Encoder output signal.
-     *  - \b LogicBlock0 (Display string: 'Logic Block 0'): Starts with the reception of the Logioc Block output signal.
-     *  - \b LogicBlock1 (Display string: 'Logic Block 1'): Starts with the reception of the Logioc Block output signal.
-     *  - \b LogicBlock2 (Display string: 'Logic Block 2'): Starts with the reception of the Logioc Block output signal.
-     *  - \b LogicBlock\#3\# (Display string: 'Logic Block \#3\#'): Starts with the reception of the Logioc Block output signal.
+     *  - \b LogicBlock0 (Display string: 'Logic Block 0'): Starts with the reception of the Logic Block output signal.
+     *  - \b LogicBlock1 (Display string: 'Logic Block 1'): Starts with the reception of the Logic Block output signal.
+     *  - \b LogicBlock2 (Display string: 'Logic Block 2'): Starts with the reception of the Logic Block output signal.
+     *  - \b LogicBlock\#3\# (Display string: 'Logic Block \#3\#'): Starts with the reception of the Logic Block output signal.
      *  - \b SoftwareSignal0 (Display string: 'Software Signal 0'): Starts on the reception of the Software Signal.
      *  - \b SoftwareSignal1 (Display string: 'Software Signal 1'): Starts on the reception of the Software Signal.
      *  - \b SoftwareSignal2 (Display string: 'Software Signal 2'): Starts on the reception of the Software Signal.
@@ -8681,7 +9988,7 @@ public:
      */
     PropertyI64 sequencerTriggerActivation;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -8706,7 +10013,9 @@ public:
         /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
         const std::string& settingName = "Base" ) :
         mvIMPACT::acquire::ComponentCollection( pDev ),
+        mvDefectPixelThreshold(),
         mvDefectivePixelEnable(),
+        mvDefectivePixelBlinkingMode(),
         mvDefectivePixelSelector(),
         mvDefectivePixelOffsetX(),
         mvDefectivePixelOffsetY(),
@@ -8718,7 +10027,9 @@ public:
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
         locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam/mvDefectivePixelCorrectionControl" );
         m_hRoot = locator.searchbase_id();
+        locator.bindComponent( mvDefectPixelThreshold, "mvDefectPixelThreshold" );
         locator.bindComponent( mvDefectivePixelEnable, "mvDefectivePixelEnable" );
+        locator.bindComponent( mvDefectivePixelBlinkingMode, "mvDefectivePixelBlinkingMode" );
         locator.bindComponent( mvDefectivePixelSelector, "mvDefectivePixelSelector" );
         locator.bindComponent( mvDefectivePixelOffsetX, "mvDefectivePixelOffsetX" );
         locator.bindComponent( mvDefectivePixelOffsetY, "mvDefectivePixelOffsetY" );
@@ -8727,13 +10038,23 @@ public:
         locator.bindComponent( mvDefectivePixelDataSave, "mvDefectivePixelDataSave@i" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
-    /// \brief A boolean property. Activates the sensor's defective pixel correction.
+    /// \brief An integer property. Sets the threshold for the defect pixel detection.
     /**
-     *  Activates the sensor's defective pixel correction.
+     *  Sets the threshold for the defect pixel detection.
+     */
+    PropertyI64 mvDefectPixelThreshold;
+    /// \brief A boolean property. Activates the camera's defective pixel correction.
+    /**
+     *  Activates the camera's defective pixel correction.
      */
     PropertyIBoolean mvDefectivePixelEnable;
+    /// \brief A boolean property. Activates the blinking mode of the camera's defective pixel correction.
+    /**
+     *  Activates the blinking mode of the camera's defective pixel correction.
+     */
+    PropertyIBoolean mvDefectivePixelBlinkingMode;
     /// \brief An integer property. Controls the index (offset) of the defective pixel to access.
     /**
      *  Controls the index (offset) of the defective pixel to access. Data selected by this selector is NOT part of a user set, but must be written to non volatile memory by calling 'mvDefectivePixelDataSave' explicitly.
@@ -8765,7 +10086,148 @@ public:
      */
     Method mvDefectivePixelDataSave;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
+    // *INDENT-ON*
+};
+
+//-----------------------------------------------------------------------------
+/// \brief Contains features to control the image controllers. The properties are applied to Auto Gain Control(AGC) and Auto Exposure Control(AEC) controller. To take effect at least AEC or AGC must be enabled.
+/**
+ *  Contains features to control the image controllers. The properties are applied to Auto Gain Control(AGC) and Auto Exposure Control(AEC) controller. To take effect at least AEC or AGC must be enabled.
+ * \ingroup GenICamInterfaceDevice
+ */
+class mvAutoFeatureControl : public mvIMPACT::acquire::ComponentCollection
+//-----------------------------------------------------------------------------
+{
+public:
+    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::mvAutoFeatureControl</b> object.
+    explicit mvAutoFeatureControl(
+        /// [in] A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+        mvIMPACT::acquire::Device* pDev,
+        /// [in] The name of the driver internal setting to access with this instance.
+        /// A list of valid setting names can be obtained by a call to
+        /// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+        /// settings can be created with the function
+        /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+        const std::string& settingName = "Base" ) :
+        mvIMPACT::acquire::ComponentCollection( pDev ),
+        mvAutoFeatureBrightness(),
+        mvAutoFeatureSensitivity(),
+        mvAutoFeatureCharacteristic(),
+        mvAutoFeatureBrightnessCalculation(),
+        mvAutoFeatureAOIHighlightEnable(),
+        mvAutoFeatureAOIMode(),
+        mvAutoFeatureAOIOffsetX(),
+        mvAutoFeatureAOIOffsetY(),
+        mvAutoFeatureAOIWidth(),
+        mvAutoFeatureAOIHeight(),
+        mvAutoFeatureBrightnessTolerance()
+    {
+        pDev->validateInterfaceLayout( dilGenICam );
+        mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
+        locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam/mvAutoFeatureControl" );
+        m_hRoot = locator.searchbase_id();
+        locator.bindComponent( mvAutoFeatureBrightness, "mvAutoFeatureBrightness" );
+        locator.bindComponent( mvAutoFeatureSensitivity, "mvAutoFeatureSensitivity" );
+        locator.bindComponent( mvAutoFeatureCharacteristic, "mvAutoFeatureCharacteristic" );
+        locator.bindComponent( mvAutoFeatureBrightnessCalculation, "mvAutoFeatureBrightnessCalculation" );
+        locator.bindComponent( mvAutoFeatureAOIHighlightEnable, "mvAutoFeatureAOIHighlightEnable" );
+        locator.bindComponent( mvAutoFeatureAOIMode, "mvAutoFeatureAOIMode" );
+        locator.bindComponent( mvAutoFeatureAOIOffsetX, "mvAutoFeatureAOIOffsetX" );
+        locator.bindComponent( mvAutoFeatureAOIOffsetY, "mvAutoFeatureAOIOffsetY" );
+        locator.bindComponent( mvAutoFeatureAOIWidth, "mvAutoFeatureAOIWidth" );
+        locator.bindComponent( mvAutoFeatureAOIHeight, "mvAutoFeatureAOIHeight" );
+        locator.bindComponent( mvAutoFeatureBrightnessTolerance, "mvAutoFeatureBrightnessTolerance" );
+    }
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %immutable; )
+    // *INDENT-ON*
+    /// \brief An integer property. Common desired average brightness value (in percent) used for Auto Gain Control(AGC) and Auto Exposure Control(AEC). At least one of these controllers must be activated for the value to take effect.
+    /**
+     *  Common desired average brightness value (in percent) used for Auto Gain Control(AGC) and Auto Exposure Control(AEC). At least one of these controllers must be activated for the value to take effect.
+     */
+    PropertyI64 mvAutoFeatureBrightness;
+    /// \brief An integer property. The controllers sensitivity of brightness deviations. This parameter influences the gain as well as the exposure controller. At least one of these controllers must be activated for the value to take effect.
+    /**
+     *  The controllers sensitivity of brightness deviations. This parameter influences the gain as well as the exposure controller. At least one of these controllers must be activated for the value to take effect.
+     */
+    PropertyI64 mvAutoFeatureSensitivity;
+    /// \brief An enumerated integer property. Selects the prioritization between Auto Exposure Control(AEC) and Auto Gain Control(AGC) controller. Both controllers have to be activated before.
+    /**
+     *  Selects the prioritization between Auto Exposure Control(AEC) and Auto Gain Control(AGC) controller. Both controllers have to be activated before.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b mvLowGain (Display string: 'mv Low Gain')
+     *  - \b mvShortExposure (Display string: 'mv Short Exposure')
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvAutoFeatureCharacteristic;
+    /// \brief An enumerated integer property. Selects the method to determine the brightness for Auto Exposure Control(AEC) and Auto Gain Control(AGC) controller.
+    /**
+     *  Selects the method to determine the brightness for Auto Exposure Control(AEC) and Auto Gain Control(AGC) controller.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b mvPeak (Display string: 'mv Peak'): The peak brightness value is used as actual value for the controller.
+     *  - \b mvAverage (Display string: 'mv Average'): The average brightness is used as actual value for the controller.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvAutoFeatureBrightnessCalculation;
+    /// \brief An enumerated integer property. Highlight auto control AOI to check AOI settings. Switch off for normal operation.
+    /**
+     *  Highlight auto control AOI to check AOI settings. Switch off for normal operation.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Off (Display string: 'Off'): The AutoFeatureAOIHighlight is switched off.
+     *  - \b On (Display string: 'On'): The AutoFeatureAOIHighlight is switched on.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvAutoFeatureAOIHighlightEnable;
+    /// \brief An enumerated integer property. Common AutoControl AOI used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balancing.
+    /**
+     *  Common AutoControl AOI used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balancing.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b mvFull (Display string: 'mv Full'): The auto controller uses the full frame for the actual value computation.
+     *  - \b mvCenter (Display string: 'mv Center'): The auto controller uses a centered AOI of 25% the full frame for the actual value computation.
+     *  - \b mvUser (Display string: 'mv User'): The auto controller uses the user defined AOI for the actual value computation.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 mvAutoFeatureAOIMode;
+    /// \brief An integer property. Common AOI X-Offset used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+    /**
+     *  Common AOI X-Offset used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+     */
+    PropertyI64 mvAutoFeatureAOIOffsetX;
+    /// \brief An integer property. Common AOI Y-Offset used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+    /**
+     *  Common AOI Y-Offset used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+     */
+    PropertyI64 mvAutoFeatureAOIOffsetY;
+    /// \brief An integer property. Common AOI Width used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+    /**
+     *  Common AOI Width used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+     */
+    PropertyI64 mvAutoFeatureAOIWidth;
+    /// \brief An integer property. Common AOI Height used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+    /**
+     *  Common AOI Height used for Auto Gain Control(AGC), Auto Exposure Control(AEC) and Auto White Balance(AWB).
+     */
+    PropertyI64 mvAutoFeatureAOIHeight;
+    /// \brief An integer property. The error input hysteresis width of the controller. If the brightness error exceeds the half of the value in positive or negative direction, the controller restarts to control the brightness. This property applies to AEC and AGC as well.
+    /**
+     *  The error input hysteresis gap of the controller. If the brightness error exceeds the half of the value in positive or negative direction, the controller restarts to control the brightness. This property applies to AEC and AGC as well.
+     */
+    PropertyI64 mvAutoFeatureBrightnessTolerance;
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -8815,7 +10277,7 @@ public:
         locator.bindComponent( fileSize, "FileSize" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects the target file in the device.
     /**
@@ -8911,7 +10373,7 @@ public:
      */
     PropertyI64 fileSize;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -8947,7 +10409,7 @@ public:
         locator.bindComponent( sourceIDValue, "SourceIDValue" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property. Controls or returns the number of sources supported by the device.
     /**
@@ -8975,7 +10437,7 @@ public:
      */
     PropertyI64 sourceIDValue;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -9047,7 +10509,7 @@ public:
         locator.bindComponent( transferStreamChannel, "TransferStreamChannel" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects which stream transfers are currently controlled by the selected Transfer features.
     /**
@@ -9058,7 +10520,7 @@ public:
      *  - \b Stream1 (Display string: 'Stream 1'): The transfer features control the data stream 1.
      *  - \b Stream2 (Display string: 'Stream 2'): The transfer features control the data stream 2.
      *  - \b Stream\#3\# (Display string: 'Stream \#3\#'): The transfer features control the data stream \#3\#.
-     *  - \b All (Display string: 'All'): The transfer features control all the data streams simulateneously.
+     *  - \b All (Display string: 'All'): The transfer features control all the data streams simultaneously.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -9122,7 +10584,7 @@ public:
     PropertyI64 transferQueueMode;
     /// \brief A method object. Starts the streaming of data blocks out of the device.
     /**
-     *  Starts the streaming of data blocks out of the device. This feature must be available when the TransferControlMode is set to 'UserControled'. If the TransferStart feature is not writable (locked), the application should not start the transfer and should avoid using the feature until it becomes writable again.
+     *  Starts the streaming of data blocks out of the device. This feature must be available when the TransferControlMode is set to 'UserControlled'. If the TransferStart feature is not writable (locked), the application should not start the transfer and should avoid using the feature until it becomes writable again.
      */
     Method transferStart;
     /// \brief A method object. Stops the streaming of data Block(s).
@@ -9272,7 +10734,7 @@ public:
      */
     PropertyI64 transferStreamChannel;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -9313,7 +10775,11 @@ public:
         scan3dCoordinateTransformSelector(),
         scan3dTransformValue(),
         scan3dCoordinateReferenceSelector(),
-        scan3dCoordinateReferenceValue()
+        scan3dCoordinateReferenceValue(),
+        scan3dFocalLength(),
+        scan3dBaseline(),
+        scan3dPrincipalPointU(),
+        scan3dPrincipalPointV()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
@@ -9336,9 +10802,13 @@ public:
         locator.bindComponent( scan3dTransformValue, "Scan3dTransformValue" );
         locator.bindComponent( scan3dCoordinateReferenceSelector, "Scan3dCoordinateReferenceSelector" );
         locator.bindComponent( scan3dCoordinateReferenceValue, "Scan3dCoordinateReferenceValue" );
+        locator.bindComponent( scan3dFocalLength, "Scan3dFocalLength" );
+        locator.bindComponent( scan3dBaseline, "Scan3dBaseline" );
+        locator.bindComponent( scan3dPrincipalPointU, "Scan3dPrincipalPointU" );
+        locator.bindComponent( scan3dPrincipalPointV, "Scan3dPrincipalPointV" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects the 3DExtraction processing module to control (if multiple ones are present).
     /**
@@ -9382,8 +10852,9 @@ public:
      *
      *  The following string values might be valid for this feature:
      *  - \b Millimeter (Display string: 'Millimeter'): Distance values are in millimeter units (default).
+     *  - \b Meter (Display string: 'Meter'): Distance values are in meter units.
      *  - \b Inch (Display string: 'Inch'): Distance values are in inch units.
-     *  - \b Pixel (Display string: 'Pixel'): Distance values reflect pixel positions on the Sensor Array.
+     *  - \b Pixel (Display string: 'Pixel'): Distance values are given as a multiple of the size of a pixel.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -9460,7 +10931,7 @@ public:
     PropertyF scan3dCoordinateOffset;
     /// \brief A boolean property. Enables the definition of a non-valid flag value in the data stream.
     /**
-     *  Enables the definition of a non-valid flag value in the data stream. Note that the confidence output is an alternate recommended way to identify non-valid pixels. Using an Scan3dInvalidDataValue may give processing penalties due to special handling.
+     *  Enables the definition of a non-valid flag value in the data stream. Note that the confidence output is an alternate recommended way to identify non-valid pixels. Using a Scan3dInvalidDataValue may give processing penalties due to special handling.
      */
     PropertyIBoolean scan3dInvalidDataFlag;
     /// \brief A floating point property. Value which identifies a non-valid pixel if Scan3dInvalidDataFlag is enabled.
@@ -9520,8 +10991,221 @@ public:
      *  Returns the reference value selected. Reads the value of a rotation or translation value for the current (Anchor or Transformed) coordinate system transformation to the Reference system.
      */
     PropertyF scan3dCoordinateReferenceValue;
+    /// \brief A floating point property. Returns the focal length of the camera in pixel.
+    /**
+     *  Returns the focal length of the camera in pixel. The focal length depends on the selected region. The value of this feature takes into account horizontal binning, decimation, or any other function changing the image resolution.
+     */
+    PropertyF scan3dFocalLength;
+    /// \brief A floating point property. Returns the baseline as the physical distance of two cameras in a stereo camera setup.
+    /**
+     *  Returns the baseline as the physical distance of two cameras in a stereo camera setup. The value of this feature can be used for 3D reconstruction from disparity images. In this case, the unit of the 3D coordinates corresponds to the unit of the baseline.
+     */
+    PropertyF scan3dBaseline;
+    /// \brief A floating point property. Returns the value of the horizontal position of the principal point, relative to the region origin, i.e.
+    /**
+     *  Returns the value of the horizontal position of the principal point, relative to the region origin, i.e. OffsetX. The value of this feature takes into account horizontal binning, decimation, or any other function changing the image resolution.
+     */
+    PropertyF scan3dPrincipalPointU;
+    /// \brief A floating point property. Returns the value of the vertical position of the principal point, relative to the region origin, i.e.
+    /**
+     *  Returns the value of the vertical position of the principal point, relative to the region origin, i.e. OffsetY. The value of this feature takes into account vertical binning, decimation, or any other function changing the image resolution.
+     */
+    PropertyF scan3dPrincipalPointV;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
+    // *INDENT-ON*
+};
+
+//-----------------------------------------------------------------------------
+/// \brief Category containing the Lighting control features.
+/**
+ *  A category containing the Lighting control features.
+ * \ingroup GenICamInterfaceDevice
+ */
+class LightControl
+//-----------------------------------------------------------------------------
+{
+public:
+    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::LightControl</b> object.
+    explicit LightControl(
+        /// [in] A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+        mvIMPACT::acquire::Device* pDev,
+        /// [in] The name of the driver internal setting to access with this instance.
+        /// A list of valid setting names can be obtained by a call to
+        /// <b>mvIMPACT::acquire::FunctionInterface::getAvailableSettings</b>, new
+        /// settings can be created with the function
+        /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
+        const std::string& settingName = "Base" ) :
+        lightControllerSelector(),
+        lightControllerSource(),
+        lightCurrentRating(),
+        lightVoltageRating(),
+        lightBrightness(),
+        lightConnectionStatus(),
+        lightCurrentMeasured(),
+        lightVoltageMeasured()
+    {
+        pDev->validateInterfaceLayout( dilGenICam );
+        mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
+        locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
+        locator.bindComponent( lightControllerSelector, "LightControllerSelector" );
+        locator.bindComponent( lightControllerSource, "LightControllerSource" );
+        locator.bindComponent( lightCurrentRating, "LightCurrentRating" );
+        locator.bindComponent( lightVoltageRating, "LightVoltageRating" );
+        locator.bindComponent( lightBrightness, "LightBrightness" );
+        locator.bindComponent( lightConnectionStatus, "LightConnectionStatus" );
+        locator.bindComponent( lightCurrentMeasured, "LightCurrentMeasured" );
+        locator.bindComponent( lightVoltageMeasured, "LightVoltageMeasured" );
+    }
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %immutable; )
+    // *INDENT-ON*
+    /// \brief An enumerated integer property. Selects the Light Controller to configure.
+    /**
+     *  Selects the Light Controller to configure.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b LightController0 (Display string: 'Light Controller 0'): Light Controller 0
+     *  - \b LightController1 (Display string: 'Light Controller 1'): Light Controller 1
+     *  - \b LightController2 (Display string: 'Light Controller 2'): Light Controller 2
+     *  - \b LightController\#3\# (Display string: 'Light Controller \#3\#'): Light Controller \#3\#
+     *  - \b LightController3 (Display string: 'Light Controller 3'): Light Controller 3
+     *  - \b LightController4 (Display string: 'Light Controller 4'): Light Controller 4
+     *  - \b LightController5 (Display string: 'Light Controller 5'): Light Controller 5
+     *  - \b LightController6 (Display string: 'Light Controller 6'): Light Controller 6
+     *  - \b LightController7 (Display string: 'Light Controller 7'): Light Controller 7
+     *  - \b LightController8 (Display string: 'Light Controller 8'): Light Controller 8
+     *  - \b LightController9 (Display string: 'Light Controller 9'): Light Controller 9
+     *  - \b LightController10 (Display string: 'Light Controller 10'): Light Controller 10
+     *  - \b LightController11 (Display string: 'Light Controller 11'): Light Controller 11
+     *  - \b LightController12 (Display string: 'Light Controller 12'): Light Controller 12
+     *  - \b LightController13 (Display string: 'Light Controller 13'): Light Controller 13
+     *  - \b LightController14 (Display string: 'Light Controller 14'): Light Controller 14
+     *  - \b LightController15 (Display string: 'Light Controller 15'): Light Controller 15
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 lightControllerSelector;
+    /// \brief An enumerated integer property. Selects the input source signal of the Light Controller.
+    /**
+     *  Selects the input source signal of the Light Controller.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Line0 (Display string: 'Line 0'): Line 0
+     *  - \b Line\#1\# (Display string: 'Line \#1\#'): Line \#1\#
+     *  - \b Timer0 (Display string: 'Timer 0'): Timer 0
+     *  - \b Timer\#1\# (Display string: 'Timer \#1\#'): Timer \#1\#
+     *  - \b Counter0 (Display string: 'Counter 0'): Counter 0
+     *  - \b Counter\#1\# (Display string: 'Counter \#1\#'): Counter \#1\#
+     *  - \b UserOutput0 (Display string: 'User Output 0'): User Output 0
+     *  - \b UserOutput\#1\# (Display string: 'User Output \#1\#'): User Output \#1\#
+     *  - \b Line1 (Display string: 'Line 1'): Line 1
+     *  - \b Line2 (Display string: 'Line 2'): Line 2
+     *  - \b Line3 (Display string: 'Line 3'): Line 3
+     *  - \b Line4 (Display string: 'Line 4'): Line 4
+     *  - \b Line5 (Display string: 'Line 5'): Line 5
+     *  - \b Line6 (Display string: 'Line 6'): Line 6
+     *  - \b Line7 (Display string: 'Line 7'): Line 7
+     *  - \b Line8 (Display string: 'Line 8'): Line 8
+     *  - \b Line9 (Display string: 'Line 9'): Line 9
+     *  - \b Line10 (Display string: 'Line 10'): Line 10
+     *  - \b Line11 (Display string: 'Line 11'): Line 11
+     *  - \b Line12 (Display string: 'Line 12'): Line 12
+     *  - \b Line13 (Display string: 'Line 13'): Line 13
+     *  - \b Line14 (Display string: 'Line 14'): Line 14
+     *  - \b Line15 (Display string: 'Line 15'): Line 15
+     *  - \b Timer1 (Display string: 'Timer 1'): Timer 1
+     *  - \b Timer2 (Display string: 'Timer 2'): Timer 2
+     *  - \b Timer3 (Display string: 'Timer 3'): Timer 3
+     *  - \b Timer4 (Display string: 'Timer 4'): Timer 4
+     *  - \b Timer5 (Display string: 'Timer 5'): Timer 5
+     *  - \b Timer6 (Display string: 'Timer 6'): Timer 6
+     *  - \b Timer7 (Display string: 'Timer 7'): Timer 7
+     *  - \b Timer8 (Display string: 'Timer 8'): Timer 8
+     *  - \b Timer9 (Display string: 'Timer 9'): Timer 9
+     *  - \b Timer10 (Display string: 'Timer 10'): Timer 10
+     *  - \b Timer11 (Display string: 'Timer 11'): Timer 11
+     *  - \b Timer12 (Display string: 'Timer 12'): Timer 12
+     *  - \b Timer13 (Display string: 'Timer 13'): Timer 13
+     *  - \b Timer14 (Display string: 'Timer 14'): Timer 14
+     *  - \b Timer15 (Display string: 'Timer 15'): Timer 15
+     *  - \b Counter1 (Display string: 'Counter 1'): Counter 1
+     *  - \b Counter2 (Display string: 'Counter 2'): Counter 2
+     *  - \b Counter3 (Display string: 'Counter 3'): Counter 3
+     *  - \b Counter4 (Display string: 'Counter 4'): Counter 4
+     *  - \b Counter5 (Display string: 'Counter 5'): Counter 5
+     *  - \b Counter6 (Display string: 'Counter 6'): Counter 6
+     *  - \b Counter7 (Display string: 'Counter 7'): Counter 7
+     *  - \b Counter8 (Display string: 'Counter 8'): Counter 8
+     *  - \b Counter9 (Display string: 'Counter 9'): Counter 9
+     *  - \b Counter10 (Display string: 'Counter 10'): Counter 10
+     *  - \b Counter11 (Display string: 'Counter 11'): Counter 11
+     *  - \b Counter12 (Display string: 'Counter 12'): Counter 12
+     *  - \b Counter13 (Display string: 'Counter 13'): Counter 13
+     *  - \b Counter14 (Display string: 'Counter 14'): Counter 14
+     *  - \b Counter15 (Display string: 'Counter 15'): Counter 15
+     *  - \b UserOutput1 (Display string: 'User Output 1'): User Output 1
+     *  - \b UserOutput2 (Display string: 'User Output 2'): User Output 2
+     *  - \b UserOutput3 (Display string: 'User Output 3'): User Output 3
+     *  - \b UserOutput4 (Display string: 'User Output 4'): User Output 4
+     *  - \b UserOutput5 (Display string: 'User Output 5'): User Output 5
+     *  - \b UserOutput6 (Display string: 'User Output 6'): User Output 6
+     *  - \b UserOutput7 (Display string: 'User Output 7'): User Output 7
+     *  - \b UserOutput8 (Display string: 'User Output 8'): User Output 8
+     *  - \b UserOutput9 (Display string: 'User Output 9'): User Output 9
+     *  - \b UserOutput10 (Display string: 'User Output 10'): User Output 10
+     *  - \b UserOutput11 (Display string: 'User Output 11'): User Output 11
+     *  - \b UserOutput12 (Display string: 'User Output 12'): User Output 12
+     *  - \b UserOutput13 (Display string: 'User Output 13'): User Output 13
+     *  - \b UserOutput14 (Display string: 'User Output 14'): User Output 14
+     *  - \b UserOutput15 (Display string: 'User Output 15'): User Output 15
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 lightControllerSource;
+    /// \brief A floating point property. Set the current rating of the lighting output.
+    /**
+     *  Set the current rating of the lighting output.
+     */
+    PropertyF lightCurrentRating;
+    /// \brief A floating point property. Set the voltage rating of the lighting output.
+    /**
+     *  Set the voltage rating of the lighting output.
+     */
+    PropertyF lightVoltageRating;
+    /// \brief A floating point property. Set the brightness of the lighting output in percent.
+    /**
+     *  Set the brightness of the lighting output in percent. Can be greater than 100% for short overdrive period.
+     */
+    PropertyF lightBrightness;
+    /// \brief An enumerated integer property. Status of a light connected to the controller's output Line.
+    /**
+     *  Status of a light connected to the controller's output Line.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Sensing (Display string: 'Sensing'): Sensing
+     *  - \b Ready (Display string: 'Ready'): Ready
+     *  - \b NoConnect (Display string: 'No Connect'): No Connect
+     *  - \b Error (Display string: 'Error'): Error
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 lightConnectionStatus;
+    /// \brief A floating point property. The measured current applied to the lighting.
+    /**
+     *  The measured current applied to the lighting.
+     */
+    PropertyF lightCurrentMeasured;
+    /// \brief A floating point property. The measured voltage applied to the lighting.
+    /**
+     *  The measured voltage applied to the lighting.
+     */
+    PropertyF lightVoltageMeasured;
+    // *INDENT-OFF*
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -9546,12 +11230,19 @@ public:
         /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
         const std::string& settingName = "Base" ) :
         chunkModeActive(),
+        chunkXMLEnable(),
         chunkSelector(),
         chunkEnable(),
+        chunkRegionSelector(),
+        chunkRegionID(),
+        chunkRegionIDValue(),
         chunkComponentSelector(),
         chunkComponentID(),
         chunkComponentIDValue(),
+        chunkGroupSelector(),
+        chunkGroupID(),
         chunkImageComponent(),
+        chunkGroupIDValue(),
         chunkPartSelector(),
         chunkImage(),
         chunkOffsetX(),
@@ -9561,18 +11252,24 @@ public:
         chunkPixelFormat(),
         chunkPixelDynamicRangeMin(),
         chunkPixelDynamicRangeMax(),
+        chunkBinningHorizontal(),
+        chunkBinningVertical(),
+        chunkDecimationHorizontal(),
+        chunkDecimationVertical(),
+        chunkReverseX(),
+        chunkReverseY(),
         chunkTimestamp(),
         chunkTimestampLatchValue(),
         chunkLineStatusAll(),
         chunkCounterSelector(),
         chunkCounterValue(),
         chunkTimerSelector(),
+        chunkTimerValue(),
         chunkScanLineSelector(),
         chunkEncoderSelector(),
         chunkEncoderValue(),
         chunkEncoderStatus(),
         chunkExposureTimeSelector(),
-        chunkTimerValue(),
         chunkExposureTime(),
         chunkGainSelector(),
         chunkGain(),
@@ -9583,9 +11280,6 @@ public:
         chunkSourceSelector(),
         chunkSourceID(),
         chunkSourceIDValue(),
-        chunkRegionSelector(),
-        chunkRegionID(),
-        chunkRegionIDValue(),
         chunkTransferBlockID(),
         chunkTransferStreamID(),
         chunkTransferQueueCurrentBlockCount(),
@@ -9606,6 +11300,10 @@ public:
         chunkScan3dTransformValue(),
         chunkScan3dCoordinateReferenceSelector(),
         chunkScan3dCoordinateReferenceValue(),
+        chunkScan3dFocalLength(),
+        chunkScan3dBaseline(),
+        chunkScan3dPrincipalPointU(),
+        chunkScan3dPrincipalPointV(),
         mvChunkJPEG(),
         chunkmvCustomIdentifier()
     {
@@ -9613,12 +11311,19 @@ public:
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
         locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
         locator.bindComponent( chunkModeActive, "ChunkModeActive" );
+        locator.bindComponent( chunkXMLEnable, "ChunkXMLEnable" );
         locator.bindComponent( chunkSelector, "ChunkSelector" );
         locator.bindComponent( chunkEnable, "ChunkEnable" );
+        locator.bindComponent( chunkRegionSelector, "ChunkRegionSelector" );
+        locator.bindComponent( chunkRegionID, "ChunkRegionID" );
+        locator.bindComponent( chunkRegionIDValue, "ChunkRegionIDValue" );
         locator.bindComponent( chunkComponentSelector, "ChunkComponentSelector" );
         locator.bindComponent( chunkComponentID, "ChunkComponentID" );
         locator.bindComponent( chunkComponentIDValue, "ChunkComponentIDValue" );
+        locator.bindComponent( chunkGroupSelector, "ChunkGroupSelector" );
+        locator.bindComponent( chunkGroupID, "ChunkGroupID" );
         locator.bindComponent( chunkImageComponent, "ChunkImageComponent" );
+        locator.bindComponent( chunkGroupIDValue, "ChunkGroupIDValue" );
         locator.bindComponent( chunkPartSelector, "ChunkPartSelector" );
         locator.bindComponent( chunkImage, "ChunkImage" );
         locator.bindComponent( chunkOffsetX, "ChunkOffsetX" );
@@ -9636,6 +11341,12 @@ public:
         {
             locator.bindComponent( chunkPixelDynamicRangeMax, "ChunkDynamicRangeMax" );
         }
+        locator.bindComponent( chunkBinningHorizontal, "ChunkBinningHorizontal" );
+        locator.bindComponent( chunkBinningVertical, "ChunkBinningVertical" );
+        locator.bindComponent( chunkDecimationHorizontal, "ChunkDecimationHorizontal" );
+        locator.bindComponent( chunkDecimationVertical, "ChunkDecimationVertical" );
+        locator.bindComponent( chunkReverseX, "ChunkReverseX" );
+        locator.bindComponent( chunkReverseY, "ChunkReverseY" );
         locator.bindComponent( chunkTimestamp, "ChunkTimestamp" );
         locator.bindComponent( chunkTimestampLatchValue, "ChunkTimestampLatchValue" );
         locator.bindComponent( chunkLineStatusAll, "ChunkLineStatusAll" );
@@ -9646,16 +11357,16 @@ public:
             locator.bindComponent( chunkCounterValue, "ChunkCounter" );
         }
         locator.bindComponent( chunkTimerSelector, "ChunkTimerSelector" );
-        locator.bindComponent( chunkScanLineSelector, "ChunkScanLineSelector" );
-        locator.bindComponent( chunkEncoderSelector, "ChunkEncoderSelector" );
-        locator.bindComponent( chunkEncoderValue, "ChunkEncoderValue" );
-        locator.bindComponent( chunkEncoderStatus, "ChunkEncoderStatus" );
-        locator.bindComponent( chunkExposureTimeSelector, "ChunkExposureTimeSelector" );
         locator.bindComponent( chunkTimerValue, "ChunkTimerValue" );
         if( !chunkTimerValue.isValid() )
         {
             locator.bindComponent( chunkTimerValue, "ChunkTimer" );
         }
+        locator.bindComponent( chunkScanLineSelector, "ChunkScanLineSelector" );
+        locator.bindComponent( chunkEncoderSelector, "ChunkEncoderSelector" );
+        locator.bindComponent( chunkEncoderValue, "ChunkEncoderValue" );
+        locator.bindComponent( chunkEncoderStatus, "ChunkEncoderStatus" );
+        locator.bindComponent( chunkExposureTimeSelector, "ChunkExposureTimeSelector" );
         locator.bindComponent( chunkExposureTime, "ChunkExposureTime" );
         locator.bindComponent( chunkGainSelector, "ChunkGainSelector" );
         locator.bindComponent( chunkGain, "ChunkGain" );
@@ -9666,9 +11377,6 @@ public:
         locator.bindComponent( chunkSourceSelector, "ChunkSourceSelector" );
         locator.bindComponent( chunkSourceID, "ChunkSourceID" );
         locator.bindComponent( chunkSourceIDValue, "ChunkSourceIDValue" );
-        locator.bindComponent( chunkRegionSelector, "ChunkRegionSelector" );
-        locator.bindComponent( chunkRegionID, "ChunkRegionID" );
-        locator.bindComponent( chunkRegionIDValue, "ChunkRegionIDValue" );
         locator.bindComponent( chunkTransferBlockID, "ChunkTransferBlockID" );
         locator.bindComponent( chunkTransferStreamID, "ChunkTransferStreamID" );
         locator.bindComponent( chunkTransferQueueCurrentBlockCount, "ChunkTransferQueueCurrentBlockCount" );
@@ -9689,17 +11397,26 @@ public:
         locator.bindComponent( chunkScan3dTransformValue, "ChunkScan3dTransformValue" );
         locator.bindComponent( chunkScan3dCoordinateReferenceSelector, "ChunkScan3dCoordinateReferenceSelector" );
         locator.bindComponent( chunkScan3dCoordinateReferenceValue, "ChunkScan3dCoordinateReferenceValue" );
+        locator.bindComponent( chunkScan3dFocalLength, "ChunkScan3dFocalLength" );
+        locator.bindComponent( chunkScan3dBaseline, "ChunkScan3dBaseline" );
+        locator.bindComponent( chunkScan3dPrincipalPointU, "ChunkScan3dPrincipalPointU" );
+        locator.bindComponent( chunkScan3dPrincipalPointV, "ChunkScan3dPrincipalPointV" );
         locator.bindComponent( mvChunkJPEG, "mvChunkJPEG" );
         locator.bindComponent( chunkmvCustomIdentifier, "ChunkmvCustomIdentifier" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
-    /// \brief A boolean property. Activates the inclusion of Chunk data in the payload of the image.
+    /// \brief A boolean property. Activates the inclusion of Chunk data in the transmitted payload.
     /**
-     *  Activates the inclusion of Chunk data in the payload of the image.
+     *  Activates the inclusion of Chunk data in the transmitted payload.
      */
     PropertyIBoolean chunkModeActive;
+    /// \brief A boolean property. Activates the inclusion of the GenICam XML necessary to the chunk parser to decode all the Chunk data included in the transmitted payload.
+    /**
+     *  Activates the inclusion of the GenICam XML necessary to the chunk parser to decode all the Chunk data included in the transmitted payload.
+     */
+    PropertyIBoolean chunkXMLEnable;
     /// \brief An enumerated integer property. Selects which Chunk to enable or control.
     /**
      *  Selects which Chunk to enable or control.
@@ -9711,13 +11428,21 @@ public:
      *  - \b Width (Display string: 'Width'): Width
      *  - \b Height (Display string: 'Height'): Height
      *  - \b PixelFormat (Display string: 'Pixel Format'): Pixel Format
-     *  - \b PixelDynamicRangeMax (Display string: 'Pixel Dynamic Range Max'): Pixel Dynamic Range Max
      *  - \b PixelDynamicRangeMin (Display string: 'Pixel Dynamic Range Min'): Pixel Dynamic Range Min
+     *  - \b PixelDynamicRangeMax (Display string: 'Pixel Dynamic Range Max'): Pixel Dynamic Range Max
+     *  - \b BinningHorizontal (Display string: 'Binning Horizontal'): Binning Horizontal
+     *  - \b BinningVertical (Display string: 'Binning Vertical'): Binning Vertical
+     *  - \b DecimationHorizontal (Display string: 'Decimation Horizontal'): Decimation Horizontal
+     *  - \b DecimationVertical (Display string: 'Decimation Vertical'): Decimation Vertical
+     *  - \b ReverseX (Display string: 'Reverse X'): Reverse X
+     *  - \b ReverseY (Display string: 'Reverse Y'): Reverse Y
      *  - \b Timestamp (Display string: 'Timestamp'): Timestamp
+     *  - \b TimestampLatchValue (Display string: 'Timestamp Latch Value'): Timestamp Latch Value
      *  - \b LineStatusAll (Display string: 'Line Status All'): Line Status All
      *  - \b CounterValue (Display string: 'Counter Value'): Counter Value
      *  - \b TimerValue (Display string: 'Timer Value'): Timer Value
      *  - \b EncoderValue (Display string: 'Encoder Value'): Encoder Value
+     *  - \b EncoderStatusValue (Display string: 'Encoder Status Value'): Encoder Status Value
      *  - \b ExposureTime (Display string: 'Exposure Time'): Exposure Time
      *  - \b Gain (Display string: 'Gain'): Gain
      *  - \b BlackLevel (Display string: 'Black Level'): Black Level
@@ -9729,10 +11454,12 @@ public:
      *  - \b RegionIDValue (Display string: 'Region ID Value'): Region ID Value
      *  - \b ComponentID (Display string: 'Component ID'): Component ID
      *  - \b ComponentIDValue (Display string: 'Component ID Value'): Component ID Value
+     *  - \b GroupIDValue (Display string: 'Group ID Value'): Group ID Value
      *  - \b TransferBlockID (Display string: 'Transfer Block ID'): Transfer Block ID
      *  - \b TransferStreamID (Display string: 'Transfer Stream ID'): Transfer Stream ID
      *  - \b TransferQueueCurrentBlockCount (Display string: 'Transfer Queue Current Block Count'): Transfer Queue Current Block Count
      *  - \b StreamChannelID (Display string: 'Stream Channel ID'): Stream Channel ID
+     *  - \b SequencerSetActive (Display string: 'Sequencer Set Active'): Sequencer Set Active
      *  - \b Scan3dDistanceUnit (Display string: 'Scan 3d Distance Unit'): Scan 3d Distance Unit
      *  - \b Scan3dOutputMode (Display string: 'Scan 3d Output Mode'): Scan 3d Output Mode
      *  - \b Scan3dCoordinateSystem (Display string: 'Scan 3d Coordinate System'): Scan 3d Coordinate System
@@ -9743,8 +11470,8 @@ public:
      *  - \b Scan3dInvalidDataValue (Display string: 'Scan 3d Invalid Data Value'): Scan 3d Invalid Data Value
      *  - \b Scan3dAxisMin (Display string: 'Scan 3d Axis Min'): Scan 3d Axis Min
      *  - \b Scan3dAxisMax (Display string: 'Scan 3d Axis Max'): Scan 3d Axis Max
-     *  - \b Scan3dCoordinateTransformValueScan3dCoordinateReferenceValue (Display string: 'Scan 3d Coordinate Transform Value Scan 3d Coordinate Reference Value'): Scan 3d Coordinate Transform Value Scan 3d Coordinate Reference Value
-     *  - \b PixelDynamicRangeMinTimestamp (Display string: 'Pixel Dynamic Range Min Timestamp')
+     *  - \b Scan3dCoordinateTransformValue (Display string: 'Scan 3d Coordinate Transform Value'): Scan 3d Coordinate Transform Value
+     *  - \b Scan3dCoordinateReferenceValue (Display string: 'Scan 3d Coordinate Reference Value'): Scan 3d Coordinate Reference Value
      *  - \b AdditionalInfo (Display string: 'Additional Info')
      *  - \b JPEG (Display string: 'JPEG')
      *  - \b mvCustomIdentifier (Display string: 'mv Custom Identifier')
@@ -9758,9 +11485,48 @@ public:
      *  Enables the inclusion of the selected Chunk data in the payload of the image.
      */
     PropertyIBoolean chunkEnable;
-    /// \brief An enumerated integer property. Selects the Component from which to retreive data from.
+    /// \brief An enumerated integer property. Selects which Region to retrieve data from.
     /**
-     *  Selects the Component from which to retreive data from.
+     *  Selects which Region to retrieve data from.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Region0 (Display string: 'Region 0'): Image comes from the Region 0.
+     *  - \b Region1 (Display string: 'Region 1'): Image comes from the Region 1.
+     *  - \b Region2 (Display string: 'Region 2'): Image comes from the Region 2.
+     *  - \b Region\#3\# (Display string: 'Region \#3\#'): Image comes from the Region \#3\#.
+     *  - \b Scan3dExtraction0 (Display string: 'Scan 3d Extraction 0'): Image comes from the Scan3dExtraction output Region 0.
+     *  - \b Scan3dExtraction1 (Display string: 'Scan 3d Extraction 1'): Image comes from the Scan3dExtraction output Region 1.
+     *  - \b Scan3dExtraction2 (Display string: 'Scan 3d Extraction 2'): Image comes from the Scan3dExtraction output Region 2.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 chunkRegionSelector;
+    /// \brief An enumerated integer property. Returns the Identifier of Region that the image comes from.
+    /**
+     *  Returns the Identifier of Region that the image comes from.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Region0 (Display string: 'Region 0'): Image comes from the Region 0.
+     *  - \b Region1 (Display string: 'Region 1'): Image comes from the Region 1.
+     *  - \b Region2 (Display string: 'Region 2'): Image comes from the Region 2.
+     *  - \b Region\#3\# (Display string: 'Region \#3\#'): Image comes from the Region \#3\#.
+     *  - \b Scan3dExtraction0 (Display string: 'Scan 3d Extraction 0'): Image comes from the Scan3dExtraction output Region 0.
+     *  - \b Scan3dExtraction1 (Display string: 'Scan 3d Extraction 1'): Image comes from the Scan3dExtraction output Region 1.
+     *  - \b Scan3dExtraction2 (Display string: 'Scan 3d Extraction 2'): Image comes from the Scan3dExtraction output Region 2.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 chunkRegionID;
+    /// \brief An integer property. Returns the unique integer Identifier value of the Region that the image comes from.
+    /**
+     *  Returns the unique integer Identifier value of the Region that the image comes from.
+     */
+    PropertyI64 chunkRegionIDValue;
+    /// \brief An enumerated integer property. Selects the Component from which to retrieve data from.
+    /**
+     *  Selects the Component from which to retrieve data from.
      *
      *  The following string values might be valid for this feature:
      *  - \b Intensity (Display string: 'Intensity'): The image data is the intensity component (visible).
@@ -9771,14 +11537,15 @@ public:
      *  - \b Disparity (Display string: 'Disparity'): The image data is the disparity component.
      *  - \b Confidence (Display string: 'Confidence'): The image data is the confidence map component.
      *  - \b Scatter (Display string: 'Scatter'): The image data is the scatter component.
+     *  - \b Multispectral (Display string: 'Multispectral'): The image data is the multispectral component.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 chunkComponentSelector;
-    /// \brief An enumerated integer property. Returns the Component Identifier of the selected Component image.
+    /// \brief An enumerated integer property. Returns the Identifier of the selected Component.
     /**
-     *  Returns the Component Identifier of the selected Component image. This can be used to identify the image component type of a multi-component buffer.
+     *  Returns the Identifier of the selected Component. This can be used to identify the image component type of a multi-component payload.
      *
      *  The following string values might be valid for this feature:
      *  - \b Intensity (Display string: 'Intensity'): The image data is the intensity component (visible).
@@ -9789,20 +11556,51 @@ public:
      *  - \b Disparity (Display string: 'Disparity'): The image data is the disparity component.
      *  - \b Confidence (Display string: 'Confidence'): The image data is the confidence map component.
      *  - \b Scatter (Display string: 'Scatter'): The image data is the scatter component.
+     *  - \b Multispectral (Display string: 'Multispectral'): The image data is the multispectral component.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 chunkComponentID;
-    /// \brief An integer property. Returns a unique Identifier value that correspond to the selected chunk Component.
+    /// \brief An integer property. Returns a unique Identifier value that corresponds to the selected chunk Component.
     /**
-     *  Returns a unique Identifier value that correspond to the selected chunk Component.
+     *  Returns a unique Identifier value that corresponds to the selected chunk Component.
      */
     PropertyI64 chunkComponentIDValue;
+    /// \brief An enumerated integer property. Selects the component Group from which to retrieve data from.
+    /**
+     *  Selects the component Group from which to retrieve data from.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Group0 (Display string: 'Group 0'): Selects Components group 0.
+     *  - \b Group1 (Display string: 'Group 1'): Selects Components group 1.
+     *  - \b Group2 (Display string: 'Group 2'): Selects Components group 2.
+     *  - \b Group\#3\# (Display string: 'Group \#3\#'): Selects Components group \#3\#.
+     *  - \b Group3 (Display string: 'Group 3'): Selects Components group 3.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 chunkGroupSelector;
+    /// \brief An enumerated integer property. Returns a unique Identifier corresponding to the selected Group of components.
+    /**
+     *  Returns a unique Identifier corresponding to the selected Group of components. This can be used to identify the component Group of a multi-group payload.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Group0 (Display string: 'Group 0'): Selects Components group 0.
+     *  - \b Group1 (Display string: 'Group 1'): Selects Components group 1.
+     *  - \b Group2 (Display string: 'Group 2'): Selects Components group 2.
+     *  - \b Group\#3\# (Display string: 'Group \#3\#'): Selects Components group \#3\#.
+     *  - \b Group3 (Display string: 'Group 3'): Selects Components group 3.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 chunkGroupID;
     /// \brief An enumerated integer property. This feature is deprecated (See ChunkComponentID).
     /**
      *  \deprecated
-     *  This feature is deprecated (See ChunkComponentID). It was representing the Component of the payload image.
+     *  This feature is deprecated (See ChunkComponentID). It was representing the component of the payload image.
      *
      *  The following string values might be valid for this feature:
      *  - \b Intensity (Display string: 'Intensity'): Intensity
@@ -9818,6 +11616,11 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 chunkImageComponent;
+    /// \brief An integer property. Returns a unique Identifier value that corresponds to the Group of Components of the selected chunk Component.
+    /**
+     *  Returns a unique Identifier value that corresponds to the Group of Components of the selected chunk Component.
+     */
+    PropertyI64 chunkGroupIDValue;
     /// \brief An integer property. This feature is deprecated (See ChunkComponentSelector).
     /**
      *  \deprecated
@@ -9927,6 +11730,16 @@ public:
      *  - \b Confidence8 (Display string: 'Confidence8'): Confidence data 8 bit.
      *  - \b Confidence16 (Display string: 'Confidence16'): Confidence data 16 bit.
      *  - \b Confidence32f (Display string: 'Confidence32f'): Confidence data 32 bit float.
+     *  - \b Data8 (Display string: 'Data8'): Generic non-pixel data 8 bit.
+     *  - \b Data8s (Display string: 'Data8s'): Generic non-pixel data 8 bit signed.
+     *  - \b Data16 (Display string: 'Data16'): Generic non-pixel data 16 bit.
+     *  - \b Data16s (Display string: 'Data16s'): Generic non-pixel data 16 bit signed.
+     *  - \b Data32 (Display string: 'Data32'): Generic non-pixel data 32 bit.
+     *  - \b Data32s (Display string: 'Data32s'): Generic non-pixel data 32 bit signed.
+     *  - \b Data32f (Display string: 'Data32f'): Generic non-pixel data 32 bit floating point.
+     *  - \b Data64 (Display string: 'Data64'): Generic non-pixel data 64 bit.
+     *  - \b Data64s (Display string: 'Data64s'): Generic non-pixel data 64 bit signed.
+     *  - \b Data64f (Display string: 'Data64f'): Generic non-pixel data 64 bit floating point.
      *  - \b Raw8 (Display string: 'Raw8'): Raw 8 bit.
      *  - \b Raw16 (Display string: 'Raw16'): Raw 16 bit.
      *  - \b Mono12Packed (Display string: 'Mono12Packed'): Mono 12 bit packed (GigE Vision Specific).
@@ -9939,7 +11752,6 @@ public:
      *  - \b BayerGB12Packed (Display string: 'BayerGB12Packed'): Bayer GB 12 bit packed (GigE Vision Specific).
      *  - \b BayerBG12Packed (Display string: 'BayerBG12Packed'): Bayer BG 12 bit packed (GigE Vision Specific).
      *  - \b RGB10V1Packed (Display string: 'RGB10V1Packed'): RGB 10 bit packed (GigE Vision Specific).
-     *  - \b BGR10V1Packed (Display string: 'BGR10V1Packed'): BGR 10 bit packed (GigE Vision Specific).
      *  - \b RGB12V1Packed (Display string: 'RGB12V1Packed'): RGB 12 bit packed (GigE Vision Specific).
      *  - \b Mono8Signed (Display string: 'Mono 8 Signed')
      *  - \b Mono10Packed (Display string: 'Mono 10 Packed')
@@ -9978,6 +11790,36 @@ public:
      *  Returns the maximum value of dynamic range of the image included in the payload.
      */
     PropertyI64 chunkPixelDynamicRangeMax;
+    /// \brief An integer property. Number of horizontal photo-sensitive cells combined together.
+    /**
+     *  Number of horizontal photo-sensitive cells combined together.
+     */
+    PropertyI64 chunkBinningHorizontal;
+    /// \brief An integer property. Number of vertical photo-sensitive cells combined together.
+    /**
+     *  Number of vertical photo-sensitive cells combined together.
+     */
+    PropertyI64 chunkBinningVertical;
+    /// \brief An integer property. Horizontal sub-sampling of the image.
+    /**
+     *  Horizontal sub-sampling of the image.
+     */
+    PropertyI64 chunkDecimationHorizontal;
+    /// \brief An integer property. Vertical sub-sampling of the image.
+    /**
+     *  Vertical sub-sampling of the image.
+     */
+    PropertyI64 chunkDecimationVertical;
+    /// \brief A boolean property. Flip horizontal of the image sent by the device.
+    /**
+     *  Flip horizontal of the image sent by the device.
+     */
+    PropertyIBoolean chunkReverseX;
+    /// \brief A boolean property. Flip vertically of the image sent by the device.
+    /**
+     *  Flip vertically of the image sent by the device.
+     */
+    PropertyIBoolean chunkReverseY;
     /// \brief An integer property. Returns the Timestamp of the image included in the payload at the time of the FrameStart internal event.
     /**
      *  Returns the Timestamp of the image included in the payload at the time of the FrameStart internal event.
@@ -10054,6 +11896,11 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 chunkTimerSelector;
+    /// \brief A floating point property. Returns the value of the selected Timer at the time of the FrameStart internal event.
+    /**
+     *  Returns the value of the selected Timer at the time of the FrameStart internal event.
+     */
+    PropertyF chunkTimerValue;
     /// \brief An integer property. Index for vector representation of one chunk value per line in an image.
     /**
      *  Index for vector representation of one chunk value per line in an image.
@@ -10114,11 +11961,6 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 chunkExposureTimeSelector;
-    /// \brief A floating point property. Returns the value of the selected Timer at the time of the FrameStart internal event.
-    /**
-     *  Returns the value of the selected Timer at the time of the FrameStart internal event.
-     */
-    PropertyF chunkTimerValue;
     /// \brief A floating point property. Returns the exposure time used to capture the image.
     /**
      *  Returns the exposure time used to capture the image.
@@ -10293,45 +12135,6 @@ public:
      *  Returns the unique integer Identifier value of the Source that the image comes from.
      */
     PropertyI64 chunkSourceIDValue;
-    /// \brief An enumerated integer property. Selects which Region to retrieve data from.
-    /**
-     *  Selects which Region to retrieve data from.
-     *
-     *  The following string values might be valid for this feature:
-     *  - \b Region0 (Display string: 'Region 0'): Image comes from the Region 0.
-     *  - \b Region1 (Display string: 'Region 1'): Image comes from the Region 1.
-     *  - \b Region2 (Display string: 'Region 2'): Image comes from the Region 2.
-     *  - \b Region\#3\# (Display string: 'Region \#3\#'): Image comes from the Region \#3\#.
-     *  - \b Scan3dExtraction0 (Display string: 'Scan 3d Extraction 0'): Image comes from the Scan3dExtraction output Region 0.
-     *  - \b Scan3dExtraction1 (Display string: 'Scan 3d Extraction 1'): Image comes from the Scan3dExtraction output Region 1.
-     *  - \b Scan3dExtraction2 (Display string: 'Scan 3d Extraction 2'): Image comes from the Scan3dExtraction output Region 2.
-     *
-     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
-     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
-     */
-    PropertyI64 chunkRegionSelector;
-    /// \brief An enumerated integer property. Returns the Identifier of Region that the image comes from.
-    /**
-     *  Returns the Identifier of Region that the image comes from.
-     *
-     *  The following string values might be valid for this feature:
-     *  - \b Region0 (Display string: 'Region 0'): Image comes from the Region 0.
-     *  - \b Region1 (Display string: 'Region 1'): Image comes from the Region 1.
-     *  - \b Region2 (Display string: 'Region 2'): Image comes from the Region 2.
-     *  - \b Region\#3\# (Display string: 'Region \#3\#'): Image comes from the Region \#3\#.
-     *  - \b Scan3dExtraction0 (Display string: 'Scan 3d Extraction 0'): Image comes from the Scan3dExtraction output Region 0.
-     *  - \b Scan3dExtraction1 (Display string: 'Scan 3d Extraction 1'): Image comes from the Scan3dExtraction output Region 1.
-     *  - \b Scan3dExtraction2 (Display string: 'Scan 3d Extraction 2'): Image comes from the Scan3dExtraction output Region 2.
-     *
-     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
-     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
-     */
-    PropertyI64 chunkRegionID;
-    /// \brief An integer property. Returns the unique integer Identifier value of the Region that the image comes from.
-    /**
-     *  Returns the unique integer Identifier value of the Region that the image comes from.
-     */
-    PropertyI64 chunkRegionIDValue;
     /// \brief An integer property. Returns the unique identifier of the transfer block used to transport the payload.
     /**
      *  Returns the unique identifier of the transfer block used to transport the payload.
@@ -10374,6 +12177,7 @@ public:
      *  The following string values might be valid for this feature:
      *  - \b Millimeter (Display string: 'Millimeter'): Default value. Distance values are in millimeter units.
      *  - \b Inch (Display string: 'Inch'): Distance values are in inch units.
+     *  - \b Pixel (Display string: 'Pixel'): Distance values are given as a multiple of the size of a pixel.
      *
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
@@ -10505,11 +12309,31 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 chunkScan3dCoordinateReferenceSelector;
-    /// \brief A floating point property. Reads the value of a position or pose coordinate for the anchor or transformed coordinate systems relative to the reference point.
+    /// \brief A floating point property. Returns the value of a position or pose coordinate for the anchor or transformed coordinate systems relative to the reference point.
     /**
-     *  Reads the value of a position or pose coordinate for the anchor or transformed coordinate systems relative to the reference point.
+     *  Returns the value of a position or pose coordinate for the anchor or transformed coordinate systems relative to the reference point.
      */
     PropertyF chunkScan3dCoordinateReferenceValue;
+    /// \brief A floating point property. Returns the focal length of the camera in pixel.
+    /**
+     *  Returns the focal length of the camera in pixel. The focal length depends on the selected region. The value of this feature takes into account horizontal binning, decimation, or any other function changing the image resolution.
+     */
+    PropertyF chunkScan3dFocalLength;
+    /// \brief A floating point property. Returns the baseline as the physical distance of two cameras in a stereo camera setup.
+    /**
+     *  Returns the baseline as the physical distance of two cameras in a stereo camera setup. The value of this feature can be used for 3D reconstruction from disparity images. In this case, the unit of the 3D coordinates corresponds to the unit of the baseline.
+     */
+    PropertyF chunkScan3dBaseline;
+    /// \brief A floating point property. Returns the value of this feature gives the horizontal position of the principal point, relative to the region origin, i.e.
+    /**
+     *  Returns the value of this feature gives the horizontal position of the principal point, relative to the region origin, i.e. OffsetX. The value of this feature takes into account horizontal binning, decimation, or any other function changing the image resolution.
+     */
+    PropertyF chunkScan3dPrincipalPointU;
+    /// \brief A floating point property. Returns the value of this feature gives the vertical position of the principal point, relative to the region origin, i.e.
+    /**
+     *  Returns the value of this feature gives the vertical position of the principal point, relative to the region origin, i.e. OffsetY. The value of this feature takes into account vertical binning, decimation, or any other function changing the image resolution.
+     */
+    PropertyF chunkScan3dPrincipalPointV;
     /// \brief A string property. Provides access to a JPEG image transmitted as part of the chunk data.
     /**
      *  Provides access to a JPEG image transmitted as part of the chunk data.
@@ -10521,7 +12345,7 @@ public:
      */
     PropertyI64 chunkmvCustomIdentifier;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -10546,16 +12370,18 @@ public:
         /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
         const std::string& settingName = "Base" ) :
         testPendingAck(),
-        testEventGenerate()
+        testEventGenerate(),
+        testPayloadFormatMode()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
         locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
         locator.bindComponent( testPendingAck, "TestPendingAck" );
         locator.bindComponent( testEventGenerate, "TestEventGenerate@i" );
+        locator.bindComponent( testPayloadFormatMode, "TestPayloadFormatMode" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An integer property. Tests the device's pending acknowledge feature.
     /**
@@ -10567,8 +12393,21 @@ public:
      *  Generates a Test Event.
      */
     Method testEventGenerate;
+    /// \brief An enumerated integer property. This feature allows setting a device in test mode and to output a specific payload format for validation of data streaming.
+    /**
+     *  This feature allows setting a device in test mode and to output a specific payload format for validation of data streaming. This feature is intended solely for test purposes. The data can be real acquired data or any test pattern.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Off (Display string: 'Off'): The test mode is disabled. This feature has no effect and the device is streaming data normally according to its configuration. This option has to be the default after each boot of the device.
+     *  - \b MultiPart (Display string: 'Multi Part'): The device streams data using multi-part payload format with at least one part in each payload. This option must be present if and only if the device supports the multi-part payload format. If the underlying transport layer negotiation has failed to allow the device to enter multi-part mode, it must not be possible to enable this test mode.
+     *  - \b GenDC (Display string: 'Gen DC'): The device streams data using GenDC payload format with at least one component in each payload. This option must be present if the device supports the GenDC payload format. If the underlying transport layer negotiation has failed to allow the device to enter GenDC mode, it must not be possible to enable this test mode.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 testPayloadFormatMode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -10593,6 +12432,10 @@ public:
         /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
         const std::string& settingName = "Base" ) :
         payloadSize(),
+        genDCStreamingMode(),
+        genDCStreamingStatus(),
+        genDCDescriptor(),
+        genDCFlowMappingTable(),
         mvU3VPHYErrorCount(),
         mvU3VLNKErrorCount(),
         mvU3VEndpointSelector(),
@@ -10601,6 +12444,15 @@ public:
         mvU3VErrorCounterReset(),
         mvU3VSpreadSpectrumClockingSupportDisable(),
         deviceTapGeometry(),
+        ptpEnable(),
+        ptpClockAccuracy(),
+        ptpDataSetLatch(),
+        ptpStatus(),
+        ptpServoStatus(),
+        ptpOffsetFromMaster(),
+        ptpClockID(),
+        ptpParentClockID(),
+        ptpGrandmasterClockID(),
         gevVersionMajor(),
         gevVersionMinor(),
         gevDeviceModeIsBigEndian(),
@@ -10680,14 +12532,28 @@ public:
         cxpLinkConfigurationStatus(),
         cxpLinkConfigurationPreferred(),
         cxpLinkConfiguration(),
+        cxpLinkSharingEnable(),
+        cxpLinkSharingSubDeviceSelector(),
+        cxpLinkSharingSubDeviceType(),
+        cxpLinkSharingHorizontalStripeCount(),
+        cxpLinkSharingVerticalStripeCount(),
+        cxpLinkSharingHorizontalOverlap(),
+        cxpLinkSharingVerticalOverlap(),
+        cxpLinkSharingDuplicateStripe(),
         cxpConnectionSelector(),
         cxpConnectionTestMode(),
         cxpConnectionTestErrorCount(),
+        cxpSendReceiveSelector(),
         cxpConnectionTestPacketCount(),
+        cxpErrorCounterSelector(),
+        cxpErrorCounterReset(),
+        cxpErrorCounterValue(),
+        cxpErrorCounterStatus(),
         cxpPoCxpAuto(),
         cxpPoCxpTurnOff(),
         cxpPoCxpTripReset(),
         cxpPoCxpStatus(),
+        cxpFirstLineTriggerWithFrameStart(),
         mvGevSCBWControl(),
         mvGevSCBW()
     {
@@ -10695,6 +12561,10 @@ public:
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
         locator.bindSearchBase( locator.searchbase_id(), "Camera/GenICam" );
         locator.bindComponent( payloadSize, "PayloadSize" );
+        locator.bindComponent( genDCStreamingMode, "GenDCStreamingMode" );
+        locator.bindComponent( genDCStreamingStatus, "GenDCStreamingStatus" );
+        locator.bindComponent( genDCDescriptor, "GenDCDescriptor" );
+        locator.bindComponent( genDCFlowMappingTable, "GenDCFlowMappingTable" );
         locator.bindComponent( mvU3VPHYErrorCount, "mvU3VPHYErrorCount" );
         locator.bindComponent( mvU3VLNKErrorCount, "mvU3VLNKErrorCount" );
         locator.bindComponent( mvU3VEndpointSelector, "mvU3VEndpointSelector" );
@@ -10703,6 +12573,23 @@ public:
         locator.bindComponent( mvU3VErrorCounterReset, "mvU3VErrorCounterReset@i" );
         locator.bindComponent( mvU3VSpreadSpectrumClockingSupportDisable, "mvU3VSpreadSpectrumClockingSupportDisable@i" );
         locator.bindComponent( deviceTapGeometry, "DeviceTapGeometry" );
+        locator.bindComponent( ptpEnable, "PtpEnable" );
+        locator.bindComponent( ptpClockAccuracy, "PtpClockAccuracy" );
+        locator.bindComponent( ptpDataSetLatch, "PtpDataSetLatch@i" );
+        locator.bindComponent( ptpStatus, "PtpStatus" );
+        locator.bindComponent( ptpServoStatus, "PtpServoStatus" );
+        locator.bindComponent( ptpOffsetFromMaster, "PtpOffsetFromMaster" );
+        locator.bindComponent( ptpClockID, "PtpClockID" );
+        if( !ptpClockID.isValid() )
+        {
+            locator.bindComponent( ptpClockID, "PtpClockId" );
+        }
+        locator.bindComponent( ptpParentClockID, "PtpParentClockID" );
+        if( !ptpParentClockID.isValid() )
+        {
+            locator.bindComponent( ptpParentClockID, "PtpParentClockId" );
+        }
+        locator.bindComponent( ptpGrandmasterClockID, "PtpGrandmasterClockID" );
         locator.bindComponent( gevVersionMajor, "GevVersionMajor" );
         locator.bindComponent( gevVersionMinor, "GevVersionMinor" );
         locator.bindComponent( gevDeviceModeIsBigEndian, "GevDeviceModeIsBigEndian" );
@@ -10782,25 +12669,74 @@ public:
         locator.bindComponent( cxpLinkConfigurationStatus, "CxpLinkConfigurationStatus" );
         locator.bindComponent( cxpLinkConfigurationPreferred, "CxpLinkConfigurationPreferred" );
         locator.bindComponent( cxpLinkConfiguration, "CxpLinkConfiguration" );
+        locator.bindComponent( cxpLinkSharingEnable, "CxpLinkSharingEnable" );
+        locator.bindComponent( cxpLinkSharingSubDeviceSelector, "CxpLinkSharingSubDeviceSelector" );
+        locator.bindComponent( cxpLinkSharingSubDeviceType, "CxpLinkSharingSubDeviceType" );
+        locator.bindComponent( cxpLinkSharingHorizontalStripeCount, "CxpLinkSharingHorizontalStripeCount" );
+        locator.bindComponent( cxpLinkSharingVerticalStripeCount, "CxpLinkSharingVerticalStripeCount" );
+        locator.bindComponent( cxpLinkSharingHorizontalOverlap, "CxpLinkSharingHorizontalOverlap" );
+        locator.bindComponent( cxpLinkSharingVerticalOverlap, "CxpLinkSharingVerticalOverlap" );
+        locator.bindComponent( cxpLinkSharingDuplicateStripe, "CxpLinkSharingDuplicateStripe" );
         locator.bindComponent( cxpConnectionSelector, "CxpConnectionSelector" );
         locator.bindComponent( cxpConnectionTestMode, "CxpConnectionTestMode" );
         locator.bindComponent( cxpConnectionTestErrorCount, "CxpConnectionTestErrorCount" );
+        locator.bindComponent( cxpSendReceiveSelector, "CxpSendReceiveSelector" );
         locator.bindComponent( cxpConnectionTestPacketCount, "CxpConnectionTestPacketCount" );
+        locator.bindComponent( cxpErrorCounterSelector, "CxpErrorCounterSelector" );
+        locator.bindComponent( cxpErrorCounterReset, "CxpErrorCounterReset@i" );
+        locator.bindComponent( cxpErrorCounterValue, "CxpErrorCounterValue" );
+        locator.bindComponent( cxpErrorCounterStatus, "CxpErrorCounterStatus" );
         locator.bindComponent( cxpPoCxpAuto, "CxpPoCxpAuto@i" );
         locator.bindComponent( cxpPoCxpTurnOff, "CxpPoCxpTurnOff@i" );
         locator.bindComponent( cxpPoCxpTripReset, "CxpPoCxpTripReset@i" );
         locator.bindComponent( cxpPoCxpStatus, "CxpPoCxpStatus" );
+        locator.bindComponent( cxpFirstLineTriggerWithFrameStart, "CxpFirstLineTriggerWithFrameStart" );
         locator.bindComponent( mvGevSCBWControl, "mvGevSCBWControl" );
         locator.bindComponent( mvGevSCBW, "mvGevSCBW" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
-    /// \brief An integer property. Provides the number of bytes transferred for each image or chunk on the stream channel.
+    /// \brief An integer property. Provides the number of bytes transferred for each data buffer or chunk on the stream channel.
     /**
-     *  Provides the number of bytes transferred for each image or chunk on the stream channel. This includes any end-of-line, end-of-frame statistics or other stamp data. This is the total size of data payload for a data block.
+     *  Provides the number of bytes transferred for each data buffer or chunk on the stream channel. This includes any end-of-line, end-of-frame statistics or other stamp data. This is the total size of data payload for a data block.
      */
     PropertyI64 payloadSize;
+    /// \brief An enumerated integer property. Controls the device's streaming format.
+    /**
+     *  Controls the device's streaming format.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Off (Display string: 'Off'): The device will only stream data in its native format.
+     *  - \b On (Display string: 'On'): The device will stream all its data in the generic GenDC format.
+     *  - \b Automatic (Display string: 'Automatic'): The device will automatically choose in which format it streams its data.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 genDCStreamingMode;
+    /// \brief An enumerated integer property. Returns whether the current device data streaming format is GenDC.
+    /**
+     *  Returns whether the current device data streaming format is GenDC. This value is conditioned by the GenDCStreamingMode.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Off (Display string: 'Off'): The device will only stream data in its native format.
+     *  - \b On (Display string: 'On'): The device will stream all its data in the generic GenDC format.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 genDCStreamingStatus;
+    /// \brief A string property. Returns a preliminary GenDC Descriptor that can be used as reference for the data to be streamed out by the device in its current configuration.
+    /**
+     *  Returns a preliminary GenDC Descriptor that can be used as reference for the data to be streamed out by the device in its current configuration. This information can be used to set up the receiver in advance to be ready for the data Containers to come.
+     */
+    PropertyS genDCDescriptor;
+    /// \brief A string property. Returns the GenDC Container data Flow mapping table that will be used to transport the GenDC Container.
+    /**
+     *  Returns the GenDC Container data Flow mapping table that will be used to transport the GenDC Container.
+     */
+    PropertyS genDCFlowMappingTable;
     /// \brief An integer property. Counts the number of errors on the PHY interface.
     /**
      *  Counts the number of errors on the PHY interface.
@@ -10904,6 +12840,99 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 deviceTapGeometry;
+    /// \brief A boolean property. Enables the Precision Time Protocol (PTP).
+    /**
+     *  Enables the Precision Time Protocol (PTP).
+     */
+    PropertyIBoolean ptpEnable;
+    /// \brief An enumerated integer property. Indicates the expected accuracy of the device PTP clock when it is the grandmaster, or in the event it becomes the grandmaster.
+    /**
+     *  Indicates the expected accuracy of the device PTP clock when it is the grandmaster, or in the event it becomes the grandmaster.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Within25ns (Display string: 'Within 25ns'): Within 25ns
+     *  - \b Within100ns (Display string: 'Within 100ns'): Within 100ns
+     *  - \b Within250ns (Display string: 'Within 250ns'): Within 250ns
+     *  - \b Within1us (Display string: 'Within 1us'): Within 1us
+     *  - \b Within2p5us (Display string: 'Within 2p 5us'): Within 2p 5us
+     *  - \b Within10us (Display string: 'Within 10us'): Within 10us
+     *  - \b Within25us (Display string: 'Within 25us'): Within 25us
+     *  - \b Within100us (Display string: 'Within 100us'): Within 100us
+     *  - \b Within250us (Display string: 'Within 250us'): Within 250us
+     *  - \b Within1ms (Display string: 'Within 1ms'): Within 1ms
+     *  - \b Within2p5ms (Display string: 'Within 2p 5ms'): Within 2p 5ms
+     *  - \b Within10ms (Display string: 'Within 10ms'): Within 10ms
+     *  - \b Within25ms (Display string: 'Within 25ms'): Within 25ms
+     *  - \b Within100ms (Display string: 'Within 100ms'): Within 100ms
+     *  - \b Within250ms (Display string: 'Within 250ms'): Within 250ms
+     *  - \b Within1s (Display string: 'Within 1s'): Within 1s
+     *  - \b Within10s (Display string: 'Within 10s'): Within 10s
+     *  - \b GreaterThan10s (Display string: 'Greater Than 10s'): Greater Than 10s
+     *  - \b AlternatePTPProfile (Display string: 'Alternate PTP Profile'): Alternate PTP Profile
+     *  - \b Unknown (Display string: 'Unknown'): Unknown
+     *  - \b Reserved (Display string: 'Reserved'): Reserved
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 ptpClockAccuracy;
+    /// \brief A method object. Latches the current values from the device's PTP clock data set.
+    /**
+     *  Latches the current values from the device's PTP clock data set.
+     */
+    Method ptpDataSetLatch;
+    /// \brief An enumerated integer property. Returns the latched state of the PTP clock.
+    /**
+     *  Returns the latched state of the PTP clock.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Initializing (Display string: 'Initializing'): Initializing
+     *  - \b Faulty (Display string: 'Faulty'): Faulty
+     *  - \b Disabled (Display string: 'Disabled'): Disabled
+     *  - \b Listening (Display string: 'Listening'): Listening
+     *  - \b PreMaster (Display string: 'Pre Master'): Pre Master
+     *  - \b Master (Display string: 'Master'): Master
+     *  - \b Passive (Display string: 'Passive'): Passive
+     *  - \b Uncalibrated (Display string: 'Uncalibrated'): Uncalibrated
+     *  - \b Slave (Display string: 'Slave'): Slave
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 ptpStatus;
+    /// \brief An enumerated integer property. Returns the latched state of the clock servo.
+    /**
+     *  Returns the latched state of the clock servo. When the servo is in a locked state, the value returned is 'Locked'. When the servo is in a non-locked state, a device-specific value can be returned to give specific information. If no device-specific value is available to describe the current state of the clock servo, the value should be 'Unknown'.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Unknown (Display string: 'Unknown'): Unknown
+     *  - \b Locked (Display string: 'Locked'): Locked
+     *  - \b Device-Specific (Display string: 'Device - Specific'): Device - Specific
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 ptpServoStatus;
+    /// \brief An integer property. Returns the latched offset from the PTP master clock in nanoseconds.
+    /**
+     *  Returns the latched offset from the PTP master clock in nanoseconds.
+     */
+    PropertyI64 ptpOffsetFromMaster;
+    /// \brief An integer property. Returns the latched clock ID of the PTP device.
+    /**
+     *  Returns the latched clock ID of the PTP device.
+     */
+    PropertyI64 ptpClockID;
+    /// \brief An integer property. Returns the latched parent clock ID of the PTP device.
+    /**
+     *  Returns the latched parent clock ID of the PTP device. The parent clock ID is the clock ID of the current master clock.
+     */
+    PropertyI64 ptpParentClockID;
+    /// \brief An integer property. Returns the latched grandmaster clock ID of the PTP device.
+    /**
+     *  Returns the latched grandmaster clock ID of the PTP device. The grandmaster clock ID is the clock ID of the current grandmaster clock.
+     */
+    PropertyI64 ptpGrandmasterClockID;
     /// \brief An integer property. This feature is deprecated (See DeviceTLVersionMajor).
     /**
      *  \deprecated
@@ -10940,7 +12969,7 @@ public:
     /// \brief An enumerated integer property. This feature is deprecated (See DeviceCharacterSet).
     /**
      *  \deprecated
-     *  This feature is deprecated (See DeviceCharacterSet). It was representing the character set used by all the strings of the bootstrap registers.
+     *  This feature is deprecated (See DeviceCharacterSet). It was representing the character set used by all the strings of the device.
      *
      *  The following string values might be valid for this feature:
      *  - \b UTF8 (Display string: 'UTF 8'): UTF 8
@@ -11006,6 +13035,7 @@ public:
      *  - \b EventData (Display string: 'Event Data'): Event Data
      *  - \b PendingAck (Display string: 'Pending Ack'): Pending Ack
      *  - \b IEEE1588 (Display string: 'IEEE 1588'): IEEE 1588
+     *  - \b Ptp (Display string: 'Ptp'): Ptp
      *  - \b Action (Display string: 'Action'): Action
      *  - \b UnconditionalAction (Display string: 'Unconditional Action'): Unconditional Action
      *  - \b ScheduledAction (Display string: 'Scheduled Action'): Scheduled Action
@@ -11104,9 +13134,9 @@ public:
      *  Reports the subnet mask of the given logical link.
      */
     PropertyI64 gevCurrentSubnetMask;
-    /// \brief An integer property. Reports the default gateway IP address to be used on the given logical link.
+    /// \brief An integer property. Reports the default gateway IP address of the given logical link.
     /**
-     *  Reports the default gateway IP address to be used on the given logical link.
+     *  Reports the default gateway IP address of the given logical link.
      */
     PropertyI64 gevCurrentDefaultGateway;
     /// \brief An enumerated integer property. Reports the current IP configuration status.
@@ -11170,13 +13200,13 @@ public:
     /// \brief An integer property. This feature is deprecated (See DeviceLinkHeartbeatTimeout).
     /**
      *  \deprecated
-     *  This feature is deprecated (See DeviceLinkHeartbeatTimeout). It was controling the current heartbeat timeout in milliseconds.
+     *  This feature is deprecated (See DeviceLinkHeartbeatTimeout). It was controlling the current heartbeat timeout in milliseconds.
      */
     PropertyI64 gevHeartbeatTimeout;
     /// \brief An integer property. This feature is deprecated (See the increment of the TimestampLatchValue feature).
     /**
      *  \deprecated
-     *  This feature is deprecated (See the increment of the TimestampLatchValue feature). It was used to indicate the number of timestamp ticks in 1 second (frequency in Hz). If IEEE 1588 is used, this feature must return 1,000,000,000 (1 GHz).
+     *  This feature is deprecated (See the increment of the TimestampLatchValue feature). It was used to indicate the number of timestamp ticks in 1 second (frequency in Hz). If PTP is used, this feature must return 1,000,000,000 (1 GHz).
      */
     PropertyI64 gevTimestampTickFrequency;
     /// \brief A method object. This feature is deprecated (See TimestampLatch).
@@ -11188,7 +13218,7 @@ public:
     /// \brief A method object. This feature is deprecated (See TimestampReset).
     /**
      *  \deprecated
-     *  This feature is deprecated (See TimestampReset). It was used to reset the timestamp counter to 0. This feature is not available or as no effect when IEEE 1588 is used.
+     *  This feature is deprecated (See TimestampReset). It was used to reset the timestamp counter to 0. This feature is not available or as no effect when  PTP is used.
      */
     Method gevTimestampControlReset;
     /// \brief An integer property. This feature is deprecated (See TimestampLatchValue).
@@ -11202,14 +13232,16 @@ public:
      *  Indicates the maximum randomized delay the device will wait to acknowledge a discovery command.
      */
     PropertyI64 gevDiscoveryAckDelay;
-    /// \brief A boolean property. Enables the IEEE 1588 Precision Time Protocol to control the timestamp register.
+    /// \brief A boolean property. This feature is deprecated (See PtpEnable).
     /**
-     *  Enables the IEEE 1588 Precision Time Protocol to control the timestamp register.
+     *  \deprecated
+     *  This feature is deprecated (See PtpEnable). It was used to enable the IEEE 1588 Precision Time Protocol to control the timestamp register.
      */
     PropertyIBoolean gevIEEE1588;
-    /// \brief An enumerated integer property. Indicates the expected accuracy of the device clock when it is the grandmaster, or in the event it becomes the grandmaster.
+    /// \brief An enumerated integer property. This feature is deprecated (See PtpClockAccurarcy).
     /**
-     *  Indicates the expected accuracy of the device clock when it is the grandmaster, or in the event it becomes the grandmaster.
+     *  \deprecated
+     *  This feature is deprecated (See PtpClockAccurarcy). It was used to indicate the expected accuracy of the device clock when it is the grandmaster, or in the event it becomes the grandmaster.
      *
      *  The following string values might be valid for this feature:
      *  - \b Within25ns (Display string: 'Within 25ns'): Within 25ns
@@ -11238,9 +13270,10 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 gevIEEE1588ClockAccuracy;
-    /// \brief An enumerated integer property. Provides the status of the IEEE 1588 clock.
+    /// \brief An enumerated integer property. This feature is deprecated (See PtpStatus).
     /**
-     *  Provides the status of the IEEE 1588 clock.
+     *  \deprecated
+     *  This feature is deprecated (See PtpStatus). It was used to Provide the status of the IEEE 1588 clock.
      *
      *  The following string values might be valid for this feature:
      *  - \b Initializing (Display string: 'Initializing'): Initializing
@@ -11257,7 +13290,7 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 gevIEEE1588Status;
-    /// \brief A boolean property. Selects the GigE Vision version to control extended status codes for.
+    /// \brief An enumerated integer property. Selects the GigE Vision version to control extended status codes for.
     /**
      *  Selects the GigE Vision version to control extended status codes for.
      *
@@ -11268,7 +13301,7 @@ public:
      *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
-    PropertyIBoolean gevGVCPExtendedStatusCodesSelector;
+    PropertyI64 gevGVCPExtendedStatusCodesSelector;
     /// \brief A boolean property. Enables the generation of extended status codes.
     /**
      *  Enables the generation of extended status codes.
@@ -11279,10 +13312,10 @@ public:
      *  Enables the generation of PENDING_ACK.
      */
     PropertyIBoolean gevGVCPPendingAck;
-    /// \brief A boolean property. This feature is deprecated (See DeviceHeartbeatMode).
+    /// \brief A boolean property. This feature is deprecated (See DeviceLinkHeartbeatMode).
     /**
      *  \deprecated
-     *  This feature is deprecated (See DeviceHeartbeatMode). It was used to disable the GVCP heartbeat.
+     *  This feature is deprecated (See DeviceLinkHeartbeatMode). It was used to disable the GVCP heartbeat.
      */
     PropertyIBoolean gevGVCPHeartbeatDisable;
     /// \brief An integer property. This feature is deprecated (See DeviceLinkCommandTimeout).
@@ -11655,6 +13688,53 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 cxpLinkConfiguration;
+    /// \brief A boolean property. Enable or disable the link sharing functionality of the device.
+    /**
+     *  Enable or disable the link sharing functionality of the device.
+     */
+    PropertyIBoolean cxpLinkSharingEnable;
+    /// \brief An integer property. Index of the sub device used in the Link Sharing.
+    /**
+     *  Index of the sub device used in the Link Sharing.
+     */
+    PropertyI64 cxpLinkSharingSubDeviceSelector;
+    /// \brief An enumerated integer property. This feature provides the type of sub device.
+    /**
+     *  This feature provides the type of sub device.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Master (Display string: 'Master'): The sub device is the master.
+     *  - \b Slave (Display string: 'Slave'): The sub device is a slave.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 cxpLinkSharingSubDeviceType;
+    /// \brief An integer property. This feature provides the number of horizontal stripes that the device implements.
+    /**
+     *  This feature provides the number of horizontal stripes that the device implements.
+     */
+    PropertyI64 cxpLinkSharingHorizontalStripeCount;
+    /// \brief An integer property. This feature provides the number of vertical stripes that the device implements.
+    /**
+     *  This feature provides the number of vertical stripes that the device implements.
+     */
+    PropertyI64 cxpLinkSharingVerticalStripeCount;
+    /// \brief An integer property. This feature provides the number of pixel overlap in the horizontal stripes that the device implements.
+    /**
+     *  This feature provides the number of pixel overlap in the horizontal stripes that the device implements.
+     */
+    PropertyI64 cxpLinkSharingHorizontalOverlap;
+    /// \brief An integer property. This feature provides the number of pixel overlap in the vertical stripes that the device implements.
+    /**
+     *  This feature provides the number of pixel overlap in the vertical stripes that the device implements.
+     */
+    PropertyI64 cxpLinkSharingVerticalOverlap;
+    /// \brief An integer property. This feature provides the duplicate count in striped system.
+    /**
+     *  This feature provides the duplicate count in striped system. A non-zero value sets the number of duplicate images sent to sub-Devices.
+     */
+    PropertyI64 cxpLinkSharingDuplicateStripe;
     /// \brief An integer property. Selects the CoaXPress physical connection to control.
     /**
      *  Selects the CoaXPress physical connection to control.
@@ -11677,11 +13757,62 @@ public:
      *  Reports the current connection error count for test packets received by the device on the connection selected by CxpConnectionSelector.
      */
     PropertyI64 cxpConnectionTestErrorCount;
-    /// \brief An integer property. Reports the current count for test packets received by the device on the connection selected by CxpConnectionSelector.
+    /// \brief An enumerated integer property. Selects which one of the send or receive features to control.
     /**
-     *  Reports the current count for test packets received by the device on the connection selected by CxpConnectionSelector.
+     *  Selects which one of the send or receive features to control.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b Send (Display string: 'Send'): Send
+     *  - \b Receive (Display string: 'Receive'): Receive
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 cxpSendReceiveSelector;
+    /// \brief An integer property. Reports the current count for the test packets on the connection selected by CxpConnectionSelector.
+    /**
+     *  Reports the current count for the test packets on the connection selected by CxpConnectionSelector.
      */
     PropertyI64 cxpConnectionTestPacketCount;
+    /// \brief An enumerated integer property. Selects which Cxp Error Counter to read or reset.
+    /**
+     *  Selects which Cxp Error Counter to read or reset.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b ConnectionLockLoss (Display string: 'Connection Lock Loss'): Counts the number of times the lock was lost.
+     *  - \b Encoding (Display string: 'Encoding'): Counts the number of protocol encoding errors detected.
+     *  - \b StreamDataPacketCrc (Display string: 'Stream Data Packet Crc'): Counts the number of CRC errors detected in a data packet. This counter is only available on the CoaXpress host.
+     *  - \b ControlPacketCrc (Display string: 'Control Packet Crc'): Counts the number of CRC errors detected in a control packet.
+     *  - \b EventPacketCrc (Display string: 'Event Packet Crc'): Counts the number of CRC errors detected in an event packet.
+     *  - \b DuplicatedCharactersCorrected (Display string: 'Duplicated Characters Corrected'): Counts the number of corrected errors in the duplicated characters in CXP control words.
+     *  - \b DuplicatedCharactersUncorrected (Display string: 'Duplicated Characters Uncorrected'): Counts the number of uncorrected errors in the duplicated characters in CXP control words.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 cxpErrorCounterSelector;
+    /// \brief A method object. Resets the selected Cxp Error Counter on the connection selected by CxpConnectionSelector.
+    /**
+     *  Resets the selected Cxp Error Counter on the connection selected by CxpConnectionSelector. The counter starts counting events immediately after the reset.
+     */
+    Method cxpErrorCounterReset;
+    /// \brief An integer property. Reads the current value of the selected Cxp Error Counter on the connection selected by CxpConnectionSelector.
+    /**
+     *  Reads the current value of the selected Cxp Error Counter on the connection selected by CxpConnectionSelector.
+     */
+    PropertyI64 cxpErrorCounterValue;
+    /// \brief An enumerated integer property. Returns the current status of the selected Cxp Error Counter on the connection selected by CxpConnectionSelector.
+    /**
+     *  Returns the current status of the selected Cxp Error Counter on the connection selected by CxpConnectionSelector.
+     *
+     *  The following string values might be valid for this feature:
+     *  - \b CounterActive (Display string: 'Counter Active'): The counter is actively counting errors.
+     *  - \b CounterOverflow (Display string: 'Counter Overflow'): The counter exceeded its maximum error count.
+     *
+     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
+     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
+     */
+    PropertyI64 cxpErrorCounterStatus;
     /// \brief A method object. Activate automatic control of the Power over CoaXPress (PoCXP) for the Link.
     /**
      *  Activate automatic control of the Power over CoaXPress (PoCXP) for the Link.
@@ -11710,6 +13841,11 @@ public:
      *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
      */
     PropertyI64 cxpPoCxpStatus;
+    /// \brief A boolean property. Specifies if a FrameStart trigger also triggers the first LineStart at the same time.
+    /**
+     *  Specifies if a FrameStart trigger also triggers the first LineStart at the same time.
+     */
+    PropertyIBoolean cxpFirstLineTriggerWithFrameStart;
     /// \brief An enumerated integer property. Selects the bandwidth control for the selected stream channel.
     /**
      *  This enumeration selects the bandwidth control for the selected stream channel.
@@ -11728,7 +13864,7 @@ public:
      */
     PropertyI64 mvGevSCBW;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
     /// \brief Calculates the effective number of payload packets (not including leader and trailer) per block of data (e.g. an image) for a GigE Vision data stream when transferring the payload type \a image.
     /**
@@ -12012,7 +14148,7 @@ public:
         locator.bindComponent( mvStepperStopAll, "mvStepperStopAll@i" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A boolean property. Controls whether the serial interface is enabled or not.
     /**
@@ -12090,9 +14226,9 @@ public:
      *  Buffer for exchanging ASCII data over the serial interface. This buffer uses the same memory as 'mvSerialInterfaceBinaryBuffer'.
      */
     PropertyS mvSerialInterfaceASCIIBuffer;
-    /// \brief A string property. Buffer for exchanging ASCII data over the serial interface. This buffer uses the same memory as 'mvSerialInterfaceASCIIBuffer'.
+    /// \brief A string property. Buffer for exchanging binary data over the serial interface. This buffer uses the same memory as 'mvSerialInterfaceASCIIBuffer'.
     /**
-     *  Buffer for exchanging ASCII data over the serial interface. This buffer uses the same memory as 'mvSerialInterfaceASCIIBuffer'.
+     *  Buffer for exchanging binary data over the serial interface. This buffer uses the same memory as 'mvSerialInterfaceASCIIBuffer'.
      */
     PropertyS mvSerialInterfaceBinaryBuffer;
     /// \brief An integer property. Length of data to write.
@@ -12284,14 +14420,14 @@ public:
      */
     Method mvStepperStopAll;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Contains features to control the i2c interface.
+/// \brief Contains features to control the I2C interface.
 /**
- *  Contains features to control the i2c interface.
+ *  Contains features to control the I2C interface.
  * \ingroup GenICamInterfaceDevice
  */
 class mvI2cInterfaceControl
@@ -12308,6 +14444,7 @@ public:
         /// settings can be created with the function
         /// <b>mvIMPACT::acquire::FunctionInterface::createSetting</b>
         const std::string& settingName = "Base" ) :
+        mvI2cInterfaceEnable(),
         mvI2cInterfaceDeviceAddress(),
         mvI2cInterfaceDeviceSubAddress(),
         mvI2cInterfaceASCIIBuffer(),
@@ -12316,11 +14453,11 @@ public:
         mvI2cInterfaceBytesToRead(),
         mvI2cInterfaceRead(),
         mvI2cInterfaceWrite(),
-        mvI2cInterfaceFastByteWriteAndSend(),
         mvI2cInterfaceSpeed()
     {
         pDev->validateInterfaceLayout( dilGenICam );
         mvIMPACT::acquire::DeviceComponentLocator locator( pDev, mvIMPACT::acquire::dltSetting, settingName );
+        locator.bindComponent( mvI2cInterfaceEnable, "mvI2cInterfaceEnable" );
         locator.bindComponent( mvI2cInterfaceDeviceAddress, "mvI2cInterfaceDeviceAddress" );
         locator.bindComponent( mvI2cInterfaceDeviceSubAddress, "mvI2cInterfaceDeviceSubAddress" );
         locator.bindComponent( mvI2cInterfaceASCIIBuffer, "mvI2cInterfaceASCIIBuffer" );
@@ -12329,60 +14466,59 @@ public:
         locator.bindComponent( mvI2cInterfaceBytesToRead, "mvI2cInterfaceBytesToRead" );
         locator.bindComponent( mvI2cInterfaceRead, "mvI2cInterfaceRead@i" );
         locator.bindComponent( mvI2cInterfaceWrite, "mvI2cInterfaceWrite@i" );
-        locator.bindComponent( mvI2cInterfaceFastByteWriteAndSend, "mvI2cInterfaceFastByteWriteAndSend" );
         locator.bindComponent( mvI2cInterfaceSpeed, "mvI2cInterfaceSpeed" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
-    /// \brief An integer property. I2c device address, must be even.
+    /// \brief A boolean property. Controls whether the I2C interface is enabled or not.
     /**
-     *  I2c device address, must be even.
+     *  Controls whether the I2C interface is enabled or not.
+     */
+    PropertyIBoolean mvI2cInterfaceEnable;
+    /// \brief An integer property. I2C device address, must be even.
+    /**
+     *  I2C device address, must be even, blocked addresses: 0x20, 0x30 (Test), 0x32, 0x34, 0x36, 0x3E, 0x60, 0x62, 0x64, 0x66, 0x6E, 0x90, 0x92, 0xA0, 0xA2, 0xA4, 0xA6, 0xAE, 0xB0, 0xB2, 0xB4, 0xB6, 0xB8, 0xBA, 0xBC, 0xBE.
      */
     PropertyI64 mvI2cInterfaceDeviceAddress;
-    /// \brief An integer property. I2c device sub address ignored when set to -1, 2 byte address if bit 0x10000 is set, else 1 Byte.
+    /// \brief An integer property. I2C device sub address ignored when set to -1, 2 byte address if bit 0x10000 is set, else 1 Byte.
     /**
-     *  I2c device sub address ignored when set to -1, 2 byte address if bit 0x10000 is set, else 1 Byte.
+     *  I2C device sub address ignored when set to -1, 2 byte address if bit 0x10000 is set, else 1 Byte.
      */
     PropertyI64 mvI2cInterfaceDeviceSubAddress;
-    /// \brief A string property. Buffer for exchanging ASCII data over the i2c interface. This buffer uses the same memory as 'mvI2cInterfaceBinaryBuffer'.
+    /// \brief A string property. Buffer for exchanging ASCII data over the I2C interface. This buffer uses the same memory as 'mvI2cInterfaceBinaryBuffer'.
     /**
-     *  Buffer for exchanging ASCII data over the i2c interface. This buffer uses the same memory as 'mvI2cInterfaceBinaryBuffer'.
+     *  Buffer for exchanging ASCII data over the I2C interface. This buffer uses the same memory as 'mvI2cInterfaceBinaryBuffer'.
      */
     PropertyS mvI2cInterfaceASCIIBuffer;
-    /// \brief A string property. Buffer for exchanging ASCII data over the i2c interface. This buffer uses the same memory as 'mvI2cInterfaceASCIIBuffer'.
+    /// \brief A string property. Buffer for exchanging binary data over the I2C interface. This buffer uses the same memory as 'mvI2cInterfaceASCIIBuffer'.
     /**
-     *  Buffer for exchanging ASCII data over the i2c interface. This buffer uses the same memory as 'mvI2cInterfaceASCIIBuffer'.
+     *  Buffer for exchanging binary data over the I2C interface. This buffer uses the same memory as 'mvI2cInterfaceASCIIBuffer'.
      */
     PropertyS mvI2cInterfaceBinaryBuffer;
-    /// \brief An integer property. Number of mvI2cInterfaceBuffer bytes to write to i2c device.
+    /// \brief An integer property. Number of bytes from mvI2cInterfaceBuffer to write to I2C device.
     /**
-     *  Number of mvI2cInterfaceBuffer bytes to write to i2c device.
+     *  Number of bytes from mvI2cInterfaceBuffer to write to I2C device.
      */
     PropertyI64 mvI2cInterfaceBytesToWrite;
-    /// \brief An integer property. Number of bytes to read from i2c device.
+    /// \brief An integer property. Number of bytes to read from I2C device.
     /**
-     *  Number of bytes to read from i2c device.
+     *  Number of bytes to read from I2C device.
      */
     PropertyI64 mvI2cInterfaceBytesToRead;
-    /// \brief A method object. Command to read data from i2c device.
+    /// \brief A method object. Command to read data from I2C device.
     /**
-     *  Command to read data from i2c device.
+     *  Command to read data from I2C device.
      */
     Method mvI2cInterfaceRead;
-    /// \brief A method object. Command to write data to i2c device
+    /// \brief A method object. Command to write data to I2C device
     /**
-     *  Command to write data to i2c device
+     *  Command to write data to I2C device
      */
     Method mvI2cInterfaceWrite;
-    /// \brief An integer property. Write immediately byte to mvI2cInterfaceDeviceAddress with optional mvI2cInterfaceDeviceSubAddress.
+    /// \brief An enumerated integer property. I2C interface clock frequency.
     /**
-     *  Write immediately byte to mvI2cInterfaceDeviceAddress with optional mvI2cInterfaceDeviceSubAddress.
-     */
-    PropertyI64 mvI2cInterfaceFastByteWriteAndSend;
-    /// \brief An enumerated integer property. I2c interface clock frequency.
-    /**
-     *  I2c interface clock frequency.
+     *  I2C interface clock frequency.
      *
      *  The following string values might be valid for this feature:
      *  - \b kHz_100 (Display string: '100 kHz'): default speed
@@ -12393,7 +14529,7 @@ public:
      */
     PropertyI64 mvI2cInterfaceSpeed;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -12429,7 +14565,12 @@ public:
         mvMSeqRegisterValue(),
         mvStateSumRegister(),
         mvStat2SumRegister(),
+        mvStat3SumRegister(),
+        mvStat4SumRegister(),
+        mvStat5SumRegister(),
+        mvStat6SumRegister(),
         mvStateSumRegisterReset(),
+        mvStateSumRegister3Reset(),
         mvLVDSSelection(),
         mvLVDSAlignment(),
         mvRunTest(),
@@ -12439,9 +14580,7 @@ public:
         mvCustomCommandInterpreterVersionMajor(),
         mvCustomCommandInterpreterVersionMinor(),
         mvCustomCommandBuffer(),
-        mvImxSensorType(),
         mvImxSensorIdOne(),
-        mvImxGroup(),
         mvImxSensorIdTwo()
     {
         pDev->validateInterfaceLayout( dilGenICam );
@@ -12459,7 +14598,12 @@ public:
         locator.bindComponent( mvMSeqRegisterValue, "mvMSeqRegisterValue" );
         locator.bindComponent( mvStateSumRegister, "mvStateSumRegister" );
         locator.bindComponent( mvStat2SumRegister, "mvStat2SumRegister" );
+        locator.bindComponent( mvStat3SumRegister, "mvStat3SumRegister" );
+        locator.bindComponent( mvStat4SumRegister, "mvStat4SumRegister" );
+        locator.bindComponent( mvStat5SumRegister, "mvStat5SumRegister" );
+        locator.bindComponent( mvStat6SumRegister, "mvStat6SumRegister" );
         locator.bindComponent( mvStateSumRegisterReset, "mvStateSumRegisterReset@i" );
+        locator.bindComponent( mvStateSumRegister3Reset, "mvStateSumRegister3Reset@i" );
         locator.bindComponent( mvLVDSSelection, "mvLVDSSelection" );
         locator.bindComponent( mvLVDSAlignment, "mvLVDSAlignment" );
         locator.bindComponent( mvRunTest, "mvRunTest@i" );
@@ -12469,13 +14613,11 @@ public:
         locator.bindComponent( mvCustomCommandInterpreterVersionMajor, "mvCustomCommandInterpreterVersionMajor" );
         locator.bindComponent( mvCustomCommandInterpreterVersionMinor, "mvCustomCommandInterpreterVersionMinor" );
         locator.bindComponent( mvCustomCommandBuffer, "mvCustomCommandBuffer" );
-        locator.bindComponent( mvImxSensorType, "mvImxSensorType" );
         locator.bindComponent( mvImxSensorIdOne, "mvImxSensorIdOne" );
-        locator.bindComponent( mvImxGroup, "mvImxGroup" );
         locator.bindComponent( mvImxSensorIdTwo, "mvImxSensorIdTwo" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property. Custom text.
     /**
@@ -12532,11 +14674,36 @@ public:
      *  Indicates several states besides some other info.
      */
     PropertyI64 mvStat2SumRegister;
+    /// \brief An integer property. Indicates several states besides some other info.
+    /**
+     *  Indicates several states besides some other info.
+     */
+    PropertyI64 mvStat3SumRegister;
+    /// \brief An integer property. Indicates several states besides some other info.
+    /**
+     *  Indicates several states besides some other info.
+     */
+    PropertyI64 mvStat4SumRegister;
+    /// \brief An integer property. Indicates several states besides some other info.
+    /**
+     *  Indicates several states besides some other info.
+     */
+    PropertyI64 mvStat5SumRegister;
+    /// \brief An integer property. Indicates several states besides some other info.
+    /**
+     *  Indicates several states besides some other info.
+     */
+    PropertyI64 mvStat6SumRegister;
     /// \brief A method object. Resets the state register.
     /**
      *  Resets the state register.
      */
     Method mvStateSumRegisterReset;
+    /// \brief A method object. Resets the state register.
+    /**
+     *  Resets the state register.
+     */
+    Method mvStateSumRegister3Reset;
     /// \brief An integer property. Selector for LVDS lanes.
     /**
      *  Selector for LVDS lanes.
@@ -12582,63 +14749,18 @@ public:
      *  Command buffer for custom commands.
      */
     PropertyS mvCustomCommandBuffer;
-    /// \brief An enumerated integer property. IMX sensor type from registers.
-    /**
-     *  IMX sensor type from registers.
-     *
-     *  The following string values might be valid for this feature:
-     *  - \b mvUnknown (Display string: 'mv Unknown'): unknown
-     *  - \b IMX250G (Display string: 'IMX 250 G'): IMX250 Grey
-     *  - \b IMX250C (Display string: 'IMX 250 C'): IMX250 Color
-     *  - \b IMX252G (Display string: 'IMX 252 G'): IMX252 Grey
-     *  - \b IMX252C (Display string: 'IMX 252 C'): IMX252 Color
-     *  - \b IMX253G (Display string: 'IMX 253 G'): IMX253 Grey
-     *  - \b IMX253C (Display string: 'IMX 253 C'): IMX253 Color
-     *  - \b IMX255G (Display string: 'IMX 255 G'): IMX255 Grey
-     *  - \b IMX255C (Display string: 'IMX 255 C'): IMX255 Color
-     *  - \b IMX264G (Display string: 'IMX 264 G'): IMX264 Grey
-     *  - \b IMX264C (Display string: 'IMX 264 C'): IMX264 Color
-     *  - \b IMX265G (Display string: 'IMX 265 G'): IMX265 Grey
-     *  - \b IMX265C (Display string: 'IMX 265 C'): IMX265 Color
-     *  - \b IMX267G (Display string: 'IMX 267 G'): IMX267 Grey
-     *  - \b IMX267C (Display string: 'IMX 267 C'): IMX267 Color
-     *  - \b IMX273G (Display string: 'IMX 273 G'): IMX273 Grey
-     *  - \b IMX273C (Display string: 'IMX 273 C'): IMX273 Color
-     *  - \b IMX287G (Display string: 'IMX 287 G'): IMX287 Grey
-     *  - \b IMX287C (Display string: 'IMX 287 C'): IMX287 Color
-     *  - \b IMX304G (Display string: 'IMX 304 G'): IMX304 Grey
-     *  - \b IMX304C (Display string: 'IMX 304 C'): IMX304 Color
-     *
-     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
-     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
-     */
-    PropertyI64 mvImxSensorType;
     /// \brief An integer property. IMX SensorID1
     /**
      *  IMX SensorID1
      */
     PropertyI64 mvImxSensorIdOne;
-    /// \brief An enumerated integer property. IMX Group
-    /**
-     *  IMX Group
-     *
-     *  The following string values might be valid for this feature:
-     *  - \b mvUnknown (Display string: 'mv Unknown'): unknown
-     *  - \b TypeOneGroup (Display string: 'Type One Group'): Type 1/1 Group: IMX253/255/267/304/305
-     *  - \b TypeTwoThirdsGroup (Display string: 'Type Two Thirds Group'): Type 2/3 Group: IMX250/252/264/265
-     *  - \b TypeOneThirdGroup (Display string: 'Type One Third Group'): Type 1/3 Group: IMX273/287/296/297
-     *
-     *  \note Depending on the device some of these values might not be supported and especially when working with third party devices there might be custom values which are not listed here.
-     *  To get a complete and reliable list of supported values at runtime an application should therefore call <b>mvIMPACT::acquire::EnumPropertyI::getTranslationDictStrings()</b> or one of the other functions dealing with translation dictionaries for enumerated properties.
-     */
-    PropertyI64 mvImxGroup;
     /// \brief An integer property. IMX SensorID2
     /**
      *  IMX SensorID2
      */
     PropertyI64 mvImxSensorIdTwo;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -12708,7 +14830,7 @@ public:
         locator.bindComponent( mvLogicGateORTermSrc1, "mvLogicGateORTermSrc1" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects the AND gate to configure.
     /**
@@ -13078,7 +15200,7 @@ public:
      */
     PropertyI64 mvLogicGateORTermSrc1;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13114,7 +15236,7 @@ public:
         locator.bindComponent( mvCurrent, "mvCurrent" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Selects the current source to configure.
     /**
@@ -13136,7 +15258,7 @@ public:
      */
     PropertyI64 mvCurrent;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13186,7 +15308,7 @@ public:
         locator.bindComponent( mvDriveLevel, "mvDriveLevel" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Sets the iris type.
     /**
@@ -13257,7 +15379,7 @@ public:
      */
     PropertyI64 mvDriveLevel;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13301,7 +15423,7 @@ public:
         locator.bindComponent( mvFFCAutoLoadMode, "mvFFCAutoLoadMode" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A boolean property. Enables the Flat Field Correction.
     /**
@@ -13342,7 +15464,7 @@ public:
      */
     PropertyI64 mvFFCAutoLoadMode;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13388,7 +15510,7 @@ public:
         locator.bindComponent( mvFrameAverageFrameCount, "mvFrameAverageFrameCount" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief An enumerated integer property. Sets the frame average operating mode.
     /**
@@ -13441,7 +15563,7 @@ public:
      */
     PropertyI64 mvFrameAverageFrameCount;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13493,7 +15615,7 @@ public:
         locator.bindComponent( mvHDRAdaptiveLocalToneMappingEnable, "mvHDRAdaptiveLocalToneMappingEnable" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A boolean property. Enables the High Dynamic Range Feature.
     /**
@@ -13581,7 +15703,7 @@ public:
      */
     PropertyIBoolean mvHDRAdaptiveLocalToneMappingEnable;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -13594,11 +15716,55 @@ public:
 class SystemModule : public mvIMPACT::acquire::ComponentCollection
 //-----------------------------------------------------------------------------
 {
+private:
+    void init( mvIMPACT::acquire::ComponentLocator& locator )
+    {
+        locator.bindComponent( TLVendorName, "TLVendorName" );
+        locator.bindComponent( TLModelName, "TLModelName" );
+        locator.bindComponent( TLID, "TLID" );
+        locator.bindComponent( TLVersion, "TLVersion" );
+        locator.bindComponent( TLFileName, "TLFileName" );
+        locator.bindComponent( TLDisplayName, "TLDisplayName" );
+        locator.bindComponent( TLPath, "TLPath" );
+        locator.bindComponent( TLType, "TLType" );
+        locator.bindComponent( genTLVersionMajor, "GenTLVersionMajor" );
+        locator.bindComponent( genTLVersionMinor, "GenTLVersionMinor" );
+        locator.bindComponent( genTLSFNCVersionMajor, "GenTLSFNCVersionMajor" );
+        locator.bindComponent( genTLSFNCVersionMinor, "GenTLSFNCVersionMinor" );
+        locator.bindComponent( genTLSFNCVersionSubMinor, "GenTLSFNCVersionSubMinor" );
+        locator.bindComponent( genCPVersionMajor, "GenCPVersionMajor" );
+        locator.bindComponent( genCPVersionMinor, "GenCPVersionMinor" );
+        locator.bindComponent( gevVersionMajor, "GevVersionMajor" );
+        locator.bindComponent( gevVersionMinor, "GevVersionMinor" );
+        locator.bindComponent( u3vVersionMajor, "U3vVersionMajor" );
+        locator.bindComponent( u3vVersionMinor, "U3vVersionMinor" );
+        locator.bindComponent( mvGevChannelDummyPacketSendEnable, "mvGevChannelDummyPacketSendEnable" );
+        locator.bindComponent( mvGevChannelDummyPacketSendInterval, "mvGevChannelDummyPacketSendInterval" );
+        locator.bindComponent( mvInterfaceTechnologyToIgnoreSelector, "mvInterfaceTechnologyToIgnoreSelector" );
+        locator.bindComponent( mvInterfaceTechnologyToIgnoreEnable, "mvInterfaceTechnologyToIgnoreEnable" );
+        locator.bindComponent( interfaceUpdateList, "InterfaceUpdateList@i" );
+        locator.bindComponent( interfaceUpdateTimeout, "InterfaceUpdateTimeout" );
+        locator.bindComponent( interfaceSelector, "InterfaceSelector" );
+        locator.bindComponent( interfaceID, "InterfaceID" );
+        locator.bindComponent( interfaceDisplayName, "InterfaceDisplayName" );
+        locator.bindComponent( interfaceType, "InterfaceType" );
+        locator.bindComponent( gevInterfaceMACAddress, "GevInterfaceMACAddress" );
+        locator.bindComponent( gevInterfaceDefaultIPAddress, "GevInterfaceDefaultIPAddress" );
+        locator.bindComponent( gevInterfaceDefaultSubnetMask, "GevInterfaceDefaultSubnetMask" );
+        locator.bindComponent( gevInterfaceDefaultGateway, "GevInterfaceDefaultGateway" );
+        locator.bindComponent( mvGevInterfaceMTU, "mvGevInterfaceMTU" );
+        locator.bindComponent( mvGevInterfaceLinkSpeed, "mvGevInterfaceLinkSpeed" );
+        locator.bindComponent( mvDeviceUpdateListBehaviour, "mvDeviceUpdateListBehaviour" );
+        locator.bindComponent( eventSelector, "EventSelector" );
+        locator.bindComponent( eventNotification, "EventNotification" );
+    }
 public:
     /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::SystemModule</b> object.
     explicit SystemModule(
         /// [in] A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-        mvIMPACT::acquire::Device* pDev ) :
+        mvIMPACT::acquire::Device* pDev,
+        /// [in] The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
+        int64_type index = 0 ) :
         mvIMPACT::acquire::ComponentCollection( INVALID_ID ),
         TLVendorName(),
         TLModelName(),
@@ -13639,53 +15805,33 @@ public:
         eventSelector(),
         eventNotification()
     {
-        mvIMPACT::acquire::ComponentLocator locator( pDev->deviceDriverFeatureList() );
-        locator.bindSearchBase( locator.searchbase_id(), "GenTL/System" );
+        mvIMPACT::acquire::ComponentLocator locator( pDev->deviceDriverFeatureList(), "GenTL" );
+        if( locator.findComponent( "System", 0, 1 ) == INVALID_ID )
+        {
+            std::ostringstream oss;
+            oss << "Producers/Producer" << index << "/System";
+            locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
+        }
+        else if( index == 0 )
+        {
+            locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( "System" ) );
+        }
+        else
+        {
+            std::ostringstream oss;
+            oss << "Producers/Producer" << index - 1 << "/System";
+            locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
+        }
         m_hRoot = locator.searchbase_id();
-        locator.bindComponent( TLVendorName, "TLVendorName" );
-        locator.bindComponent( TLModelName, "TLModelName" );
-        locator.bindComponent( TLID, "TLID" );
-        locator.bindComponent( TLVersion, "TLVersion" );
-        locator.bindComponent( TLFileName, "TLFileName" );
-        locator.bindComponent( TLDisplayName, "TLDisplayName" );
-        locator.bindComponent( TLPath, "TLPath" );
-        locator.bindComponent( TLType, "TLType" );
-        locator.bindComponent( genTLVersionMajor, "GenTLVersionMajor" );
-        locator.bindComponent( genTLVersionMinor, "GenTLVersionMinor" );
-        locator.bindComponent( genTLSFNCVersionMajor, "GenTLSFNCVersionMajor" );
-        locator.bindComponent( genTLSFNCVersionMinor, "GenTLSFNCVersionMinor" );
-        locator.bindComponent( genTLSFNCVersionSubMinor, "GenTLSFNCVersionSubMinor" );
-        locator.bindComponent( genCPVersionMajor, "GenCPVersionMajor" );
-        locator.bindComponent( genCPVersionMinor, "GenCPVersionMinor" );
-        locator.bindComponent( gevVersionMajor, "GevVersionMajor" );
-        locator.bindComponent( gevVersionMinor, "GevVersionMinor" );
-        locator.bindComponent( u3vVersionMajor, "U3vVersionMajor" );
-        locator.bindComponent( u3vVersionMinor, "U3vVersionMinor" );
-        locator.bindComponent( mvGevChannelDummyPacketSendEnable, "mvGevChannelDummyPacketSendEnable" );
-        locator.bindComponent( mvGevChannelDummyPacketSendInterval, "mvGevChannelDummyPacketSendInterval" );
-        locator.bindComponent( mvInterfaceTechnologyToIgnoreSelector, "mvInterfaceTechnologyToIgnoreSelector" );
-        locator.bindComponent( mvInterfaceTechnologyToIgnoreEnable, "mvInterfaceTechnologyToIgnoreEnable" );
-        locator.bindComponent( interfaceUpdateList, "InterfaceUpdateList@i" );
-        locator.bindComponent( interfaceUpdateTimeout, "InterfaceUpdateTimeout" );
-        locator.bindComponent( interfaceSelector, "InterfaceSelector" );
-        locator.bindComponent( interfaceID, "InterfaceID" );
-        locator.bindComponent( interfaceDisplayName, "InterfaceDisplayName" );
-        locator.bindComponent( interfaceType, "InterfaceType" );
-        locator.bindComponent( gevInterfaceMACAddress, "GevInterfaceMACAddress" );
-        locator.bindComponent( gevInterfaceDefaultIPAddress, "GevInterfaceDefaultIPAddress" );
-        locator.bindComponent( gevInterfaceDefaultSubnetMask, "GevInterfaceDefaultSubnetMask" );
-        locator.bindComponent( gevInterfaceDefaultGateway, "GevInterfaceDefaultGateway" );
-        locator.bindComponent( mvGevInterfaceMTU, "mvGevInterfaceMTU" );
-        locator.bindComponent( mvGevInterfaceLinkSpeed, "mvGevInterfaceLinkSpeed" );
-        locator.bindComponent( mvDeviceUpdateListBehaviour, "mvDeviceUpdateListBehaviour" );
-        locator.bindComponent( eventSelector, "EventSelector" );
-        locator.bindComponent( eventNotification, "EventNotification" );
+        init( locator );
     }
     /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::SystemModule</b> object.
     /**
      *  \since 2.17.0
      */
-    explicit SystemModule( ) :
+    explicit SystemModule(
+        /// [in] The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
+        int64_type index = 0 ) :
         mvIMPACT::acquire::ComponentCollection( INVALID_ID ),
         TLVendorName(),
         TLModelName(),
@@ -13732,50 +15878,28 @@ public:
         {
             ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, "Couldn't find list 'mvGenTLConsumer'(type: dmltDeviceDriverLib)" );
         }
-        mvIMPACT::acquire::ComponentLocator locator( hList );
-        locator.bindSearchBase( locator.searchbase_id(), "GenTL/System" );
+        mvIMPACT::acquire::ComponentLocator locator( hList, "GenTL" );
+        if( locator.findComponent( "System", 0, 1 ) == INVALID_ID )
+        {
+            std::ostringstream oss;
+            oss << "Producers/Producer" << index << "/System";
+            locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
+        }
+        else if( index == 0 )
+        {
+            locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( "System" ) );
+        }
+        else
+        {
+            std::ostringstream oss;
+            oss << "Producers/Producer" << index - 1 << "/System";
+            locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
+        }
         m_hRoot = locator.searchbase_id();
-        locator.bindComponent( TLVendorName, "TLVendorName" );
-        locator.bindComponent( TLModelName, "TLModelName" );
-        locator.bindComponent( TLID, "TLID" );
-        locator.bindComponent( TLVersion, "TLVersion" );
-        locator.bindComponent( TLFileName, "TLFileName" );
-        locator.bindComponent( TLDisplayName, "TLDisplayName" );
-        locator.bindComponent( TLPath, "TLPath" );
-        locator.bindComponent( TLType, "TLType" );
-        locator.bindComponent( genTLVersionMajor, "GenTLVersionMajor" );
-        locator.bindComponent( genTLVersionMinor, "GenTLVersionMinor" );
-        locator.bindComponent( genTLSFNCVersionMajor, "GenTLSFNCVersionMajor" );
-        locator.bindComponent( genTLSFNCVersionMinor, "GenTLSFNCVersionMinor" );
-        locator.bindComponent( genTLSFNCVersionSubMinor, "GenTLSFNCVersionSubMinor" );
-        locator.bindComponent( genCPVersionMajor, "GenCPVersionMajor" );
-        locator.bindComponent( genCPVersionMinor, "GenCPVersionMinor" );
-        locator.bindComponent( gevVersionMajor, "GevVersionMajor" );
-        locator.bindComponent( gevVersionMinor, "GevVersionMinor" );
-        locator.bindComponent( u3vVersionMajor, "U3vVersionMajor" );
-        locator.bindComponent( u3vVersionMinor, "U3vVersionMinor" );
-        locator.bindComponent( mvGevChannelDummyPacketSendEnable, "mvGevChannelDummyPacketSendEnable" );
-        locator.bindComponent( mvGevChannelDummyPacketSendInterval, "mvGevChannelDummyPacketSendInterval" );
-        locator.bindComponent( mvInterfaceTechnologyToIgnoreSelector, "mvInterfaceTechnologyToIgnoreSelector" );
-        locator.bindComponent( mvInterfaceTechnologyToIgnoreEnable, "mvInterfaceTechnologyToIgnoreEnable" );
-        locator.bindComponent( interfaceUpdateList, "InterfaceUpdateList@i" );
-        locator.bindComponent( interfaceUpdateTimeout, "InterfaceUpdateTimeout" );
-        locator.bindComponent( interfaceSelector, "InterfaceSelector" );
-        locator.bindComponent( interfaceID, "InterfaceID" );
-        locator.bindComponent( interfaceDisplayName, "InterfaceDisplayName" );
-        locator.bindComponent( interfaceType, "InterfaceType" );
-        locator.bindComponent( gevInterfaceMACAddress, "GevInterfaceMACAddress" );
-        locator.bindComponent( gevInterfaceDefaultIPAddress, "GevInterfaceDefaultIPAddress" );
-        locator.bindComponent( gevInterfaceDefaultSubnetMask, "GevInterfaceDefaultSubnetMask" );
-        locator.bindComponent( gevInterfaceDefaultGateway, "GevInterfaceDefaultGateway" );
-        locator.bindComponent( mvGevInterfaceMTU, "mvGevInterfaceMTU" );
-        locator.bindComponent( mvGevInterfaceLinkSpeed, "mvGevInterfaceLinkSpeed" );
-        locator.bindComponent( mvDeviceUpdateListBehaviour, "mvDeviceUpdateListBehaviour" );
-        locator.bindComponent( eventSelector, "EventSelector" );
-        locator.bindComponent( eventNotification, "EventNotification" );
+        init( locator );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property. Indicates the name of the transport layer vendor.
     /**
@@ -14070,8 +16194,8 @@ public:
      *  - \b LinkTrigger\#2\# (Display string: 'Link Trigger \#2\#'): The event will be generated when a Rising Edge is detected on the LinkTrigger \#2\#.
      *  - \b LinkSpeedChange (Display string: 'Link Speed Change'): The event will be generated when the link speed has changed.
      *  - \b ActionLate (Display string: 'Action Late'): The event will be generated when a valid scheduled action command is received and is scheduled to be executed at a time that is already past.
-     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b Error (Display string: 'Error'): Device just detected an error during the active Acquisition.
+     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b PrimaryApplicationSwitch (Display string: 'Primary Application Switch'): The event will be generated when a primary application switchover has been granted (GigE Vision Specific).
      *  - \b Counter2Start (Display string: 'Counter 2 Start'): The event will be generated when counter 2 starts counting.
      *  - \b Counter3Start (Display string: 'Counter 3 Start'): The event will be generated when counter 3 starts counting.
@@ -14129,6 +16253,34 @@ public:
      *  - \b Timer13End (Display string: 'Timer 13 End'): The event will be generated when Timer 13 ends counting.
      *  - \b Timer14End (Display string: 'Timer 14 End'): The event will be generated when Timer 14 ends counting.
      *  - \b Timer15End (Display string: 'Timer 15 End'): The event will be generated when Timer 15 ends counting.
+     *  - \b Encoder2Stopped (Display string: 'Encoder 2 Stopped'): The event will be generated when the Encoder 2 stops for longer than EncoderTimeout.
+     *  - \b Encoder3Stopped (Display string: 'Encoder 3 Stopped'): The event will be generated when the Encoder 3 stops for longer than EncoderTimeout.
+     *  - \b Encoder4Stopped (Display string: 'Encoder 4 Stopped'): The event will be generated when the Encoder 4 stops for longer than EncoderTimeout.
+     *  - \b Encoder5Stopped (Display string: 'Encoder 5 Stopped'): The event will be generated when the Encoder 5 stops for longer than EncoderTimeout.
+     *  - \b Encoder6Stopped (Display string: 'Encoder 6 Stopped'): The event will be generated when the Encoder 6 stops for longer than EncoderTimeout.
+     *  - \b Encoder7Stopped (Display string: 'Encoder 7 Stopped'): The event will be generated when the Encoder 7 stops for longer than EncoderTimeout.
+     *  - \b Encoder8Stopped (Display string: 'Encoder 8 Stopped'): The event will be generated when the Encoder 8 stops for longer than EncoderTimeout.
+     *  - \b Encoder9Stopped (Display string: 'Encoder 9 Stopped'): The event will be generated when the Encoder 9 stops for longer than EncoderTimeout.
+     *  - \b Encoder10Stopped (Display string: 'Encoder 10 Stopped'): The event will be generated when the Encoder 10 stops for longer than EncoderTimeout.
+     *  - \b Encoder11Stopped (Display string: 'Encoder 11 Stopped'): The event will be generated when the Encoder 11 stops for longer than EncoderTimeout.
+     *  - \b Encoder12Stopped (Display string: 'Encoder 12 Stopped'): The event will be generated when the Encoder 12 stops for longer than EncoderTimeout.
+     *  - \b Encoder13Stopped (Display string: 'Encoder 13 Stopped'): The event will be generated when the Encoder 13 stops for longer than EncoderTimeout.
+     *  - \b Encoder14Stopped (Display string: 'Encoder 14 Stopped'): The event will be generated when the Encoder 14 stops for longer than EncoderTimeout.
+     *  - \b Encoder15Stopped (Display string: 'Encoder 15 Stopped'): The event will be generated when the Encoder 15 stops for longer than EncoderTimeout.
+     *  - \b Encoder2Restarted (Display string: 'Encoder 2 Restarted'): The event will be generated when the Encoder 2 restarts moving.
+     *  - \b Encoder3Restarted (Display string: 'Encoder 3 Restarted'): The event will be generated when the Encoder 3 restarts moving.
+     *  - \b Encoder4Restarted (Display string: 'Encoder 4 Restarted'): The event will be generated when the Encoder 4 restarts moving.
+     *  - \b Encoder5Restarted (Display string: 'Encoder 5 Restarted'): The event will be generated when the Encoder 5 restarts moving.
+     *  - \b Encoder6Restarted (Display string: 'Encoder 6 Restarted'): The event will be generated when the Encoder 6 restarts moving.
+     *  - \b Encoder7Restarted (Display string: 'Encoder 7 Restarted'): The event will be generated when the Encoder 7 restarts moving.
+     *  - \b Encoder8Restarted (Display string: 'Encoder 8 Restarted'): The event will be generated when the Encoder 8 restarts moving.
+     *  - \b Encoder9Restarted (Display string: 'Encoder 9 Restarted'): The event will be generated when the Encoder 9 restarts moving.
+     *  - \b Encoder10Restarted (Display string: 'Encoder 10 Restarted'): The event will be generated when the Encoder 10 restarts moving.
+     *  - \b Encoder11Restarted (Display string: 'Encoder 11 Restarted'): The event will be generated when the Encoder 11 restarts moving.
+     *  - \b Encoder12Restarted (Display string: 'Encoder 12 Restarted'): The event will be generated when the Encoder 12 restarts moving.
+     *  - \b Encoder13Restarted (Display string: 'Encoder 13 Restarted'): The event will be generated when the Encoder 13 restarts moving.
+     *  - \b Encoder14Restarted (Display string: 'Encoder 14 Restarted'): The event will be generated when the Encoder 14 restarts moving.
+     *  - \b Encoder15Restarted (Display string: 'Encoder 15 Restarted'): The event will be generated when the Encoder 15 restarts moving.
      *  - \b Line2RisingEdge (Display string: 'Line 2 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 2.
      *  - \b Line3RisingEdge (Display string: 'Line 3 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 3.
      *  - \b Line4RisingEdge (Display string: 'Line 4 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 4.
@@ -14171,6 +16323,22 @@ public:
      *  - \b Line13AnyEdge (Display string: 'Line 13 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 13.
      *  - \b Line14AnyEdge (Display string: 'Line 14 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 14.
      *  - \b Line15AnyEdge (Display string: 'Line 15 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 15.
+     *  - \b Link0Trigger (Display string: 'Link 0 Trigger')
+     *  - \b Link1Trigger (Display string: 'Link 1 Trigger')
+     *  - \b Link2Trigger (Display string: 'Link 2 Trigger')
+     *  - \b Link3Trigger (Display string: 'Link 3 Trigger')
+     *  - \b Link4Trigger (Display string: 'Link 4 Trigger')
+     *  - \b Link5Trigger (Display string: 'Link 5 Trigger')
+     *  - \b Link6Trigger (Display string: 'Link 6 Trigger')
+     *  - \b Link7Trigger (Display string: 'Link 7 Trigger')
+     *  - \b Link8Trigger (Display string: 'Link 8 Trigger')
+     *  - \b Link9Trigger (Display string: 'Link 9 Trigger')
+     *  - \b Link10Trigger (Display string: 'Link 10 Trigger')
+     *  - \b Link11Trigger (Display string: 'Link 11 Trigger')
+     *  - \b Link12Trigger (Display string: 'Link 12 Trigger')
+     *  - \b Link13Trigger (Display string: 'Link 13 Trigger')
+     *  - \b Link14Trigger (Display string: 'Link 14 Trigger')
+     *  - \b Link15Trigger (Display string: 'Link 15 Trigger')
      *  - \b InterfaceListChanged (Display string: 'Interface List Changed'): This enumeration value indicates an event that is fired when the list of interfaces has been updated.
      *  - \b InterfaceLost (Display string: 'Interface Lost'): This enumeration value indicates an event that is raised when the interface connection is lost.
      *  - \b DeviceListChanged (Display string: 'Device List Changed'): This enumeration value indicates an event that is fired when the list of devices has been updated.
@@ -14199,8 +16367,66 @@ public:
      */
     PropertyI64 eventNotification;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
+    /// \brief Returns the number of GenTL producers detected in the current system.
+    /**
+     *  This is also the number of system modules detected thus this value - 1 defines the maximum value that can
+     *  be passed as the \a index parameter into a <b>mvIMPACT::acquire::SystemModule</b> constructor.
+     *  \since 2.32.0
+     */
+    static int64_type getSystemModuleCount( void )
+    {
+        int64_type systemModuleCount = 0;
+        HLIST hList = INVALID_ID;
+        if( DMR_FindList( INVALID_ID, "mvGenTLConsumer", dmltDeviceDriverLib, 0, &hList ) == DMR_NO_ERROR )
+        {
+            if( hList != INVALID_ID )
+            {
+                ComponentLocator locator( hList );
+                hList = locator.findComponent( "GenTL", 0, 1 );
+                if( hList != INVALID_ID )
+                {
+                    locator = ComponentLocator( hList );
+                    if( locator.findComponent( "System", 0, 1 ) != INVALID_ID )
+                    {
+                        systemModuleCount++;
+                    }
+                    const HLIST hListProducers = locator.findComponent( "Producers", 0, 1 );
+                    if( hListProducers != INVALID_ID )
+                    {
+                        ComponentList producers( hListProducers );
+                        systemModuleCount += static_cast<int64_type>( producers.size() );
+                    }
+                }
+            }
+        }
+        return systemModuleCount;
+    }
+    /// \brief Returns the number of interfaces associated with this GenTL producer.
+    /**
+     * This should return the same value as when calling <b>mvIMPACT::acquire::GenICam::SystemModule::interfaceSelector::getMaxValue</b>
+     * however there are producers out there that do not implement the \c interfaceSelector property correctly.
+     *
+     *  \since 2.34.0
+     */
+    int64_type getInterfaceModuleCount( void )
+    {
+        int64_type interfaceCount = 0;
+        ComponentLocator locator( Component( hObj() ).parent() );
+        const HLIST hList = locator.findComponent( "Interfaces", smIgnoreMethods | smIgnoreProperties );
+        if( hList != INVALID_ID )
+        {
+            Component it( hList );
+            it = it.firstChild();
+            while( it.isValid() )
+            {
+                ++interfaceCount;
+                it = it.nextSibling();
+            }
+        }
+        return interfaceCount;
+    }
 };
 
 //-----------------------------------------------------------------------------
@@ -14212,79 +16438,9 @@ public:
 class InterfaceModule : public mvIMPACT::acquire::ComponentCollection
 //-----------------------------------------------------------------------------
 {
-public:
-    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::InterfaceModule</b> object.
-    explicit InterfaceModule(
-        /// [in] A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
-        mvIMPACT::acquire::Device* pDev,
-        /// [in] The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
-        int64_type index ) :
-        mvIMPACT::acquire::ComponentCollection( INVALID_ID ),
-        interfaceID(),
-        interfaceDisplayName(),
-        interfaceType(),
-        interfaceTLVersionMajor(),
-        interfaceTLVersionMinor(),
-        gevInterfaceGatewaySelector(),
-        gevInterfaceGateway(),
-        gevInterfaceMACAddress(),
-        gevInterfaceSubnetSelector(),
-        gevInterfaceSubnetIPAddress(),
-        gevInterfaceSubnetMask(),
-        mvGevInterfaceMTU(),
-        mvGevInterfaceLinkSpeed(),
-        mvGevAdvancedDeviceDiscoveryEnable(),
-        deviceUpdateList(),
-        deviceUpdateTimeout(),
-        deviceSelector(),
-        deviceID(),
-        deviceVendorName(),
-        deviceModelName(),
-        deviceType(),
-        deviceLinkSpeed(),
-        deviceAccessStatus(),
-        deviceSerialNumber(),
-        deviceUserID(),
-        deviceTLVersionMajor(),
-        deviceTLVersionMinor(),
-        gevDeviceIPAddress(),
-        gevDeviceSubnetMask(),
-        gevDeviceGateway(),
-        gevDeviceIPConfigurationStatus(),
-        gevDeviceMACAddress(),
-        gevCurrentControlMode(),
-        mvDeviceCommandChannelTransmissionTimeout(),
-        mvDeviceCommandChannelRetryCount(),
-        gevVersionMajor(),
-        gevVersionMinor(),
-        genCPVersionMajor(),
-        genCPVersionMinor(),
-        u3vVersionMajor(),
-        u3vVersionMinor(),
-        mvDevicePrimaryApplicationSwitchoverSupported(),
-        mvDevicePrimaryApplicationSwitchoverEnable(),
-        gevApplicationSwitchoverKey(),
-        mvDeviceNetworkInterfaceCount(),
-        gevDeviceForceIP(),
-        gevDeviceForceIPAddress(),
-        gevDeviceForceSubnetMask(),
-        gevDeviceForceGateway(),
-        actionCommand(),
-        actionDeviceKey(),
-        actionGroupKey(),
-        actionGroupMask(),
-        actionScheduledTimeEnable(),
-        actionScheduledTime(),
-        gevActionDestinationIPAddress(),
-        eventSelector(),
-        eventNotification()
+private:
+    void init( mvIMPACT::acquire::ComponentLocator& locator )
     {
-        mvIMPACT::acquire::ComponentLocator locator( pDev->deviceDriverFeatureList() );
-        locator.bindSearchBase( locator.searchbase_id(), "GenTL/Interfaces" );
-        std::ostringstream oss;
-        oss << "Interface" << index;
-        locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
-        m_hRoot = locator.searchbase_id();
         locator.bindComponent( interfaceID, "InterfaceID" );
         locator.bindComponent( interfaceDisplayName, "InterfaceDisplayName" );
         locator.bindComponent( interfaceType, "InterfaceType" );
@@ -14300,6 +16456,9 @@ public:
         locator.bindComponent( mvGevInterfaceLinkSpeed, "mvGevInterfaceLinkSpeed" );
         locator.bindComponent( mvGevAdvancedDeviceDiscoveryEnable, "mvGevAdvancedDeviceDiscoveryEnable" );
         locator.bindComponent( deviceUpdateList, "DeviceUpdateList@i" );
+        locator.bindComponent( mvUnicastDeviceDiscoveryCommandCount, "mvUnicastDeviceDiscoveryCommandCount" );
+        locator.bindComponent( mvUnicastDeviceDiscoveryCommandSelector, "mvUnicastDeviceDiscoveryCommandSelector" );
+        locator.bindComponent( mvUnicastDeviceDiscoveryDestinationIPAddress, "mvUnicastDeviceDiscoveryDestinationIPAddress" );
         locator.bindComponent( deviceUpdateTimeout, "DeviceUpdateTimeout" );
         locator.bindComponent( deviceSelector, "DeviceSelector" );
         locator.bindComponent( deviceID, "DeviceID" );
@@ -14338,6 +16497,7 @@ public:
         locator.bindComponent( gevDeviceForceIPAddress, "GevDeviceForceIPAddress" );
         locator.bindComponent( gevDeviceForceSubnetMask, "GevDeviceForceSubnetMask" );
         locator.bindComponent( gevDeviceForceGateway, "GevDeviceForceGateway" );
+        locator.bindComponent( mvDeviceUpdateFirmware, "mvDeviceUpdateFirmware@i" );
         locator.bindComponent( actionCommand, "ActionCommand@i" );
         if( !actionCommand.isValid() )
         {
@@ -14376,11 +16536,36 @@ public:
         locator.bindComponent( eventSelector, "EventSelector" );
         locator.bindComponent( eventNotification, "EventNotification" );
     }
-    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::InterfaceModule</b> object.
+public:
+#ifndef WRAP_ANY
+    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::InterfaceModule</b> object(\b deprecated).
     /**
+     *  \deprecated This constructor has been declared deprecated as it doesn't allow to access features from 3rd party GenTL producers. Use a constructor that allows the selection of the desired GenTL producer instead.
      *  \since 2.17.0
      */
+    explicit MVIMPACT_DEPRECATED_CPP( InterfaceModule(
+                                          /// [in] A pointer to a <b>mvIMPACT::acquire::Device</b> object obtained from a <b>mvIMPACT::acquire::DeviceManager</b> object.
+                                          mvIMPACT::acquire::Device* pDev,
+                                          /// [in] The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
+                                          int64_type index ) );
+#endif // #ifndef WRAP_ANY
+#ifndef WRAP_ANY
+    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::InterfaceModule</b> object(\b deprecated).
+    /**
+     *  \deprecated This constructor has been declared deprecated as it doesn't allow to access features from 3rd party GenTL producers. Use a constructor that allows the selection of the desired GenTL producer instead.
+     *  \since 2.17.0
+     */
+    explicit MVIMPACT_DEPRECATED_CPP( InterfaceModule(
+                                          /// [in] The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
+                                          int64_type index ) );
+#endif // #ifndef WRAP_ANY
+    /// \brief Constructs a new <b>mvIMPACT::acquire::GenICam::InterfaceModule</b> object.
+    /**
+     *  \since 2.32.0
+     */
     explicit InterfaceModule(
+        /// [in] The <b>mvIMPACT::acquire::GenICam::SystemModule</b> instance providing access to the interface module to be created.
+        const SystemModule& parent,
         /// [in] The \a index of the instance this object shall be created for. Passing an invalid index will raise an exception.
         int64_type index ) :
         mvIMPACT::acquire::ComponentCollection( INVALID_ID ),
@@ -14399,6 +16584,9 @@ public:
         mvGevInterfaceLinkSpeed(),
         mvGevAdvancedDeviceDiscoveryEnable(),
         deviceUpdateList(),
+        mvUnicastDeviceDiscoveryCommandCount(),
+        mvUnicastDeviceDiscoveryCommandSelector(),
+        mvUnicastDeviceDiscoveryDestinationIPAddress(),
         deviceUpdateTimeout(),
         deviceSelector(),
         deviceID(),
@@ -14433,6 +16621,7 @@ public:
         gevDeviceForceIPAddress(),
         gevDeviceForceSubnetMask(),
         gevDeviceForceGateway(),
+        mvDeviceUpdateFirmware(),
         actionCommand(),
         actionDeviceKey(),
         actionGroupKey(),
@@ -14443,111 +16632,16 @@ public:
         eventSelector(),
         eventNotification()
     {
-        HLIST hList;
-        TDMR_ERROR result;
-        if( ( result = DMR_FindList( INVALID_ID, "mvGenTLConsumer", dmltDeviceDriverLib, 0, &hList ) ) != DMR_NO_ERROR )
-        {
-            ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, "Couldn't find list 'mvGenTLConsumer'(type: dmltDeviceDriverLib)" );
-        }
-        mvIMPACT::acquire::ComponentLocator locator( hList );
-        locator.bindSearchBase( locator.searchbase_id(), "GenTL/Interfaces" );
+        ComponentList baseList( parent.hObj() );
+        mvIMPACT::acquire::ComponentLocator locator( baseList.parent(), "Interfaces" );
         std::ostringstream oss;
         oss << "Interface" << index;
         locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
         m_hRoot = locator.searchbase_id();
-        locator.bindComponent( interfaceID, "InterfaceID" );
-        locator.bindComponent( interfaceDisplayName, "InterfaceDisplayName" );
-        locator.bindComponent( interfaceType, "InterfaceType" );
-        locator.bindComponent( interfaceTLVersionMajor, "InterfaceTLVersionMajor" );
-        locator.bindComponent( interfaceTLVersionMinor, "InterfaceTLVersionMinor" );
-        locator.bindComponent( gevInterfaceGatewaySelector, "GevInterfaceGatewaySelector" );
-        locator.bindComponent( gevInterfaceGateway, "GevInterfaceGateway" );
-        locator.bindComponent( gevInterfaceMACAddress, "GevInterfaceMACAddress" );
-        locator.bindComponent( gevInterfaceSubnetSelector, "GevInterfaceSubnetSelector" );
-        locator.bindComponent( gevInterfaceSubnetIPAddress, "GevInterfaceSubnetIPAddress" );
-        locator.bindComponent( gevInterfaceSubnetMask, "GevInterfaceSubnetMask" );
-        locator.bindComponent( mvGevInterfaceMTU, "mvGevInterfaceMTU" );
-        locator.bindComponent( mvGevInterfaceLinkSpeed, "mvGevInterfaceLinkSpeed" );
-        locator.bindComponent( mvGevAdvancedDeviceDiscoveryEnable, "mvGevAdvancedDeviceDiscoveryEnable" );
-        locator.bindComponent( deviceUpdateList, "DeviceUpdateList@i" );
-        locator.bindComponent( deviceUpdateTimeout, "DeviceUpdateTimeout" );
-        locator.bindComponent( deviceSelector, "DeviceSelector" );
-        locator.bindComponent( deviceID, "DeviceID" );
-        locator.bindComponent( deviceVendorName, "DeviceVendorName" );
-        locator.bindComponent( deviceModelName, "DeviceModelName" );
-        locator.bindComponent( deviceType, "DeviceType" );
-        locator.bindComponent( deviceLinkSpeed, "DeviceLinkSpeed" );
-        locator.bindComponent( deviceAccessStatus, "DeviceAccessStatus" );
-        locator.bindComponent( deviceSerialNumber, "DeviceSerialNumber" );
-        locator.bindComponent( deviceUserID, "DeviceUserID" );
-        locator.bindComponent( deviceTLVersionMajor, "DeviceTLVersionMajor" );
-        locator.bindComponent( deviceTLVersionMinor, "DeviceTLVersionMinor" );
-        locator.bindComponent( gevDeviceIPAddress, "GevDeviceIPAddress" );
-        locator.bindComponent( gevDeviceSubnetMask, "GevDeviceSubnetMask" );
-        locator.bindComponent( gevDeviceGateway, "GevDeviceGateway" );
-        locator.bindComponent( gevDeviceIPConfigurationStatus, "GevDeviceIPConfigurationStatus" );
-        locator.bindComponent( gevDeviceMACAddress, "GevDeviceMACAddress" );
-        locator.bindComponent( gevCurrentControlMode, "GevCurrentControlMode" );
-        locator.bindComponent( mvDeviceCommandChannelTransmissionTimeout, "mvDeviceCommandChannelTransmissionTimeout" );
-        locator.bindComponent( mvDeviceCommandChannelRetryCount, "mvDeviceCommandChannelRetryCount" );
-        locator.bindComponent( gevVersionMajor, "GevVersionMajor" );
-        locator.bindComponent( gevVersionMinor, "GevVersionMinor" );
-        locator.bindComponent( genCPVersionMajor, "GenCPVersionMajor" );
-        locator.bindComponent( genCPVersionMinor, "GenCPVersionMinor" );
-        locator.bindComponent( u3vVersionMajor, "U3vVersionMajor" );
-        locator.bindComponent( u3vVersionMinor, "U3vVersionMinor" );
-        locator.bindComponent( mvDevicePrimaryApplicationSwitchoverSupported, "mvDevicePrimaryApplicationSwitchoverSupported" );
-        locator.bindComponent( mvDevicePrimaryApplicationSwitchoverEnable, "mvDevicePrimaryApplicationSwitchoverEnable" );
-        locator.bindComponent( gevApplicationSwitchoverKey, "GevApplicationSwitchoverKey" );
-        if( !gevApplicationSwitchoverKey.isValid() )
-        {
-            locator.bindComponent( gevApplicationSwitchoverKey, "mvDevicePrimaryApplicationSwitchoverKey" );
-        }
-        locator.bindComponent( mvDeviceNetworkInterfaceCount, "mvDeviceNetworkInterfaceCount" );
-        locator.bindComponent( gevDeviceForceIP, "GevDeviceForceIP@i" );
-        locator.bindComponent( gevDeviceForceIPAddress, "GevDeviceForceIPAddress" );
-        locator.bindComponent( gevDeviceForceSubnetMask, "GevDeviceForceSubnetMask" );
-        locator.bindComponent( gevDeviceForceGateway, "GevDeviceForceGateway" );
-        locator.bindComponent( actionCommand, "ActionCommand@i" );
-        if( !actionCommand.isValid() )
-        {
-            locator.bindComponent( actionCommand, "mvActionSend@i" );
-        }
-        locator.bindComponent( actionDeviceKey, "ActionDeviceKey" );
-        if( !actionDeviceKey.isValid() )
-        {
-            locator.bindComponent( actionDeviceKey, "mvActionDeviceKey" );
-        }
-        locator.bindComponent( actionGroupKey, "ActionGroupKey" );
-        if( !actionGroupKey.isValid() )
-        {
-            locator.bindComponent( actionGroupKey, "mvActionGroupKey" );
-        }
-        locator.bindComponent( actionGroupMask, "ActionGroupMask" );
-        if( !actionGroupMask.isValid() )
-        {
-            locator.bindComponent( actionGroupMask, "mvActionGroupMask" );
-        }
-        locator.bindComponent( actionScheduledTimeEnable, "ActionScheduledTimeEnable" );
-        if( !actionScheduledTimeEnable.isValid() )
-        {
-            locator.bindComponent( actionScheduledTimeEnable, "mvActionScheduledTimeEnable" );
-        }
-        locator.bindComponent( actionScheduledTime, "ActionScheduledTime" );
-        if( !actionScheduledTime.isValid() )
-        {
-            locator.bindComponent( actionScheduledTime, "mvActionScheduledTime" );
-        }
-        locator.bindComponent( gevActionDestinationIPAddress, "GevActionDestinationIPAddress" );
-        if( !gevActionDestinationIPAddress.isValid() )
-        {
-            locator.bindComponent( gevActionDestinationIPAddress, "mvActionDestinationIPAddress" );
-        }
-        locator.bindComponent( eventSelector, "EventSelector" );
-        locator.bindComponent( eventNotification, "EventNotification" );
+        init( locator );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property. GenTL producer wide unique identifier of the selected interface.
     /**
@@ -14636,6 +16730,21 @@ public:
      *  This command updates the internal device list of this interface.
      */
     Method deviceUpdateList;
+    /// \brief An integer property. Specifies the number of discovery commands which will be sent to destinations defined by 'mvUnicastDeviceDiscoveryCommandSelector' and 'mvUnicastDeviceDiscoveryDestinationIPAddress'.
+    /**
+     *  Specifies the number of discovery commands which will be sent to destinations defined by 'mvUnicastDeviceDiscoveryCommandSelector' and 'mvUnicastDeviceDiscoveryDestinationIPAddress'. No unicast device discovery will be performed once set to '0'. The mvUnicastDeviceDiscoveryCommandCount specifies the maximum value of the mvUnicastDeviceDiscoveryCommandSelector property.
+     */
+    PropertyI64 mvUnicastDeviceDiscoveryCommandCount;
+    /// \brief An integer property. Selects unicast discovery command to configure.
+    /**
+     *  Selects unicast discovery command to configure.
+     */
+    PropertyI64 mvUnicastDeviceDiscoveryCommandSelector;
+    /// \brief An integer property. Controls the destination IP address of the selected unicast device discovery command.
+    /**
+     *  Controls the destination IP address of the selected unicast device discovery command.
+     */
+    PropertyI64 mvUnicastDeviceDiscoveryDestinationIPAddress;
     /// \brief An integer property. Specifies timeout for the DeviceUpdateList Command.
     /**
      *  Specifies timeout for the DeviceUpdateList Command.
@@ -14854,6 +16963,11 @@ public:
      *  Static gateway IP address to set for the GVCP interface of the selected remote device.
      */
     PropertyI64 gevDeviceForceGateway;
+    /// \brief A method object. Updates the device's firmware.
+    /**
+     *  Updates the device using the firmware images embedded into this producer library.
+     */
+    Method mvDeviceUpdateFirmware;
     /// \brief A method object. Sends the action command
     /**
      *  It either sends an action command unicast packet to the IP address specified by the 'mvActionDestinationIPAddress' property, or broadcasts an action command broadcast packet on the broadcast domain specified by the 'mvActionDestinationIPAddress' property
@@ -14958,8 +17072,8 @@ public:
      *  - \b LinkTrigger\#2\# (Display string: 'Link Trigger \#2\#'): The event will be generated when a Rising Edge is detected on the LinkTrigger \#2\#.
      *  - \b LinkSpeedChange (Display string: 'Link Speed Change'): The event will be generated when the link speed has changed.
      *  - \b ActionLate (Display string: 'Action Late'): The event will be generated when a valid scheduled action command is received and is scheduled to be executed at a time that is already past.
-     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b Error (Display string: 'Error'): Device just detected an error during the active Acquisition.
+     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b PrimaryApplicationSwitch (Display string: 'Primary Application Switch'): The event will be generated when a primary application switchover has been granted (GigE Vision Specific).
      *  - \b Counter2Start (Display string: 'Counter 2 Start'): The event will be generated when counter 2 starts counting.
      *  - \b Counter3Start (Display string: 'Counter 3 Start'): The event will be generated when counter 3 starts counting.
@@ -15017,6 +17131,34 @@ public:
      *  - \b Timer13End (Display string: 'Timer 13 End'): The event will be generated when Timer 13 ends counting.
      *  - \b Timer14End (Display string: 'Timer 14 End'): The event will be generated when Timer 14 ends counting.
      *  - \b Timer15End (Display string: 'Timer 15 End'): The event will be generated when Timer 15 ends counting.
+     *  - \b Encoder2Stopped (Display string: 'Encoder 2 Stopped'): The event will be generated when the Encoder 2 stops for longer than EncoderTimeout.
+     *  - \b Encoder3Stopped (Display string: 'Encoder 3 Stopped'): The event will be generated when the Encoder 3 stops for longer than EncoderTimeout.
+     *  - \b Encoder4Stopped (Display string: 'Encoder 4 Stopped'): The event will be generated when the Encoder 4 stops for longer than EncoderTimeout.
+     *  - \b Encoder5Stopped (Display string: 'Encoder 5 Stopped'): The event will be generated when the Encoder 5 stops for longer than EncoderTimeout.
+     *  - \b Encoder6Stopped (Display string: 'Encoder 6 Stopped'): The event will be generated when the Encoder 6 stops for longer than EncoderTimeout.
+     *  - \b Encoder7Stopped (Display string: 'Encoder 7 Stopped'): The event will be generated when the Encoder 7 stops for longer than EncoderTimeout.
+     *  - \b Encoder8Stopped (Display string: 'Encoder 8 Stopped'): The event will be generated when the Encoder 8 stops for longer than EncoderTimeout.
+     *  - \b Encoder9Stopped (Display string: 'Encoder 9 Stopped'): The event will be generated when the Encoder 9 stops for longer than EncoderTimeout.
+     *  - \b Encoder10Stopped (Display string: 'Encoder 10 Stopped'): The event will be generated when the Encoder 10 stops for longer than EncoderTimeout.
+     *  - \b Encoder11Stopped (Display string: 'Encoder 11 Stopped'): The event will be generated when the Encoder 11 stops for longer than EncoderTimeout.
+     *  - \b Encoder12Stopped (Display string: 'Encoder 12 Stopped'): The event will be generated when the Encoder 12 stops for longer than EncoderTimeout.
+     *  - \b Encoder13Stopped (Display string: 'Encoder 13 Stopped'): The event will be generated when the Encoder 13 stops for longer than EncoderTimeout.
+     *  - \b Encoder14Stopped (Display string: 'Encoder 14 Stopped'): The event will be generated when the Encoder 14 stops for longer than EncoderTimeout.
+     *  - \b Encoder15Stopped (Display string: 'Encoder 15 Stopped'): The event will be generated when the Encoder 15 stops for longer than EncoderTimeout.
+     *  - \b Encoder2Restarted (Display string: 'Encoder 2 Restarted'): The event will be generated when the Encoder 2 restarts moving.
+     *  - \b Encoder3Restarted (Display string: 'Encoder 3 Restarted'): The event will be generated when the Encoder 3 restarts moving.
+     *  - \b Encoder4Restarted (Display string: 'Encoder 4 Restarted'): The event will be generated when the Encoder 4 restarts moving.
+     *  - \b Encoder5Restarted (Display string: 'Encoder 5 Restarted'): The event will be generated when the Encoder 5 restarts moving.
+     *  - \b Encoder6Restarted (Display string: 'Encoder 6 Restarted'): The event will be generated when the Encoder 6 restarts moving.
+     *  - \b Encoder7Restarted (Display string: 'Encoder 7 Restarted'): The event will be generated when the Encoder 7 restarts moving.
+     *  - \b Encoder8Restarted (Display string: 'Encoder 8 Restarted'): The event will be generated when the Encoder 8 restarts moving.
+     *  - \b Encoder9Restarted (Display string: 'Encoder 9 Restarted'): The event will be generated when the Encoder 9 restarts moving.
+     *  - \b Encoder10Restarted (Display string: 'Encoder 10 Restarted'): The event will be generated when the Encoder 10 restarts moving.
+     *  - \b Encoder11Restarted (Display string: 'Encoder 11 Restarted'): The event will be generated when the Encoder 11 restarts moving.
+     *  - \b Encoder12Restarted (Display string: 'Encoder 12 Restarted'): The event will be generated when the Encoder 12 restarts moving.
+     *  - \b Encoder13Restarted (Display string: 'Encoder 13 Restarted'): The event will be generated when the Encoder 13 restarts moving.
+     *  - \b Encoder14Restarted (Display string: 'Encoder 14 Restarted'): The event will be generated when the Encoder 14 restarts moving.
+     *  - \b Encoder15Restarted (Display string: 'Encoder 15 Restarted'): The event will be generated when the Encoder 15 restarts moving.
      *  - \b Line2RisingEdge (Display string: 'Line 2 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 2.
      *  - \b Line3RisingEdge (Display string: 'Line 3 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 3.
      *  - \b Line4RisingEdge (Display string: 'Line 4 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 4.
@@ -15059,6 +17201,22 @@ public:
      *  - \b Line13AnyEdge (Display string: 'Line 13 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 13.
      *  - \b Line14AnyEdge (Display string: 'Line 14 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 14.
      *  - \b Line15AnyEdge (Display string: 'Line 15 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 15.
+     *  - \b Link0Trigger (Display string: 'Link 0 Trigger')
+     *  - \b Link1Trigger (Display string: 'Link 1 Trigger')
+     *  - \b Link2Trigger (Display string: 'Link 2 Trigger')
+     *  - \b Link3Trigger (Display string: 'Link 3 Trigger')
+     *  - \b Link4Trigger (Display string: 'Link 4 Trigger')
+     *  - \b Link5Trigger (Display string: 'Link 5 Trigger')
+     *  - \b Link6Trigger (Display string: 'Link 6 Trigger')
+     *  - \b Link7Trigger (Display string: 'Link 7 Trigger')
+     *  - \b Link8Trigger (Display string: 'Link 8 Trigger')
+     *  - \b Link9Trigger (Display string: 'Link 9 Trigger')
+     *  - \b Link10Trigger (Display string: 'Link 10 Trigger')
+     *  - \b Link11Trigger (Display string: 'Link 11 Trigger')
+     *  - \b Link12Trigger (Display string: 'Link 12 Trigger')
+     *  - \b Link13Trigger (Display string: 'Link 13 Trigger')
+     *  - \b Link14Trigger (Display string: 'Link 14 Trigger')
+     *  - \b Link15Trigger (Display string: 'Link 15 Trigger')
      *  - \b InterfaceListChanged (Display string: 'Interface List Changed'): This enumeration value indicates an event that is fired when the list of interfaces has been updated.
      *  - \b InterfaceLost (Display string: 'Interface Lost'): This enumeration value indicates an event that is raised when the interface connection is lost.
      *  - \b DeviceListChanged (Display string: 'Device List Changed'): This enumeration value indicates an event that is fired when the list of devices has been updated.
@@ -15087,9 +17245,171 @@ public:
      */
     PropertyI64 eventNotification;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
+
+#if !defined( DOXYGEN_SHOULD_SKIP_THIS ) && !defined( WRAP_ANY )
+//-----------------------------------------------------------------------------
+inline InterfaceModule::InterfaceModule( mvIMPACT::acquire::Device* pDev, int64_type index ) :
+    mvIMPACT::acquire::ComponentCollection( INVALID_ID ),
+    interfaceID(),
+    interfaceDisplayName(),
+    interfaceType(),
+    interfaceTLVersionMajor(),
+    interfaceTLVersionMinor(),
+    gevInterfaceGatewaySelector(),
+    gevInterfaceGateway(),
+    gevInterfaceMACAddress(),
+    gevInterfaceSubnetSelector(),
+    gevInterfaceSubnetIPAddress(),
+    gevInterfaceSubnetMask(),
+    mvGevInterfaceMTU(),
+    mvGevInterfaceLinkSpeed(),
+    mvGevAdvancedDeviceDiscoveryEnable(),
+    deviceUpdateList(),
+    mvUnicastDeviceDiscoveryCommandCount(),
+    mvUnicastDeviceDiscoveryCommandSelector(),
+    mvUnicastDeviceDiscoveryDestinationIPAddress(),
+    deviceUpdateTimeout(),
+    deviceSelector(),
+    deviceID(),
+    deviceVendorName(),
+    deviceModelName(),
+    deviceType(),
+    deviceLinkSpeed(),
+    deviceAccessStatus(),
+    deviceSerialNumber(),
+    deviceUserID(),
+    deviceTLVersionMajor(),
+    deviceTLVersionMinor(),
+    gevDeviceIPAddress(),
+    gevDeviceSubnetMask(),
+    gevDeviceGateway(),
+    gevDeviceIPConfigurationStatus(),
+    gevDeviceMACAddress(),
+    gevCurrentControlMode(),
+    mvDeviceCommandChannelTransmissionTimeout(),
+    mvDeviceCommandChannelRetryCount(),
+    gevVersionMajor(),
+    gevVersionMinor(),
+    genCPVersionMajor(),
+    genCPVersionMinor(),
+    u3vVersionMajor(),
+    u3vVersionMinor(),
+    mvDevicePrimaryApplicationSwitchoverSupported(),
+    mvDevicePrimaryApplicationSwitchoverEnable(),
+    gevApplicationSwitchoverKey(),
+    mvDeviceNetworkInterfaceCount(),
+    gevDeviceForceIP(),
+    gevDeviceForceIPAddress(),
+    gevDeviceForceSubnetMask(),
+    gevDeviceForceGateway(),
+    mvDeviceUpdateFirmware(),
+    actionCommand(),
+    actionDeviceKey(),
+    actionGroupKey(),
+    actionGroupMask(),
+    actionScheduledTimeEnable(),
+    actionScheduledTime(),
+    gevActionDestinationIPAddress(),
+    eventSelector(),
+    eventNotification()
+//-----------------------------------------------------------------------------
+{
+    mvIMPACT::acquire::ComponentLocator locator( pDev->deviceDriverFeatureList() );
+    locator.bindSearchBase( locator.searchbase_id(), "GenTL/Interfaces" );
+    std::ostringstream oss;
+    oss << "Interface" << index;
+    locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
+    m_hRoot = locator.searchbase_id();
+    init( locator );
+}
+#endif // #if !defined( DOXYGEN_SHOULD_SKIP_THIS ) && !defined( WRAP_ANY )
+
+#if !defined( DOXYGEN_SHOULD_SKIP_THIS ) && !defined( WRAP_ANY )
+//-----------------------------------------------------------------------------
+inline InterfaceModule::InterfaceModule( int64_type index ) :
+    mvIMPACT::acquire::ComponentCollection( INVALID_ID ),
+    interfaceID(),
+    interfaceDisplayName(),
+    interfaceType(),
+    interfaceTLVersionMajor(),
+    interfaceTLVersionMinor(),
+    gevInterfaceGatewaySelector(),
+    gevInterfaceGateway(),
+    gevInterfaceMACAddress(),
+    gevInterfaceSubnetSelector(),
+    gevInterfaceSubnetIPAddress(),
+    gevInterfaceSubnetMask(),
+    mvGevInterfaceMTU(),
+    mvGevInterfaceLinkSpeed(),
+    mvGevAdvancedDeviceDiscoveryEnable(),
+    deviceUpdateList(),
+    mvUnicastDeviceDiscoveryCommandCount(),
+    mvUnicastDeviceDiscoveryCommandSelector(),
+    mvUnicastDeviceDiscoveryDestinationIPAddress(),
+    deviceUpdateTimeout(),
+    deviceSelector(),
+    deviceID(),
+    deviceVendorName(),
+    deviceModelName(),
+    deviceType(),
+    deviceLinkSpeed(),
+    deviceAccessStatus(),
+    deviceSerialNumber(),
+    deviceUserID(),
+    deviceTLVersionMajor(),
+    deviceTLVersionMinor(),
+    gevDeviceIPAddress(),
+    gevDeviceSubnetMask(),
+    gevDeviceGateway(),
+    gevDeviceIPConfigurationStatus(),
+    gevDeviceMACAddress(),
+    gevCurrentControlMode(),
+    mvDeviceCommandChannelTransmissionTimeout(),
+    mvDeviceCommandChannelRetryCount(),
+    gevVersionMajor(),
+    gevVersionMinor(),
+    genCPVersionMajor(),
+    genCPVersionMinor(),
+    u3vVersionMajor(),
+    u3vVersionMinor(),
+    mvDevicePrimaryApplicationSwitchoverSupported(),
+    mvDevicePrimaryApplicationSwitchoverEnable(),
+    gevApplicationSwitchoverKey(),
+    mvDeviceNetworkInterfaceCount(),
+    gevDeviceForceIP(),
+    gevDeviceForceIPAddress(),
+    gevDeviceForceSubnetMask(),
+    gevDeviceForceGateway(),
+    mvDeviceUpdateFirmware(),
+    actionCommand(),
+    actionDeviceKey(),
+    actionGroupKey(),
+    actionGroupMask(),
+    actionScheduledTimeEnable(),
+    actionScheduledTime(),
+    gevActionDestinationIPAddress(),
+    eventSelector(),
+    eventNotification()
+//-----------------------------------------------------------------------------
+{
+    HLIST hList;
+    TDMR_ERROR result;
+    if( ( result = DMR_FindList( INVALID_ID, "mvGenTLConsumer", dmltDeviceDriverLib, 0, &hList ) ) != DMR_NO_ERROR )
+    {
+        ExceptionFactory::raiseException( MVIA_FUNCTION, __LINE__, result, "Couldn't find list 'mvGenTLConsumer'(type: dmltDeviceDriverLib)" );
+    }
+    mvIMPACT::acquire::ComponentLocator locator( hList );
+    locator.bindSearchBase( locator.searchbase_id(), "GenTL/Interfaces" );
+    std::ostringstream oss;
+    oss << "Interface" << index;
+    locator = mvIMPACT::acquire::ComponentLocator( locator.findComponent( oss.str() ) );
+    m_hRoot = locator.searchbase_id();
+    init( locator );
+}
+#endif // #if !defined( DOXYGEN_SHOULD_SKIP_THIS ) && !defined( WRAP_ANY )
 
 //-----------------------------------------------------------------------------
 /// \brief Category contains items that belong to the device module of the transport layer.
@@ -15138,6 +17458,7 @@ public:
         u3vVersionMinor(),
         deviceEndianessMechanism(),
         linkCommandTimeout(),
+        mvLinkCommandTimeoutCheckGranularity(),
         linkCommandRetryCount(),
         streamSelector(),
         streamID(),
@@ -15174,6 +17495,7 @@ public:
         locator.bindComponent( u3vVersionMinor, "U3vVersionMinor" );
         locator.bindComponent( deviceEndianessMechanism, "DeviceEndianessMechanism" );
         locator.bindComponent( linkCommandTimeout, "LinkCommandTimeout" );
+        locator.bindComponent( mvLinkCommandTimeoutCheckGranularity, "mvLinkCommandTimeoutCheckGranularity" );
         locator.bindComponent( linkCommandRetryCount, "LinkCommandRetryCount" );
         locator.bindComponent( streamSelector, "StreamSelector" );
         locator.bindComponent( streamID, "StreamID" );
@@ -15181,7 +17503,7 @@ public:
         locator.bindComponent( eventNotification, "EventNotification" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property. This feature is deprecated (See DeviceSerialNumber).
     /**
@@ -15366,6 +17688,11 @@ public:
      *  The feature specifies application timeout for the control channel communication. It defines the application timeout, and it is related to the device feature DeviceLinkCommandTimeout specifying the maximum time for handling a command in the device. Up to DeviceLinkCommandRetryCount attempts with this timeout are made before a command fails with a timout error.
      */
     PropertyF linkCommandTimeout;
+    /// \brief An integer property. Indicates how often the driver shall check the link during one 'DeviceLinkCommandTimeout' interval.
+    /**
+     *  Indicates how often the driver shall check the link during one 'DeviceLinkCommandTimeout' interval. The higher this value the more often the link will be checked. However additional traffic on the link is only generated if no other communication like polling certain registers, reading or writing is performed by an application. A higher value will result in a faster notification in case a device has been physically been unplugged.
+     */
+    PropertyI64 mvLinkCommandTimeoutCheckGranularity;
     /// \brief An integer property. Specifies maximum number of tries before failing the control channel commands.
     /**
      *  This feature specifies maximum number of tries before failing the control channel commands.
@@ -15450,8 +17777,8 @@ public:
      *  - \b LinkTrigger\#2\# (Display string: 'Link Trigger \#2\#'): The event will be generated when a Rising Edge is detected on the LinkTrigger \#2\#.
      *  - \b LinkSpeedChange (Display string: 'Link Speed Change'): The event will be generated when the link speed has changed.
      *  - \b ActionLate (Display string: 'Action Late'): The event will be generated when a valid scheduled action command is received and is scheduled to be executed at a time that is already past.
-     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b Error (Display string: 'Error'): Device just detected an error during the active Acquisition.
+     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b PrimaryApplicationSwitch (Display string: 'Primary Application Switch'): The event will be generated when a primary application switchover has been granted (GigE Vision Specific).
      *  - \b Counter2Start (Display string: 'Counter 2 Start'): The event will be generated when counter 2 starts counting.
      *  - \b Counter3Start (Display string: 'Counter 3 Start'): The event will be generated when counter 3 starts counting.
@@ -15509,6 +17836,34 @@ public:
      *  - \b Timer13End (Display string: 'Timer 13 End'): The event will be generated when Timer 13 ends counting.
      *  - \b Timer14End (Display string: 'Timer 14 End'): The event will be generated when Timer 14 ends counting.
      *  - \b Timer15End (Display string: 'Timer 15 End'): The event will be generated when Timer 15 ends counting.
+     *  - \b Encoder2Stopped (Display string: 'Encoder 2 Stopped'): The event will be generated when the Encoder 2 stops for longer than EncoderTimeout.
+     *  - \b Encoder3Stopped (Display string: 'Encoder 3 Stopped'): The event will be generated when the Encoder 3 stops for longer than EncoderTimeout.
+     *  - \b Encoder4Stopped (Display string: 'Encoder 4 Stopped'): The event will be generated when the Encoder 4 stops for longer than EncoderTimeout.
+     *  - \b Encoder5Stopped (Display string: 'Encoder 5 Stopped'): The event will be generated when the Encoder 5 stops for longer than EncoderTimeout.
+     *  - \b Encoder6Stopped (Display string: 'Encoder 6 Stopped'): The event will be generated when the Encoder 6 stops for longer than EncoderTimeout.
+     *  - \b Encoder7Stopped (Display string: 'Encoder 7 Stopped'): The event will be generated when the Encoder 7 stops for longer than EncoderTimeout.
+     *  - \b Encoder8Stopped (Display string: 'Encoder 8 Stopped'): The event will be generated when the Encoder 8 stops for longer than EncoderTimeout.
+     *  - \b Encoder9Stopped (Display string: 'Encoder 9 Stopped'): The event will be generated when the Encoder 9 stops for longer than EncoderTimeout.
+     *  - \b Encoder10Stopped (Display string: 'Encoder 10 Stopped'): The event will be generated when the Encoder 10 stops for longer than EncoderTimeout.
+     *  - \b Encoder11Stopped (Display string: 'Encoder 11 Stopped'): The event will be generated when the Encoder 11 stops for longer than EncoderTimeout.
+     *  - \b Encoder12Stopped (Display string: 'Encoder 12 Stopped'): The event will be generated when the Encoder 12 stops for longer than EncoderTimeout.
+     *  - \b Encoder13Stopped (Display string: 'Encoder 13 Stopped'): The event will be generated when the Encoder 13 stops for longer than EncoderTimeout.
+     *  - \b Encoder14Stopped (Display string: 'Encoder 14 Stopped'): The event will be generated when the Encoder 14 stops for longer than EncoderTimeout.
+     *  - \b Encoder15Stopped (Display string: 'Encoder 15 Stopped'): The event will be generated when the Encoder 15 stops for longer than EncoderTimeout.
+     *  - \b Encoder2Restarted (Display string: 'Encoder 2 Restarted'): The event will be generated when the Encoder 2 restarts moving.
+     *  - \b Encoder3Restarted (Display string: 'Encoder 3 Restarted'): The event will be generated when the Encoder 3 restarts moving.
+     *  - \b Encoder4Restarted (Display string: 'Encoder 4 Restarted'): The event will be generated when the Encoder 4 restarts moving.
+     *  - \b Encoder5Restarted (Display string: 'Encoder 5 Restarted'): The event will be generated when the Encoder 5 restarts moving.
+     *  - \b Encoder6Restarted (Display string: 'Encoder 6 Restarted'): The event will be generated when the Encoder 6 restarts moving.
+     *  - \b Encoder7Restarted (Display string: 'Encoder 7 Restarted'): The event will be generated when the Encoder 7 restarts moving.
+     *  - \b Encoder8Restarted (Display string: 'Encoder 8 Restarted'): The event will be generated when the Encoder 8 restarts moving.
+     *  - \b Encoder9Restarted (Display string: 'Encoder 9 Restarted'): The event will be generated when the Encoder 9 restarts moving.
+     *  - \b Encoder10Restarted (Display string: 'Encoder 10 Restarted'): The event will be generated when the Encoder 10 restarts moving.
+     *  - \b Encoder11Restarted (Display string: 'Encoder 11 Restarted'): The event will be generated when the Encoder 11 restarts moving.
+     *  - \b Encoder12Restarted (Display string: 'Encoder 12 Restarted'): The event will be generated when the Encoder 12 restarts moving.
+     *  - \b Encoder13Restarted (Display string: 'Encoder 13 Restarted'): The event will be generated when the Encoder 13 restarts moving.
+     *  - \b Encoder14Restarted (Display string: 'Encoder 14 Restarted'): The event will be generated when the Encoder 14 restarts moving.
+     *  - \b Encoder15Restarted (Display string: 'Encoder 15 Restarted'): The event will be generated when the Encoder 15 restarts moving.
      *  - \b Line2RisingEdge (Display string: 'Line 2 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 2.
      *  - \b Line3RisingEdge (Display string: 'Line 3 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 3.
      *  - \b Line4RisingEdge (Display string: 'Line 4 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 4.
@@ -15551,6 +17906,22 @@ public:
      *  - \b Line13AnyEdge (Display string: 'Line 13 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 13.
      *  - \b Line14AnyEdge (Display string: 'Line 14 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 14.
      *  - \b Line15AnyEdge (Display string: 'Line 15 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 15.
+     *  - \b Link0Trigger (Display string: 'Link 0 Trigger')
+     *  - \b Link1Trigger (Display string: 'Link 1 Trigger')
+     *  - \b Link2Trigger (Display string: 'Link 2 Trigger')
+     *  - \b Link3Trigger (Display string: 'Link 3 Trigger')
+     *  - \b Link4Trigger (Display string: 'Link 4 Trigger')
+     *  - \b Link5Trigger (Display string: 'Link 5 Trigger')
+     *  - \b Link6Trigger (Display string: 'Link 6 Trigger')
+     *  - \b Link7Trigger (Display string: 'Link 7 Trigger')
+     *  - \b Link8Trigger (Display string: 'Link 8 Trigger')
+     *  - \b Link9Trigger (Display string: 'Link 9 Trigger')
+     *  - \b Link10Trigger (Display string: 'Link 10 Trigger')
+     *  - \b Link11Trigger (Display string: 'Link 11 Trigger')
+     *  - \b Link12Trigger (Display string: 'Link 12 Trigger')
+     *  - \b Link13Trigger (Display string: 'Link 13 Trigger')
+     *  - \b Link14Trigger (Display string: 'Link 14 Trigger')
+     *  - \b Link15Trigger (Display string: 'Link 15 Trigger')
      *  - \b InterfaceListChanged (Display string: 'Interface List Changed'): This enumeration value indicates an event that is fired when the list of interfaces has been updated.
      *  - \b InterfaceLost (Display string: 'Interface Lost'): This enumeration value indicates an event that is raised when the interface connection is lost.
      *  - \b DeviceListChanged (Display string: 'Device List Changed'): This enumeration value indicates an event that is fired when the list of devices has been updated.
@@ -15579,7 +17950,7 @@ public:
      */
     PropertyI64 eventNotification;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
@@ -15611,15 +17982,20 @@ public:
         mvStreamDriverTechnology(),
         mvAutoJoinMulticastGroups(),
         mvResendActive(),
+        mvResendUserControlledEnable(),
         mvResendMode(),
         mvResendBatchingActive(),
-        mvResendCaptureWindowSize(),
+        mvResendMaximumGapSize(),
         mvResendThreshold(),
         mvResendRequestMax(),
         mvResendRequestCredits(),
         mvResendResponseTimeout(),
         mvResendsPerTimeout(),
-        mvResendFeaturesLocked(),
+        mvMultiCoreAcquisitionEnable(),
+        mvMultiCoreAcquisitionBaseCore(),
+        mvMultiCoreAcquisitionCoreCount(),
+        mvMultiCoreAcquisitionFirstCoreIndex(),
+        mvMultiCoreAcquisitionCoreSwitchInterval(),
         streamAnnouncedBufferCount(),
         streamBufferHandlingMode(),
         streamAnnounceBufferMinimum(),
@@ -15648,15 +18024,40 @@ public:
         locator.bindComponent( mvStreamDriverTechnology, "mvStreamDriverTechnology" );
         locator.bindComponent( mvAutoJoinMulticastGroups, "mvAutoJoinMulticastGroups" );
         locator.bindComponent( mvResendActive, "mvResendActive" );
+        locator.bindComponent( mvResendUserControlledEnable, "mvResendUserControlledEnable" );
         locator.bindComponent( mvResendMode, "mvResendMode" );
         locator.bindComponent( mvResendBatchingActive, "mvResendBatchingActive" );
-        locator.bindComponent( mvResendCaptureWindowSize, "mvResendCaptureWindowSize" );
+        locator.bindComponent( mvResendMaximumGapSize, "mvResendMaximumGapSize" );
+        if( !mvResendMaximumGapSize.isValid() )
+        {
+            locator.bindComponent( mvResendMaximumGapSize, "mvResendCaptureWindowSize" );
+        }
         locator.bindComponent( mvResendThreshold, "mvResendThreshold" );
         locator.bindComponent( mvResendRequestMax, "mvResendRequestMax" );
         locator.bindComponent( mvResendRequestCredits, "mvResendRequestCredits" );
         locator.bindComponent( mvResendResponseTimeout, "mvResendResponseTimeout" );
         locator.bindComponent( mvResendsPerTimeout, "mvResendsPerTimeout" );
-        locator.bindComponent( mvResendFeaturesLocked, "mvResendFeaturesLocked" );
+        locator.bindComponent( mvMultiCoreAcquisitionEnable, "mvMultiCoreAcquisitionEnable" );
+        if( !mvMultiCoreAcquisitionEnable.isValid() )
+        {
+            locator.bindComponent( mvMultiCoreAcquisitionEnable, "mvMultiCPUStreamProcessingEnable" );
+        }
+        locator.bindComponent( mvMultiCoreAcquisitionBaseCore, "mvMultiCoreAcquisitionBaseCore" );
+        locator.bindComponent( mvMultiCoreAcquisitionCoreCount, "mvMultiCoreAcquisitionCoreCount" );
+        if( !mvMultiCoreAcquisitionCoreCount.isValid() )
+        {
+            locator.bindComponent( mvMultiCoreAcquisitionCoreCount, "mvMultiCPUStreamProcessingCPUCount" );
+        }
+        locator.bindComponent( mvMultiCoreAcquisitionFirstCoreIndex, "mvMultiCoreAcquisitionFirstCoreIndex" );
+        if( !mvMultiCoreAcquisitionFirstCoreIndex.isValid() )
+        {
+            locator.bindComponent( mvMultiCoreAcquisitionFirstCoreIndex, "mvMultiCPUStreamProcessingFirstCPUIndex" );
+        }
+        locator.bindComponent( mvMultiCoreAcquisitionCoreSwitchInterval, "mvMultiCoreAcquisitionCoreSwitchInterval" );
+        if( !mvMultiCoreAcquisitionCoreSwitchInterval.isValid() )
+        {
+            locator.bindComponent( mvMultiCoreAcquisitionCoreSwitchInterval, "mvMultiCPUStreamProcessingSwitchInterval" );
+        }
         locator.bindComponent( streamAnnouncedBufferCount, "StreamAnnouncedBufferCount" );
         locator.bindComponent( streamBufferHandlingMode, "StreamBufferHandlingMode" );
         locator.bindComponent( streamAnnounceBufferMinimum, "StreamAnnounceBufferMinimum" );
@@ -15674,7 +18075,7 @@ public:
         locator.bindComponent( eventNotification, "EventNotification" );
     }
     // *INDENT-OFF*
-    PYTHON_ONLY( %immutable; )
+    PYTHON_OR_JAVA_ONLY( %immutable; )
     // *INDENT-ON*
     /// \brief A string property. Device wide unique ID of the selected stream.
     /**
@@ -15713,6 +18114,11 @@ public:
      *  This feature controls if the stream will issue packet resend requests.
      */
     PropertyIBoolean mvResendActive;
+    /// \brief A boolean property. This feature controls if the resend related parameters on this stream will be controlled by the driver or the host application.
+    /**
+     *  This feature controls if the resend related parameters on this stream will be controlled by the driver or the host application.
+     */
+    PropertyIBoolean mvResendUserControlledEnable;
     /// \brief An integer property. Indicates the mode the internal resend algorithm is working in. This feature is a bit mask. The bits have the following meaning (LSB to MSB): Request Resends when a new block starts and the current one has missing packets(0x01)(not recommended for LAG), Request Resends when a new block starts and the current one has no trailer so far(0x02)(not recommended for LAG), Request Resends when more than 'ResendThreshold' packets have been received since a missing packet has been detected(0x04), Request Resends whenever 'mvResendResponseTimeout' did elapse for the previous still incomplete buffer(0x08), Request Resends whenever 'mvResendResponseTimeout' did elapse for the current still incomplete buffer(0x10), Request Resends whenever a packet is considered as missing(0x20)(not recommended for LAG), Request Resends whenever a block start has been missing(e.g. because no capture buffer was available at the time the block did start)(0x40)
     /**
      *  Indicates the mode the internal resend algorithm is working in. This feature is a bit mask. The bits have the following meaning (LSB to MSB): Request Resends when a new block starts and the current one has missing packets(0x01)(not recommended for LAG), Request Resends when a new block starts and the current one has no trailer so far(0x02)(not recommended for LAG), Request Resends when more than 'ResendThreshold' packets have been received since a missing packet has been detected(0x04), Request Resends whenever 'mvResendResponseTimeout' did elapse for the previous still incomplete buffer(0x08), Request Resends whenever 'mvResendResponseTimeout' did elapse for the current still incomplete buffer(0x10), Request Resends whenever a packet is considered as missing(0x20)(not recommended for LAG), Request Resends whenever a block start has been missing(e.g. because no capture buffer was available at the time the block did start)(0x40)
@@ -15723,11 +18129,11 @@ public:
      *  This feature controls if the stream will issue batched packet resend requests if it detects several consecutive missing packets.
      */
     PropertyIBoolean mvResendBatchingActive;
-    /// \brief An integer property. Indicates the width of the capture window.
+    /// \brief An integer property. Defines the maximum gap between 2 consecutive packets in the stream.
     /**
-     *  This feature indicates the width of the capture window in packets.
+     *  This feature defines the maximum gap between 2 consecutive packets in the stream. If a detected gap larger than 'MaximumGapSize' this block is considered as incomplete. When this parameter is 0 no gap will be considered as too big!
      */
-    PropertyI64 mvResendCaptureWindowSize;
+    PropertyI64 mvResendMaximumGapSize;
     /// \brief An integer property. Indicates the resend threshold within the capture window.
     /**
      *  This feature indicates the resend threshold within the capture window. If current packet ID and first missing packet ID are mvResendThreshold IDs apart the stream will issue a resend request.
@@ -15753,11 +18159,31 @@ public:
      *  This feature indicates the number of packets to be requested whenever the resend response timeout elapses.
      */
     PropertyI64 mvResendsPerTimeout;
-    /// \brief An integer property. Used by the driver to lock critical resend related parameters during the acquisition.
+    /// \brief A boolean property. This feature controls whether the host shall process incoming data a single arbitrary CPU core (Off) or one or multiple dedicated ones (On).
     /**
-     *  Used by the driver to lock critical resend related parameters during the acquisition.
+     *  This feature controls whether the host shall process incoming data a single arbitrary CPU core (Off) or one or multiple dedicated ones (On)
      */
-    PropertyI64 mvResendFeaturesLocked;
+    PropertyIBoolean mvMultiCoreAcquisitionEnable;
+    /// \brief An integer property. This feature indicates the base CPU core (as selected by the NIC) that will be used for the processing of network data for this stream.
+    /**
+     *  This feature indicates the base CPU core (as selected by the NIC) that will be used for the processing of network data for this stream. This value when added to 'mvMultiCoreAcquisitionFirstCoreIndex' will indicate the first of 'mvMultiCoreAcquisitionCoreCount' actual CPUs that will ater be used for the processing of network data for this stream
+     */
+    PropertyI64 mvMultiCoreAcquisitionBaseCore;
+    /// \brief An integer property. This feature controls how many CPU cores will be used for the processing of network data for this stream.
+    /**
+     *  This feature controls how many CPU cores will be used for the processing of network data for this stream
+     */
+    PropertyI64 mvMultiCoreAcquisitionCoreCount;
+    /// \brief An integer property. This feature controls which is the first CPU core to use for processing network data out of the list of CPU cores available for this task for the NIC associated with this stream.
+    /**
+     *  This feature controls which is the first CPU core to use for processing network data out of the list of CPU cores available for this task for the NIC associated with this stream. Please note that this number does NOT have a 1:1 relationship to the CPU in your system but to the CPUs available for processing on the selected NIC. So if e.g. the corresponding NICs RSS table can access CPUs 6, 8, 10 and 12 then setting 'mvMultiCoreAcquisitionFirstCoreIndex' to 2 will result in CPUs 10 and 12 to be used!
+     */
+    PropertyI64 mvMultiCoreAcquisitionFirstCoreIndex;
+    /// \brief An integer property. This feature controls after how many network packets the processing shall switch to the next CPU core. Smaller values introduce a higher overhead, values too high might result in loss of data when the network card runs out of buffers. The recommended values are in the range of 32 - 256.
+    /**
+     *  This feature controls after how many network packets the processing shall switch to the next CPU core. Smaller values introduce a higher overhead, values too high might result in loss of data when the network card runs out of buffers. The recommended values are in the range of 32 - 256
+     */
+    PropertyI64 mvMultiCoreAcquisitionCoreSwitchInterval;
     /// \brief An integer property. Number of announced (known) buffers on this stream. This value is volatile. It may change if additional buffers are announced and/or buffers are revoked by the GenTL Consumer.
     /**
      *  This is a read-only feature. It indicates the number of announced (known) buffers on this stream. This value is volatile. It may change if additional buffers are announced and/or buffers are revoked by the GenTL Consumer.
@@ -15809,9 +18235,9 @@ public:
      *  This feature indicates the number of frames started in the acquisition engine. This number is incremented every time in case of a new buffer is started and then to be filled (data written to) regardless even if the buffer is later delivered to the user or discarded for any reason. This number is initialized with 0 at the time the stream is opened. It is not reset until the stream is closed.
      */
     PropertyI64 streamStartedFrameCount;
-    /// \brief An integer property. Provides the number of bytes transferred for each image or chunk on the stream channel.
+    /// \brief An integer property. Provides the number of bytes transferred for each data buffer or chunk on the stream channel.
     /**
-     *  Provides the number of bytes transferred for each image or chunk on the stream channel. This includes any end-of-line, end-of-frame statistics or other stamp data. This is the total size of data payload for a data block.
+     *  Provides the number of bytes transferred for each data buffer or chunk on the stream channel. This includes any end-of-line, end-of-frame statistics or other stamp data. This is the total size of data payload for a data block.
      */
     PropertyI64 payloadSize;
     /// \brief A boolean property. Flag indicating whether the acquisition engine is started or not.
@@ -15898,8 +18324,8 @@ public:
      *  - \b LinkTrigger\#2\# (Display string: 'Link Trigger \#2\#'): The event will be generated when a Rising Edge is detected on the LinkTrigger \#2\#.
      *  - \b LinkSpeedChange (Display string: 'Link Speed Change'): The event will be generated when the link speed has changed.
      *  - \b ActionLate (Display string: 'Action Late'): The event will be generated when a valid scheduled action command is received and is scheduled to be executed at a time that is already past.
-     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b Error (Display string: 'Error'): Device just detected an error during the active Acquisition.
+     *  - \b Test (Display string: 'Test'): The test event will be generated when the device receives the TestEventGenerate command (EventNotification for the Test event is always On).
      *  - \b PrimaryApplicationSwitch (Display string: 'Primary Application Switch'): The event will be generated when a primary application switchover has been granted (GigE Vision Specific).
      *  - \b Counter2Start (Display string: 'Counter 2 Start'): The event will be generated when counter 2 starts counting.
      *  - \b Counter3Start (Display string: 'Counter 3 Start'): The event will be generated when counter 3 starts counting.
@@ -15957,6 +18383,34 @@ public:
      *  - \b Timer13End (Display string: 'Timer 13 End'): The event will be generated when Timer 13 ends counting.
      *  - \b Timer14End (Display string: 'Timer 14 End'): The event will be generated when Timer 14 ends counting.
      *  - \b Timer15End (Display string: 'Timer 15 End'): The event will be generated when Timer 15 ends counting.
+     *  - \b Encoder2Stopped (Display string: 'Encoder 2 Stopped'): The event will be generated when the Encoder 2 stops for longer than EncoderTimeout.
+     *  - \b Encoder3Stopped (Display string: 'Encoder 3 Stopped'): The event will be generated when the Encoder 3 stops for longer than EncoderTimeout.
+     *  - \b Encoder4Stopped (Display string: 'Encoder 4 Stopped'): The event will be generated when the Encoder 4 stops for longer than EncoderTimeout.
+     *  - \b Encoder5Stopped (Display string: 'Encoder 5 Stopped'): The event will be generated when the Encoder 5 stops for longer than EncoderTimeout.
+     *  - \b Encoder6Stopped (Display string: 'Encoder 6 Stopped'): The event will be generated when the Encoder 6 stops for longer than EncoderTimeout.
+     *  - \b Encoder7Stopped (Display string: 'Encoder 7 Stopped'): The event will be generated when the Encoder 7 stops for longer than EncoderTimeout.
+     *  - \b Encoder8Stopped (Display string: 'Encoder 8 Stopped'): The event will be generated when the Encoder 8 stops for longer than EncoderTimeout.
+     *  - \b Encoder9Stopped (Display string: 'Encoder 9 Stopped'): The event will be generated when the Encoder 9 stops for longer than EncoderTimeout.
+     *  - \b Encoder10Stopped (Display string: 'Encoder 10 Stopped'): The event will be generated when the Encoder 10 stops for longer than EncoderTimeout.
+     *  - \b Encoder11Stopped (Display string: 'Encoder 11 Stopped'): The event will be generated when the Encoder 11 stops for longer than EncoderTimeout.
+     *  - \b Encoder12Stopped (Display string: 'Encoder 12 Stopped'): The event will be generated when the Encoder 12 stops for longer than EncoderTimeout.
+     *  - \b Encoder13Stopped (Display string: 'Encoder 13 Stopped'): The event will be generated when the Encoder 13 stops for longer than EncoderTimeout.
+     *  - \b Encoder14Stopped (Display string: 'Encoder 14 Stopped'): The event will be generated when the Encoder 14 stops for longer than EncoderTimeout.
+     *  - \b Encoder15Stopped (Display string: 'Encoder 15 Stopped'): The event will be generated when the Encoder 15 stops for longer than EncoderTimeout.
+     *  - \b Encoder2Restarted (Display string: 'Encoder 2 Restarted'): The event will be generated when the Encoder 2 restarts moving.
+     *  - \b Encoder3Restarted (Display string: 'Encoder 3 Restarted'): The event will be generated when the Encoder 3 restarts moving.
+     *  - \b Encoder4Restarted (Display string: 'Encoder 4 Restarted'): The event will be generated when the Encoder 4 restarts moving.
+     *  - \b Encoder5Restarted (Display string: 'Encoder 5 Restarted'): The event will be generated when the Encoder 5 restarts moving.
+     *  - \b Encoder6Restarted (Display string: 'Encoder 6 Restarted'): The event will be generated when the Encoder 6 restarts moving.
+     *  - \b Encoder7Restarted (Display string: 'Encoder 7 Restarted'): The event will be generated when the Encoder 7 restarts moving.
+     *  - \b Encoder8Restarted (Display string: 'Encoder 8 Restarted'): The event will be generated when the Encoder 8 restarts moving.
+     *  - \b Encoder9Restarted (Display string: 'Encoder 9 Restarted'): The event will be generated when the Encoder 9 restarts moving.
+     *  - \b Encoder10Restarted (Display string: 'Encoder 10 Restarted'): The event will be generated when the Encoder 10 restarts moving.
+     *  - \b Encoder11Restarted (Display string: 'Encoder 11 Restarted'): The event will be generated when the Encoder 11 restarts moving.
+     *  - \b Encoder12Restarted (Display string: 'Encoder 12 Restarted'): The event will be generated when the Encoder 12 restarts moving.
+     *  - \b Encoder13Restarted (Display string: 'Encoder 13 Restarted'): The event will be generated when the Encoder 13 restarts moving.
+     *  - \b Encoder14Restarted (Display string: 'Encoder 14 Restarted'): The event will be generated when the Encoder 14 restarts moving.
+     *  - \b Encoder15Restarted (Display string: 'Encoder 15 Restarted'): The event will be generated when the Encoder 15 restarts moving.
      *  - \b Line2RisingEdge (Display string: 'Line 2 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 2.
      *  - \b Line3RisingEdge (Display string: 'Line 3 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 3.
      *  - \b Line4RisingEdge (Display string: 'Line 4 Rising Edge'): The event will be generated when a Rising Edge is detected on the Line 4.
@@ -15999,6 +18453,22 @@ public:
      *  - \b Line13AnyEdge (Display string: 'Line 13 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 13.
      *  - \b Line14AnyEdge (Display string: 'Line 14 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 14.
      *  - \b Line15AnyEdge (Display string: 'Line 15 Any Edge'): The event will be generated when a Falling or Rising Edge is detected on the Line 15.
+     *  - \b Link0Trigger (Display string: 'Link 0 Trigger')
+     *  - \b Link1Trigger (Display string: 'Link 1 Trigger')
+     *  - \b Link2Trigger (Display string: 'Link 2 Trigger')
+     *  - \b Link3Trigger (Display string: 'Link 3 Trigger')
+     *  - \b Link4Trigger (Display string: 'Link 4 Trigger')
+     *  - \b Link5Trigger (Display string: 'Link 5 Trigger')
+     *  - \b Link6Trigger (Display string: 'Link 6 Trigger')
+     *  - \b Link7Trigger (Display string: 'Link 7 Trigger')
+     *  - \b Link8Trigger (Display string: 'Link 8 Trigger')
+     *  - \b Link9Trigger (Display string: 'Link 9 Trigger')
+     *  - \b Link10Trigger (Display string: 'Link 10 Trigger')
+     *  - \b Link11Trigger (Display string: 'Link 11 Trigger')
+     *  - \b Link12Trigger (Display string: 'Link 12 Trigger')
+     *  - \b Link13Trigger (Display string: 'Link 13 Trigger')
+     *  - \b Link14Trigger (Display string: 'Link 14 Trigger')
+     *  - \b Link15Trigger (Display string: 'Link 15 Trigger')
      *  - \b InterfaceListChanged (Display string: 'Interface List Changed'): This enumeration value indicates an event that is fired when the list of interfaces has been updated.
      *  - \b InterfaceLost (Display string: 'Interface Lost'): This enumeration value indicates an event that is raised when the interface connection is lost.
      *  - \b DeviceListChanged (Display string: 'Device List Changed'): This enumeration value indicates an event that is fired when the list of devices has been updated.
@@ -16027,7 +18497,7 @@ public:
      */
     PropertyI64 eventNotification;
     // *INDENT-OFF*
-    PYTHON_ONLY( %mutable; )
+    PYTHON_OR_JAVA_ONLY( %mutable; )
     // *INDENT-ON*
 };
 
