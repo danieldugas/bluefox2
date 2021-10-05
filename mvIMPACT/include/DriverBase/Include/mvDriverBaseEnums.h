@@ -1,20 +1,4 @@
 //-----------------------------------------------------------------------------
-// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
-//
-// This software is provided by MATRIX VISION GmbH "as is"
-// and any express or implied warranties, including, but not limited to, the
-// implied warranties of merchantability and fitness for a particular purpose
-// are disclaimed.
-//
-// In no event shall MATRIX VISION GmbH be liable for any direct,
-// indirect, incidental, special, exemplary, or consequential damages
-// (including, but not limited to, procurement of substitute goods or services;
-// loss of use, data, or profits; or business interruption) however caused and
-// on any theory of liability, whether in contract, strict liability, or tort
-// (including negligence or otherwise) arising in any way out of the use of
-// this software, even if advised of the possibility of such damage.
-
-//-----------------------------------------------------------------------------
 #ifndef mvDriverBaseEnumsH
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define mvDriverBaseEnumsH mvDriverBaseEnumsH
@@ -32,38 +16,54 @@
 // Macros to influence what is to be included into the documentation and what is not
 #if defined(DEVICE_SPECIFIC_DOCUMENTATION_ONLY)
 #   if defined(BUILD_MVBLUECOUGAR_DOCUMENTATION)
+#       if defined(BUILD_MVBLUECOUGARP_DOCUMENTATION)
+#           define IGNORE_MVBLUECOUGARS_SPECIFIC_DOCUMENTATION
+#           define IGNORE_MVBLUELYNXM7_SPECIFIC_DOCUMENTATION
+#       elif defined(BUILD_MVBLUECOUGARS_DOCUMENTATION)
+#           define IGNORE_MVBLUECOUGARP_SPECIFIC_DOCUMENTATION
+#           define IGNORE_MVBLUELYNXM7_SPECIFIC_DOCUMENTATION
+#       elif defined(BUILD_MVBLUELYNXM7_DOCUMENTATION)
+#           define IGNORE_MVBLUECOUGARP_SPECIFIC_DOCUMENTATION
+#           define IGNORE_MVBLUECOUGARS_SPECIFIC_DOCUMENTATION
+#       endif
 #       define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #   elif defined(BUILD_MVBLUEFOX_DOCUMENTATION)
 #       define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
+#   elif defined(BUILD_MVBLUELYNXX_DOCUMENTATION)
+#       define IGNORE_MVDEVICE_SPECIFIC_INTERFACE_DOCUMENTATION
+#       define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #   elif defined(BUILD_MVGRABBER_DOCUMENTATION)
 #       define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #   elif defined(BUILD_MVVIRTUALDEVICE_DOCUMENTATION)
 #       define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVV4L2_SPECIFIC_DOCUMENTATION
 #   elif defined(BUILD_MVV4L2_DOCUMENTATION)
 #       define IGNORE_MVBLUECOUGAR_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVBLUEFOX_SPECIFIC_DOCUMENTATION
+#       define IGNORE_MVBLUELYNXX_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 #       define IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 #   endif // device specific documentation macros
 #endif // #if defined(DEVICE_SPECIFIC_DOCUMENTATION_ONLY)
-
-#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-#   ifndef MV_CUSTOM_COLOR_TWIST_INPUT_CORRECTION_MATRIX_MODES
-#       define MV_CUSTOM_COLOR_TWIST_INPUT_CORRECTION_MATRIX_MODES
-#   endif
-#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 
 #ifdef __cplusplus
 extern "C" {
@@ -158,33 +158,29 @@ enum TAoiMode
      *  In this mode, a device and processing function dependent window in the middle of
      *  the AOI captured from the device will be used for the processing function.
      *
-     *  \since 2.37.0
+     *  Example:
      *
-     * Example:
-     *  - Assume a device that can deliver 1280*960 pixels.
+     *  - Assume a device that can deliver 640 x 480 pixels.
+     *  - The user selects to capture an rectangular AOI starting at 100/100 with a width of 200*200
      *
      *  Now in the centered AOI mode a processing function will use a window smaller than the AOI in the middle
-     *  of the image.
+     *  of the user defined AOI. This e.g. could be a rectangle starting at 150/150 with a width of 100*100.
      *
-     *  The starting point can be calculated by the formula:
-     *  \code
-     *   offsetX = ( width - ( width / 2 ) ) / 2
-     *   offsetY = ( height - ( height / 2 ) ) / 2
-     *  \endcode
-     *
-     *  The used AOI is just width / 2 * height / 2 thus takes up the center quarter of the selected AOI.
-     *
-     * \image html TAoiMode_amCentered.png
-     *
-     *  In case of an AOI defined by the user, the central AOI of the delivered image is used.
-     *
-     *  \deprecated Up to version 2.36.0 the AOI had just a size of 50*50 pixels.
-     *  The behavior was the following:
-     *  - Assume a device that can deliver 640*480 pixels.
-     *  - The user selects to capture an rectangular AOI starting at 100/100 with a width of 200*200
-     *  Now in the centered AOI mode a processing function will use a window smaller than the AOI in the middle of the user defined AOI. This e.g. could be a rectangle starting at 150/150 with a
-     *  width of 100*100.
-     *  \image html TAoiMode_amCentered_upTo_2-36-0.png
+     * \code
+     *             640
+     *  |--------------------------------|
+     *  |    100                         |
+     *  | 100|-----------------|         |
+     *  |    |   150           |         |
+     *  |    |150|--------|    |         |
+     *  |    |   |        |100 |200      |480
+     *  |    |   |--------|    |         |
+     *  |    |      100        |         |
+     *  |    |-----------------|         |
+     *  |           200                  |
+     *  |                                |
+     *  |--------------------------------|
+     * \endcode
      */
     amCentered = 0,
     /// \brief Use the complete image for image processing.
@@ -194,7 +190,7 @@ enum TAoiMode
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Defines valid auto-control speed modes.
+/// \brief Defines valid AutoControlSpeed modes.
 /**
  *  Auto control speed modes define the time in which the controller tries to adapt its parameters to
  *  reach the desired result.
@@ -535,7 +531,7 @@ enum TBlueFOXSensorTiming
      *  This mode is not available for every <b>mvBlueFOX</b> camera.
      */
     bfstFastLineSkip = 1,
-    /// \brief This mode is not available for every <b>mvBlueFOX</b> camera.
+    /// This mode is not available for every <b>mvBlueFOX</b> camera.
     bfstLowSmearLineSkip = 2
 };
 
@@ -1051,7 +1047,7 @@ enum TCameraShutterMode
      *  This is only useful with special lighting or an mechanical extra shutter
      */
     csmGlobalResetRelease,
-    /// \brief Start and stop of integration will happen at the same time for all pixels. Uses optimization for fast centered Readout.
+    /// Start and stop of integration will happen at the same time for all pixels. Uses optimisation for fast centered Readout.
     csmFrameShutterWithFastCenterReadout
 };
 
@@ -1341,7 +1337,7 @@ enum TCameraTriggerMode
      *  by the user.
      *
      *  When e.g. a camera in free running mode captures 30 images per sec. and the user needs
-     *  an image every 40 ms (25 fps) this mode might be more suitable than <b>mvIMPACT::acquire::ctmContinuous</b>
+     *  an image every 40 ms (25 fps) this mode might be more suitable then <b>mvIMPACT::acquire::ctmContinuous</b>
      *  as in the continuous mode when asking for an image every 40 ms the user might need to wait
      *  for the next frame start which at 30 Hz in the worst case would result in a capture time
      *  of (1/30Hz)*2 = 66.6 ms when an image start has just been missed. In
@@ -1379,10 +1375,8 @@ enum TCameraTriggerMode
     /// \brief Start the exposure of a frame when the trigger input level changes from high to low or from low to high.
     ctmOnAnyEdge,
     /// \brief Start the exposure of a frame when the trigger input level changes from high to low or from low to high.
-    /**
-     *  This mode is behaves like ctmContinuous but allows the FPS-Rate to be controlled directly.
-     */
     ctmFramerateControlled
+    /// This mode is behaves like ctmContinuous but allows the FPS-Rate to be controlled directly
 };
 
 //-----------------------------------------------------------------------------
@@ -1413,7 +1407,7 @@ enum TCameraTriggerSource
 enum TChannelSplitMode
 //-----------------------------------------------------------------------------
 {
-    /// \brief The channels will be re-arranged one after the other thus the resulting image will have the same width but 'channel count' times more lines than the input image.
+    /// \brief The channels will be re-arranged one after the other thus the resulting image will have the same width but 'channel count' times more lines then the input image.
     csmVertical,
     /// \brief The channels will be re-arranged next to each other thus the resulting image will have the same height but 'channel count' times more pixels per line.
     csmHorizontal,
@@ -1441,23 +1435,715 @@ enum TClampMode
 //-----------------------------------------------------------------------------
 /// \brief Defines valid values for input color correction matrices.
 /**
+ *  The constant values have the following meaning:
+ *
+ *  First column of values:
+ *  <table>
+ *  <tr><td class="header">Constant Value</td><td class="header">Meaning</td></tr>
+ *  <tr><td class="indexvalue">0x00010000</td><td class="indexvalue">Custom(not associated with a specific product)</td></tr>
+ *  <tr><td class="indexvalue">0x00020000</td><td class="indexvalue">mvBlueCOUGAR-X</td></tr>
+ *  <tr><td class="indexvalue">0x00030000</td><td class="indexvalue">mvBlueCOUGAR-XD</td></tr>
+ *  <tr><td class="indexvalue">0x00040000</td><td class="indexvalue">mvBlueFOX</td></tr>
+ *  <tr><td class="indexvalue">0x00050000</td><td class="indexvalue">mvBlueFOX3</td></tr>
+ *  </table>
+ *
+ *  Second column of values:
+ *  <table>
+ *  <tr><td class="header">Constant Value</td><td class="header">Meaning</td></tr>
+ *  <tr><td class="indexvalue">0x10000000</td><td class="indexvalue">WPPLS</td></tr>
+ *  <tr><td class="indexvalue">0x20000000</td><td class="indexvalue">CIECAM16</td></tr>
+ *  </table>
+ *
+ *  Third column of values:
+ *  A unique constant for each image sensor or custom selection. The following values have been
+ *  assigned so far:
+ *  - 0x0001: Aptina MT9V034 sensor
+ *  - 0x0002: Aptina MT9M021 and MT9M031 sensor
+ *  - 0x0003: Aptina MT9M023, MT9M024 and MT9M034 sensor
+ *  - 0x0004: e2v EV76C560 sensor
+ *  - 0x0005: CMOSIS CMV4000 sensor
+ *  - 0x0006: Aptina MT9P031 sensor
+ *  - 0x0007: Sony ICX424 sensor
+ *  - 0x0008: Sony ICX414 sensor
+ *  - 0x0009: Sony ICX415 sensor
+ *  - 0x000a: Sony ICX445 sensor
+ *  - 0x000b: Sony ICX267 sensor
+ *  - 0x000c: Sony ICX274 sensor
+ *  - 0x000d: Sony ICX655 sensor
+ *  - 0x000e: Sony ICX674 sensor
+ *  - 0x000f: Sony ICX694 and ICX695 sensors
+ *  - 0x0010: Sony ICX814 and ICX815 sensors
+ *  - 0x0011: Aptina MT9J003 sensor
+ *  - 0x0012: CMOSIS CMV2000 sensor
+ *  - 0x0013: CMOSIS CMV4000 sensor
+ *  - 0x0014: e2v EV76C570 sensor
+ *  - 0x0015: Aptina AR0331 sensor
+ *  - 0x0016: Sony ICX204 sensor
+ *  - 0x0017: Sony IMX174 sensor
+ *  - 0x0018: Sony ICX834 and ICX834_2T sensors
+ *  - 0x0019: Sony ICX625 sensor
+ *  - 0x001a: Aptina MT9F002 sensor
+ *  - 0x001b: Sony IMX249 sensor
+ *  - 0x001c: Sony IMX250 sensor
+ *  - 0x001d: Sony IMX252 sensor
+ *  - 0x001e: Sony IMX264 sensor
+ *  - 0x001f: Sony IMX265 sensor
+ *  - 0x0020: Sony IMX253 sensor
+ *  - 0x0021: Sony IMX255 sensor
+ *  - 0x0022: Sony IMX267 sensor
+ *  - 0x0023: Sony IMX304 sensor
+ *  - 0x0024: Sony IMX287 sensor
+ *  - 0x0025: Sony IMX273 sensor
+ *  - 0x0026: Sony IMX178 sensor
+ *  - 0x0027: Sony IMX420 sensor
+ *  - ...
+ *  - 0x1000: User defined correction matrix
+ *  - 0x2000: Driver automatically selects the matching sensor matrix if available
+ *
  * \since 2.2.2
  */
 /// \ingroup CommonInterface
 enum TColorTwistInputCorrectionMatrixMode
 //-----------------------------------------------------------------------------
 {
-#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
-    MV_CUSTOM_COLOR_TWIST_INPUT_CORRECTION_MATRIX_MODES
-#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
+    /// \brief The CIECAM16 correction matrix for Aptina MT9V034 sensors.
+    cticmmAptina_MT9V034_CIECAM16   = 0x00010000 | 0x20000000 | 0x0001,
+    /// \brief The CIECAM16 correction matrix for Aptina MT9M021 and MT9M031 sensors.
+    cticmmAptina_MT9M021_CIECAM16   = 0x00010000 | 0x20000000 | 0x0002,
+    /// \brief The CIECAM16 correction matrix for Aptina MT9M023, MT9M024 and MT9M034 sensors.
+    cticmmAptina_MT9M023_CIECAM16   = 0x00010000 | 0x20000000 | 0x0003,
+    /// \brief The CIECAM16 correction matrix for e2v EV76C560 sensors
+    cticmme2v_EV76C560_CIECAM16     = 0x00010000 | 0x20000000 | 0x0004,
+    /// \brief The CIECAM16 correction matrix for Aptina MT9P031 sensors
+    cticmmAptina_MT9P031_CIECAM16   = 0x00010000 | 0x20000000 | 0x0006,
+    /// \brief The CIECAM16 correction matrix for Sony ICX424 sensors
+    cticmmSony_ICX424_CIECAM16      = 0x00010000 | 0x20000000 | 0x0007,
+    /// \brief The CIECAM16 correction matrix for Sony ICX414 sensors
+    cticmmSony_ICX414_CIECAM16      = 0x00010000 | 0x20000000 | 0x0008,
+    /// \brief The CIECAM16 correction matrix for Sony ICX415 sensors
+    cticmmSony_ICX415_CIECAM16      = 0x00010000 | 0x20000000 | 0x0009,
+    /// \brief The CIECAM16 correction matrix for Sony ICX445 sensors
+    cticmmSony_ICX445_CIECAM16      = 0x00010000 | 0x20000000 | 0x000a,
+    /// \brief The CIECAM16 correction matrix for Sony ICX267 sensors
+    cticmmSony_ICX267_CIECAM16      = 0x00010000 | 0x20000000 | 0x000b,
+    /// \brief The CIECAM16 correction matrix for Sony ICX274 sensors
+    cticmmSony_ICX274_CIECAM16      = 0x00010000 | 0x20000000 | 0x000c,
+    /// \brief The CIECAM16 correction matrix for Sony ICX655 sensors
+    cticmmSony_ICX655_CIECAM16      = 0x00010000 | 0x20000000 | 0x000d,
+    /// \brief The CIECAM16 correction matrix for Sony ICX674 sensors
+    cticmmSony_ICX674_CIECAM16      = 0x00010000 | 0x20000000 | 0x000e,
+    /// \brief The CIECAM16 correction matrix for Sony ICX694 and ICX695 sensors
+    cticmmSony_ICX694_CIECAM16      = 0x00010000 | 0x20000000 | 0x000f,
+    /// \brief The CIECAM16 correction matrix for Sony ICX814 and ICX815 sensors
+    cticmmSony_ICX814_CIECAM16      = 0x00010000 | 0x20000000 | 0x0010,
+    /// \brief The CIECAM16 correction matrix for Aptina MT9J003 sensors
+    cticmmAptina_MT9J003_CIECAM16   = 0x00010000 | 0x20000000 | 0x0011,
+    /// \brief The CIECAM16 correction matrix for CMOSIS CMV2000 sensors
+    cticmmCMOSIS_CMV2000_CIECAM16   = 0x00010000 | 0x20000000 | 0x0012,
+    /// \brief The CIECAM16 correction matrix for CMOSIS CMV4000 sensors
+    cticmmCMOSIS_CMV4000_CIECAM16   = 0x00010000 | 0x20000000 | 0x0013,
+    /// \brief The CIECAM16 correction matrix for e2v EV76C570 sensors
+    cticmme2v_EV76C570_CIECAM16     = 0x00010000 | 0x20000000 | 0x0014,
+    /// \brief The CIECAM16 correction matrix for Aptina AR0331 sensors
+    cticmmAptina_AR0331_CIECAM16    = 0x00010000 | 0x20000000 | 0x0015,
+    /// \brief The CIECAM16 correction matrix for Sony ICX204 sensors
+    cticmmSony_ICX204_CIECAM16      = 0x00010000 | 0x20000000 | 0x0016,
+    /// \brief The CIECAM16 correction matrix for Sony IMX174 sensors
+    cticmmSony_IMX174_CIECAM16      = 0x00010000 | 0x20000000 | 0x0017,
+    /// \brief The CIECAM16 correction matrix for Sony ICX834 and ICX834_2T sensors
+    cticmmSony_ICX834_CIECAM16      = 0x00010000 | 0x20000000 | 0x0018,
+    /// \brief The CIECAM16 correction matrix for Sony ICX625 sensors
+    cticmmSony_ICX625_CIECAM16      = 0x00010000 | 0x20000000 | 0x0019,
+    /// \brief The CIECAM16 correction matrix for Aptina MT9F002 sensors
+    cticmmAptina_MT9F002_CIECAM16   = 0x00010000 | 0x20000000 | 0x001a,
+    /// \brief The CIECAM16 correction matrix for Sony IMX249 sensor
+    cticmmSony_IMX249_CIECAM16      = 0x00010000 | 0x20000000 | 0x001b,
+    /// \brief The CIECAM16 correction matrix for Sony IMX250 sensor
+    cticmmSony_IMX250_CIECAM16      = 0x00010000 | 0x20000000 | 0x001c,
+    /// \brief The CIECAM16 correction matrix for Sony IMX252 sensor
+    cticmmSony_IMX252_CIECAM16      = 0x00010000 | 0x20000000 | 0x001d,
+    /// \brief The CIECAM16 correction matrix for Sony IMX264 sensor
+    cticmmSony_IMX264_CIECAM16      = 0x00010000 | 0x20000000 | 0x001e,
+    /// \brief The CIECAM16 correction matrix for Sony IMX265 sensor
+    cticmmSony_IMX265_CIECAM16      = 0x00010000 | 0x20000000 | 0x001f,
+    /// \brief The CIECAM16 correction matrix for Sony IMX253 sensor
+    cticmmSony_IMX253_CIECAM16      = 0x00010000 | 0x20000000 | 0x0020,
+    /// \brief The CIECAM16 correction matrix for Sony IMX255 sensor
+    cticmmSony_IMX255_CIECAM16      = 0x00010000 | 0x20000000 | 0x0021,
+    /// \brief The CIECAM16 correction matrix for Sony IMX267 sensor
+    cticmmSony_IMX267_CIECAM16      = 0x00010000 | 0x20000000 | 0x0022,
+    /// \brief The CIECAM16 correction matrix for Sony IMX304 sensor
+    cticmmSony_IMX304_CIECAM16      = 0x00010000 | 0x20000000 | 0x0023,
+    /// \brief The CIECAM16 correction matrix for Sony IMX287 sensor
+    cticmmSony_IMX287_CIECAM16      = 0x00010000 | 0x20000000 | 0x0024,
+    /// \brief The CIECAM16 correction matrix for Sony IMX273 sensor
+    cticmmSony_IMX273_CIECAM16      = 0x00010000 | 0x20000000 | 0x0025,
+    /// \brief The CIECAM16 correction matrix for Sony IMX178 sensor
+    cticmmSony_IMX178_CIECAM16      = 0x00010000 | 0x20000000 | 0x0026,
+    /// \brief The CIECAM16 correction matrix for Sony IMX420 sensors
+    cticmmSony_IMX420_CIECAM16      = 0x00010000 | 0x20000000 | 0x0027,
     /// \brief A user defined correction matrix.
-    cticmmUser = 0x00010000 | 0x1000,
+    cticmmUser                      = 0x00010000 |              0x1000,
     /// \brief A device specific internally defined correction matrix.
     /**
      *  This will almost always be the best selection as then the driver
      *  internally uses the best matrix for known products.
      */
-    cticmmDeviceSpecific = 0x00010000 | 0x2000
+    cticmmDeviceSpecific            = 0x00010000 |              0x2000,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx00wC devices.
+    cticmmBlueCOUGAR_Xx00wC_WPPLS   = 0x00020000 | 0x10000000 | 0x0001,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx010C devices.
+    /**
+     *  \since 2.11.9
+     */
+    cticmmBlueCOUGAR_Xx010C_WPPLS   = 0x00020000 | 0x10000000 | 0x0011,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx02bC devices.
+    cticmmBlueCOUGAR_Xx02bC_WPPLS   = 0x00020000 | 0x10000000 | 0x0002,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx02dC devices.
+    cticmmBlueCOUGAR_Xx02dC_WPPLS   = 0x00020000 | 0x10000000 | 0x0003,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx02eC devices.
+    cticmmBlueCOUGAR_Xx02eC_WPPLS   = 0x00020000 | 0x10000000 | 0x0004,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx04bC and mvBlueCOUGAR-XDx04bC devices.
+    cticmmBlueCOUGAR_Xx04bC_WPPLS   = 0x00020000 | 0x10000000 | 0x0005,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx04fC devices.
+    /**
+     *  \since 2.12.0
+     */
+    cticmmBlueCOUGAR_Xx04fC_WPPLS   = 0x00020000 | 0x10000000 | 0x001b,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx04iC devices.
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+     * \since 2.14.3
+     */
+    cticmmBlueCOUGAR_Xx04iC_WPPLS   = 0x00020000 | 0x10000000 | 0x001f,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx05C devices.
+    cticmmBlueCOUGAR_Xx05C_WPPLS    = 0x00020000 | 0x10000000 | 0x0006,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx05bC devices.
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+     * \since 2.14.1
+     */
+    cticmmBlueCOUGAR_Xx05bC_WPPLS   = 0x00020000 | 0x10000000 | 0x001e,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx20aC devices.
+    cticmmBlueCOUGAR_Xx20aC_WPPLS   = 0x00020000 | 0x10000000 | 0x0007,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx20bC devices.
+    cticmmBlueCOUGAR_Xx20bC_WPPLS   = 0x00020000 | 0x10000000 | 0x0008,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx20dC devices.
+    cticmmBlueCOUGAR_Xx20dC_WPPLS   = 0x00020000 | 0x10000000 | 0x0009,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-x21C devices.
+    /**
+     * \since 2.5.20
+     */
+    cticmmBlueCOUGAR_Xx21C_WPPLS    = 0x00020000 | 0x10000000 | 0x0016,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx22C devices.
+    cticmmBlueCOUGAR_Xx22C_WPPLS    = 0x00020000 | 0x10000000 | 0x000a,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx23C devices.
+    cticmmBlueCOUGAR_Xx23C_WPPLS    = 0x00020000 | 0x10000000 | 0x000b,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx24C devices.
+    cticmmBlueCOUGAR_Xx24C_WPPLS    = 0x00020000 | 0x10000000 | 0x000c,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx25aC devices.
+    cticmmBlueCOUGAR_Xx25aC_WPPLS   = 0x00020000 | 0x10000000 | 0x000d,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx25C devices.
+    cticmmBlueCOUGAR_Xx25C_WPPLS    = 0x00020000 | 0x10000000 | 0x0019,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx04C and mvBlueCOUGAR-XDx04C devices.
+    /**
+     *  \since 2.4.0
+     */
+    cticmmBlueCOUGAR_Xx04C_WPPLS    = 0x00020000 | 0x10000000 | 0x0012,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx04aC and mvBlueCOUGAR-XDx04aC devices.
+    /**
+     *  \since 2.4.0
+     */
+    cticmmBlueCOUGAR_Xx04aC_WPPLS   = 0x00020000 | 0x10000000 | 0x0013,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx04eC devices.
+    /**
+     *  \since 2.5.12
+     */
+    cticmmBlueCOUGAR_Xx04eC_WPPLS   = 0x00020000 | 0x10000000 | 0x0014,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx09bC devices.
+    /**
+    *  \since 2.17.1
+    */
+    cticmmBlueCOUGAR_Xx09bC_WPPLS   = 0x00020000 | 0x10000000 | 0x0022,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx012bC devices.
+    /**
+    *  \since 2.17.1
+    */
+    cticmmBlueCOUGAR_Xx012bC_WPPLS  = 0x00020000 | 0x10000000 | 0x0023,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx00fC devices.
+    /**
+    *  \since 2.21.1
+    */
+    cticmmBlueCOUGAR_Xx00fC_WPPLS  = 0x00020000 | 0x10000000 | 0x0024,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-Xx02fC devices.
+    /**
+    *  \since 2.21.1
+    */
+    cticmmBlueCOUGAR_Xx02fC_WPPLS  = 0x00020000 | 0x10000000 | 0x0025,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx04dC devices.
+    cticmmBlueCOUGAR_XDx04dC_WPPLS  = 0x00030000 | 0x10000000 | 0x0017,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx212aC and mvBlueCOUGAR-XDx212C devices.
+    cticmmBlueCOUGAR_XDx212C_WPPLS  = 0x00030000 | 0x10000000 | 0x0018,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx24aC and mvBlueCOUGAR-XDx24bC devices.
+    cticmmBlueCOUGAR_XDx24aC_WPPLS  = 0x00030000 | 0x10000000 | 0x000e,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx26C and mvBlueCOUGAR-XDx26aC devices.
+    cticmmBlueCOUGAR_XDx26C_WPPLS   = 0x00030000 | 0x10000000 | 0x000f,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx29C and mvBlueCOUGAR-XDx29aC devices.
+    cticmmBlueCOUGAR_XDx29C_WPPLS   = 0x00030000 | 0x10000000 | 0x0010,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx05aC devices.
+    /**
+     *  \since 2.13.8
+     */
+    cticmmBlueCOUGAR_XDx05aC_WPPLS  = 0x00030000 | 0x10000000 | 0x001c,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx09bC devices.
+    /**
+    *  \since 2.17.1
+    */
+    cticmmBlueCOUGAR_XDx09bC_WPPLS =  0x00030000 | 0x10000000 | 0x0022,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx012bC devices.
+    /**
+    *  \since 2.17.1
+    */
+    cticmmBlueCOUGAR_XDx012bC_WPPLS = 0x00030000 | 0x10000000 | 0x0023,
+    /// \brief The WPPLS correction matrix for mvBlueCOUGAR-XDx04hC devices.
+    /**
+     *  \since 2.14.0
+     */
+    cticmmBlueCOUGAR_XDx04hC_WPPLS  = 0x00030000 | 0x10000000 | 0x001d,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x00wC devices.
+    cticmmBlueFOX_x00wC_WPPLS       = 0x00040000 | 0x10000000 | 0x0001,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x02bC devices.
+    cticmmBlueFOX_x02bC_WPPLS       = 0x00040000 | 0x10000000 | 0x0002,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x02dC devices.
+    cticmmBlueFOX_x02dC_WPPLS       = 0x00040000 | 0x10000000 | 0x0003,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x05C devices.
+    cticmmBlueFOX_x05C_WPPLS        = 0x00040000 | 0x10000000 | 0x0006,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x20aC devices.
+    cticmmBlueFOX_x20aC_WPPLS       = 0x00040000 | 0x10000000 | 0x0007,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x21C devices.
+    cticmmBlueFOX_x21C_WPPLS        = 0x00040000 | 0x10000000 | 0x0016,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x23C devices.
+    cticmmBlueFOX_x23C_WPPLS        = 0x00040000 | 0x10000000 | 0x000b,
+    /// \brief The WPPLS correction matrix for mvBlueFOX-x24C devices.
+    cticmmBlueFOX_x24C_WPPLS        = 0x00040000 | 0x10000000 | 0x000c,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x100C devices.
+    cticmmBlueFOX3_x100C_WPPLS      = 0x00050000 | 0x10000000 | 0x0011,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x020C devices.
+    /**
+     *  \since 2.5.12
+     */
+    cticmmBlueFOX3_x020C_WPPLS      = 0x00050000 | 0x10000000 | 0x0014,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x031C devices.
+    /**
+     * \since 2.5.20
+     */
+    cticmmBlueFOX3_x031C_WPPLS      = 0x00050000 | 0x10000000 | 0x0015,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x012bC devices.
+    cticmmBlueFOX3_x012bC_WPPLS     = 0x00050000 | 0x10000000 | 0x0002,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x012dC devices.
+    cticmmBlueFOX3_x012dC_WPPLS     = 0x00050000 | 0x10000000 | 0x0003,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x013C devices.
+    cticmmBlueFOX3_x013C_WPPLS      = 0x00050000 | 0x10000000 | 0x0004,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x024C devices.
+    /**
+     *  \since 2.11.5
+     */
+    cticmmBlueFOX3_x024C_WPPLS      = 0x00050000 | 0x10000000 | 0x0017,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x140C devices.
+    /**
+     *  \since 2.13.2
+     */
+    cticmmBlueFOX3_x140C_WPPLS      = 0x00050000 | 0x10000000 | 0x001a,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x024C devices.
+    /**
+     *  \since 2.12.0
+     */
+    cticmmBlueFOX3_x024aC_WPPLS      = 0x00050000 | 0x10000000 | 0x001b,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x051C devices.
+    /**
+     *  \since 2.13.8
+     */
+    cticmmBlueFOX3_x051C_WPPLS       = 0x00050000 | 0x10000000 | 0x001c,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x051aC devices.
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+     * \since 2.14.3
+     */
+    cticmmBlueFOX3_x051aC_WPPLS      = 0x00050000 | 0x10000000 | 0x001e,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x032C devices.
+    /**
+     *  \since 2.14.0
+     */
+    cticmmBlueFOX3_x032C_WPPLS       = 0x00050000 | 0x10000000 | 0x001d,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+     * \since 2.14.3
+     */
+    cticmmBlueFOX3_x032aC_WPPLS      = 0x00050000 | 0x10000000 | 0x001f,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x124C devices.
+    /**
+     * \since 2.16.0
+     */
+    cticmmBlueFOX3_x124C_WPPLS       = 0x00050000 | 0x10000000 | 0x0020,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x089C devices.
+    /**
+     * \since 2.16.0
+     */
+    cticmmBlueFOX3_x089C_WPPLS       = 0x00050000 | 0x10000000 | 0x0021,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x089aC devices.
+    /**
+     * \since 2.16.0
+     */
+    cticmmBlueFOX3_x089aC_WPPLS      = 0x00050000 | 0x10000000 | 0x0022,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x124aC devices.
+    /**
+    * \since 2.17.1
+    */
+    cticmmBlueFOX3_x124aC_WPPLS      = 0x00050000 | 0x10000000 | 0x0023,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x004C devices.
+    /**
+    * \since 2.21.1
+    */
+    cticmmBlueFOX3_x004C_WPPLS      = 0x00050000 | 0x10000000 | 0x0024,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x016C devices.
+    /**
+    * \since 2.21.1
+    */
+    cticmmBlueFOX3_x016C_WPPLS      = 0x00050000 | 0x10000000 | 0x0025,
+    /// \brief The WPPLS correction matrix for mvBlueFOX3-x064C devices.
+    /**
+    * \since 2.22.0
+    */
+    cticmmBlueFOX3_x064C_WPPLS      = 0x00050000 | 0x10000000 | 0x0026,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx00wC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx00wC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0001,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx010C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx010C_CIECAM16 = 0x00020000 | 0x20000000 | 0x0011,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx02bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx02bC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0002,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx02dC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx02dC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0003,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx02eC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx02eC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0004,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx04bC and mvBlueCOUGAR-XDx04bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx04bC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0005,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx04fC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx04fC_CIECAM16 = 0x00020000 | 0x20000000 | 0x001b,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx04iC devices.
+    /**
+    *  \since 2.26.0
+    */
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx04iC_CIECAM16 = 0x00020000 | 0x20000000 | 0x001f,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx05C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx05C_CIECAM16 = 0x00020000 | 0x20000000 | 0x0006,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx05bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx05bC_CIECAM16 = 0x00020000 | 0x20000000 | 0x001e,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx20aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx20aC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0007,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx20bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx20bC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0008,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx20dC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx20dC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0009,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-x21C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx21C_CIECAM16 = 0x00020000 | 0x20000000 | 0x0016,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx22C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx22C_CIECAM16 = 0x00020000 | 0x20000000 | 0x000a,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx23C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx23C_CIECAM16 = 0x00020000 | 0x20000000 | 0x000b,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx24C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx24C_CIECAM16 = 0x00020000 | 0x20000000 | 0x000c,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx25aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx25aC_CIECAM16 = 0x00020000 | 0x20000000 | 0x000d,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx25C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx25C_CIECAM16 = 0x00020000 | 0x20000000 | 0x0019,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx04C and mvBlueCOUGAR-XDx04C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx04C_CIECAM16 = 0x00020000 | 0x20000000 | 0x0012,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx04aC and mvBlueCOUGAR-XDx04aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx04aC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0013,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx04eC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx04eC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0014,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx09bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx09bC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0022,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx012bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx012bC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0023,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx00fC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx00fC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0024,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-Xx02fC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_Xx02fC_CIECAM16 = 0x00020000 | 0x20000000 | 0x0025,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx04dC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx04dC_CIECAM16 = 0x00030000 | 0x20000000 | 0x0017,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx212aC and mvBlueCOUGAR-XDx212C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx212C_CIECAM16 = 0x00030000 | 0x20000000 | 0x0018,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx24aC and mvBlueCOUGAR-XDx24bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx24aC_CIECAM16 = 0x00030000 | 0x20000000 | 0x000e,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx26C and mvBlueCOUGAR-XDx26aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx26C_CIECAM16 = 0x00030000 | 0x20000000 | 0x000f,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx29C and mvBlueCOUGAR-XDx29aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx29C_CIECAM16 = 0x00030000 | 0x20000000 | 0x0010,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx05aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx05aC_CIECAM16 = 0x00030000 | 0x20000000 | 0x001c,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx09bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx09bC_CIECAM16 = 0x00030000 | 0x20000000 | 0x0022,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx012bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx012bC_CIECAM16 = 0x00030000 | 0x20000000 | 0x0023,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx04hC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueCOUGAR_XDx04hC_CIECAM16 = 0x00030000 | 0x20000000 | 0x001d,
+    /// \brief The CIECAM16 correction matrix for mvBlueCOUGAR-XDx07C devices.
+    /**
+    *  \since 2.25.0
+    */
+    cticmmBlueCOUGAR_XDx07C_CIECAM16 = 0x00030000 | 0x20000000 | 0x0027,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x00wC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x00wC_CIECAM16 = 0x00040000 | 0x20000000 | 0x0001,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x02bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x02bC_CIECAM16 = 0x00040000 | 0x20000000 | 0x0002,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x02dC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x02dC_CIECAM16 = 0x00040000 | 0x20000000 | 0x0003,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x05C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x05C_CIECAM16 = 0x00040000 | 0x20000000 | 0x0006,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x20aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x20aC_CIECAM16 = 0x00040000 | 0x20000000 | 0x0007,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x21C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x21C_CIECAM16 = 0x00040000 | 0x20000000 | 0x0016,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x23C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x23C_CIECAM16 = 0x00040000 | 0x20000000 | 0x000b,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX-x24C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX_x24C_CIECAM16 = 0x00040000 | 0x20000000 | 0x000c,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x100C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x100C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0011,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x020C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x020C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0014,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x031C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x031C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0015,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x012bC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x012bC_CIECAM16 = 0x00050000 | 0x20000000 | 0x0002,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x012dC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x012dC_CIECAM16 = 0x00050000 | 0x20000000 | 0x0003,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x013C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x013C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0004,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x024C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x024C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0017,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x140C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x140C_CIECAM16 = 0x00050000 | 0x20000000 | 0x001a,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x024C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x024aC_CIECAM16 = 0x00050000 | 0x20000000 | 0x001b,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x051C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x051C_CIECAM16 = 0x00050000 | 0x20000000 | 0x001c,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x051aC devices.
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x051aC_CIECAM16 = 0x00050000 | 0x20000000 | 0x001e,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x032C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x032C_CIECAM16 = 0x00050000 | 0x20000000 | 0x001d,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x032aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x032aC_CIECAM16 = 0x00050000 | 0x20000000 | 0x001f,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x124C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x124C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0020,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x089C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x089C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0021,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x089aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x089aC_CIECAM16 = 0x00050000 | 0x20000000 | 0x0022,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x124aC devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x124aC_CIECAM16 = 0x00050000 | 0x20000000 | 0x0023,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x004C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x004C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0024,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x016C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x016C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0025,
+    /// \brief The CIECAM16 correction matrix for mvBlueFOX3-x064C devices.
+    /**
+    *  \since 2.26.0
+    */
+    cticmmBlueFOX3_x064C_CIECAM16 = 0x00050000 | 0x20000000 | 0x0026
 };
 
 //-----------------------------------------------------------------------------
@@ -1604,68 +2290,22 @@ enum TDefectivePixelsFilterMode
 {
     /// \brief This filter is switched off.
     dpfmOff = 0,
-    /// \brief The filter is active, detected defective pixels will be replaced with the average value from the left and right neighbor pixel.
+    /// \brief The filter is active, detected defective pixels will be replaced with the average value from the left and right neighbour pixel.
     dpfm3x1Average,
-    /// \brief The filter is active, detected defective pixels will be replaced with the median value calculated from the nearest neighbors (3x3).
+    /// \brief The filter is active, detected defective pixels will be replaced with the median value calculated from the nearest neighbours (3x3).
     dpfm3x3Median,
     /// \brief reset the calibration, delete all internal lists.
     dpfmResetCalibration,
     /// \brief Detect defective leaky pixels within the next frame captured.
     /**
-     *  These are pixels that produce a higher read out value than the average when the sensor is not exposed.
+     *  These are pixels that produce a higher read out value than average when the sensor is not exposed.
      */
     dpfmCalibrateLeakyPixel,
     /// \brief Detect defective cold pixels within the next frame captured.
     /**
-     *  These are pixels that produce a lower read out code than the average when the sensor is exposed to light.
+     *  These are pixels that produce a lower read out code than average when the sensor is exposed to light.
      */
-    dpfmCalibrateColdPixel,
-    /// \brief Detect defective hot pixels within the next frame captured.
-    /**
-     *  These are pixels that produce a higher read out code than the average when the sensor is exposed to light.
-     *
-     *  \since 2.31.0
-     */
-    dpfmCalibrateHotPixel,
-    /// \brief Detect defective hot and cold pixels within the next frame captured.
-    /**
-     *  These are pixels that produce either a higher or a lower read out code than the average when the sensor is exposed to light. This
-     *  effectively combines <b>mvIMPACT::acquire::dpfmCalibrateColdPixel</b> and <b>mvIMPACT::acquire::dpfmCalibrateHotPixel</b>
-     *
-     *  \since 2.31.0
-     */
-    dpfmCalibrateHotAndColdPixel,
-    /// \brief The filter is active, detected defective pixel will be replaced and treated as being fed into a 3x3 de-Bayer algorithm before reaching the filter.
-    /**
-     *  This is a rather special mode that only makes sense for very specific use cases:
-     *  - Defective pixel data has been obtained by the filter from a device that did carry this data within it's non-volatile memory,
-     *    the device itself does NOT provide a defective pixel replacement functionality and the device is
-     *    operated in RGB or YUV mode using a 3 by 3 filter kernel. This will introduce artifacts in the pixels surrounding the defective pixel then and
-     *    to compensate that a special handling is needed.
-     *  - To reduce CPU load another use case might be to detect defective pixels on a device in Bayer mode using the defective pixel filter of this
-     *    SDK and then switch the device into RGB mode if supported. Again this is only needed if the device itself does not offer a defective
-     *    pixel compensation.
-     *
-     *  A far better way to tackle this of course would be (in that order):
-     *  - Compensate the defective pixels on the device BEFORE feeding the data into the Bayer filter
-     *  - Switch the device to a Bayer format, compensate the defective pixels on the host and THEN feed the data into a host-based Bayer filter
-     *  - Select a device with less defective pixels if these are causing harm to the application
-     *
-     * This mode will only operate on packed RGB or packed YUV444 data! It will assume that when given a pixel \a p all the surrounding pixels marked with a \a d in the following
-     * section need to be replaced as well(\a - stands for other pixels \b NOT affected by the replacement operation):
-     *
-     * \code
-     *  ---------------
-     *  ---------------
-     *  ----ddd--------
-     *  ----dpd--------
-     *  ----ddd--------
-     *  ---------------
-     * \endcode
-     *
-     * \since 2.33.0
-     */
-    dpfmReplaceDefectivePixelAfter3x3Filter
+    dpfmCalibrateColdPixel
 };
 
 //-----------------------------------------------------------------------------
@@ -1740,7 +2380,7 @@ enum TDeviceAdvancedOptions // flags_attribute, uint_type
     daoLowFrameRateOptimization = 0x20,
     /// \brief Enable per channel offset correction.
     /**
-     *  Allow per channel offset correction in non auto offset mode for sensors with a Bayer (RGGB) based analog path.
+     *  Allow per channel offset correction in non auto offset mode for sensors with a bayer (RGGB) based analog path.
      *  The per channel offset value will be added to the master offset (Offset_pc).
     */
     daoEnablePerChannelOffsetCorrection = 0x40,
@@ -1760,35 +2400,6 @@ enum TDeviceAdvancedOptions // flags_attribute, uint_type
      * Changing gain or AOI could make such a recalibration necessary.
     */
     daoTriggerSensorColumnCalibration = 0x100
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Defines the way the packet size auto negotiation is handled for GigE Vision devices.
-/**
- * All modes will eventually result in the optimal packet value. However depending on the network
- * setup one method might be faster than another.
- */
-/// \ingroup CommonInterface
-enum TDeviceAutoNegotiatePacketSizeMode
-//-----------------------------------------------------------------------------
-{
-    /// \brief Start with the maximum possible packet size.
-    /**
-     * If set to <b>mvIMPACT::acquire::danpsmHighToLow</b> the packet size auto negotiation starts with the NICs current MTU value. If this value is too
-     * large (in terms of not all network components support it) decreasing sizes will be tried until the optimal (thus highest value supported by all
-     * network components) has been found.
-     *
-     * \note This mode is optimal when working with network interfaces where Jumbo frames are enabled.
-     */
-    danpsmHighToLow,
-    /// \brief Start with the minimal possible packet size.
-    /**
-     * If set to <b>mvIMPACT::acquire::danpsmLowToHigh</b> the packet size auto negotiation starts with the smallest possible MTU. Afterwards increasing sizes
-     * will be tried until the optimal (thus highest value supported by all network components) has been found.
-     *
-     * \note This mode is optimal when nothing is known about the network configuration.
-     */
-    danpsmLowToHigh
 };
 
 //-----------------------------------------------------------------------------
@@ -1867,7 +2478,6 @@ enum TDeviceDigitalOutputMode
     ddomTemperatureOutOfRange
 };
 
-#if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 //-----------------------------------------------------------------------------
 /// \brief Defines valid event states.
 /**
@@ -1879,7 +2489,7 @@ enum TDeviceDigitalOutputMode
 enum TDeviceEventMode
 //-----------------------------------------------------------------------------
 {
-    /// \brief This event won't be signaled in this state even if the underlying event has been noticed by the device driver.
+    /// \brief This event won't be signalled in this state even if the underlying event has been noticed by the device driver.
     demIgnore,
     /// \brief This event will be notified whenever the underlying event has been detected by the device driver.
     demNotify
@@ -1904,27 +2514,27 @@ enum TDeviceEventType // flags_attribute, uint_type
 {
     /// \brief A dummy constant to specify \a no event where an event type must be specified.
     detNone = 0,
-    /// \brief An event of this type will be signaled (<b>if desired</b>) each time a hotplug compliant device recognized by the mvIMPACT acquire device manager has been connected to the system(<b>deprecated</b>).
+    /// \brief An event of this type will be signalled (<b>if desired</b>) each time a hotplug compliant device recognized by the mvIMPACT acquire device manager has been connected to the system(<b>deprecated</b>).
     /**
      *  \deprecated
      *  This event has been declared <b>deprecated</b>. An application should register a callback
      *  to the state property instead.
      */
     detPnPArrival = 0x1,
-    /// \brief An event of this type will be signaled (<b>if desired</b>) each time a hotplug compliant device recognized by the mvIMPACT acquire device manager has been disconnected to the system(<b>deprecated</b>).
+    /// \brief An event of this type will be signalled (<b>if desired</b>) each time a hotplug compliant device recognized by the mvIMPACT acquire device manager has been disconnected to the system(<b>deprecated</b>).
     /**
      *  \deprecated
      *  This event has been declared <b>deprecated</b>. An application should register a callback
      *  to the state property instead.
      */
     detPnPRemoval = 0x2,
-    /// \brief An event of this type will be signaled (<b>if desired</b>) each time the start of a new image has been detected by the device.
+    /// \brief An event of this type will be signalled (<b>if desired</b>) each time the start of a new image has been detected by the device.
     /**
      *  \note
      *  This is currently only supported by mvTITAN/mvGAMMA devices.
      */
     detFrameStart = 0x4,
-    /// \brief An event of this type will be signaled (<b>if desired</b>) each time the histogram is calculated.
+    /// \brief An event of this type will be signalled (<b>if desired</b>) each time the histogram is calculated.
     /**
      *  \note
      *  This is currently only supported by OEM devices.
@@ -1933,7 +2543,6 @@ enum TDeviceEventType // flags_attribute, uint_type
     /// \brief A combination of all event types, which can be used as a mask.
     detAll = detPnPArrival | detPnPRemoval | detFrameStart | detHistogramReady
 };
-#endif // #if !defined(WRAP_ANY) && !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 
 #ifndef IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 //-----------------------------------------------------------------------------
@@ -1978,8 +2587,8 @@ enum TDeviceInterfaceLayout
      *  this request if the current settings differ from the settings that shall be used for this request.
      *
      *  \deprecated
-     *  This interface layout has been declared <b>deprecated</b> for GenICam compliant devices(mvBlueCOUGAR-S,
-     *  mvBlueCOUGAR-X and mvBlueCOUGAR-XD). For these products please use <b>mvIMPACT::acquire::dilGenICam</b>
+     *  This interface layout has been declared <b>deprecated</b> for GenICam compliant devices(mvBlueCOUGAR-P, mvBlueCOUGAR-S,
+     *  mvBlueCOUGAR-X, mvBlueCOUGAR-XD and mvBlueLYNX-M7). For these products please use <b>mvIMPACT::acquire::dilGenICam</b>
      *  instead. Newer devices like the mvBlueFOX3 will not support this interface layout at all.
      *
      *  \sa \ref InterfaceLayouts_Differences.
@@ -1998,7 +2607,7 @@ enum TDeviceInterfaceLayout
      *
      *  \note This interface layout will allow to access third party devices as well.
      *
-     *  \sa \ref InterfaceLayouts \n
+     *  \sa \ref AccessingAndWorkingWithPropertiesMethodsAndLists \n
      *  \ref InterfaceLayouts_Differences.
      */
     dilGenICam = 2
@@ -2205,6 +2814,7 @@ enum TDeviceTriggerMode
     /// \brief Trigger valid as long as the level of the source signal is low.
     dtmLevelLow
 };
+#endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 //-----------------------------------------------------------------------------
 /// \brief Specifies the type trigger overlap permitted with the previous frame.
@@ -2222,7 +2832,6 @@ enum TDeviceTriggerOverlap // long_type
     /// \brief Trigger is accepted at any time during the capture of the previous frame.
     dtoPreviousFrame
 };
-#endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 //-----------------------------------------------------------------------------
 /// \brief Defines valid digital I/O states.
@@ -2351,7 +2960,7 @@ enum TDMR_ERROR // no_property_type
 {
     /// \brief The function call was executed successfully.
     /**
-     * \n \b [0]
+     *  \b [0]
      */
     DMR_NO_ERROR = 0,
     /// \brief The specified device can't be found.
@@ -2360,14 +2969,14 @@ enum TDMR_ERROR // no_property_type
      *  device manager or if the caller tried to close a device which currently
      *  isn't initialized.
      *
-     * \n \b [-2100]
+     *  \b [-2100]
      */
     DMR_DEV_NOT_FOUND = -2100,
     /// \brief The device manager couldn't be initialized.
     /**
      *  This is an internal error.
      *
-     * \n \b [-2101]
+     *  \b [-2101]
      */
     DMR_INIT_FAILED = -2101,
     /// \brief The device is already in use.
@@ -2376,12 +2985,12 @@ enum TDMR_ERROR // no_property_type
      *  device already and an application tries to open the device once more or if a
      *  certain resource is available only once but shall be used twice.
      *
-     * \n \b [-2102]
+     *  \b [-2102]
      */
     DMR_DRV_ALREADY_IN_USE = -2102,
     /// \brief The specified device couldn't be initialized.
     /**
-     * \n \b [-2103]
+     *  \b [-2103]
      */
     DMR_DEV_CANNOT_OPEN = -2103,
     /// \brief The device manager or another module hasn't been initialized properly.
@@ -2389,7 +2998,7 @@ enum TDMR_ERROR // no_property_type
      *  This error occurs if the user tries e.g. to close the device manager without
      *  having initialized it before or if a library used internally or a module or device associated with that library has not been initialized properly or if
      *
-     * \n \b [-2104]
+     *  \b [-2104]
      */
     DMR_NOT_INITIALIZED = -2104,
     /// \brief A device could not be initialized.
@@ -2397,7 +3006,7 @@ enum TDMR_ERROR // no_property_type
      *  In this case the log-file will contain detailed information about the source of the
      *  problem.
      *
-     * \n \b [-2105]
+     *  \b [-2105]
      */
     DMR_DRV_CANNOT_OPEN = -2105,
     /// \brief The devices request queue is empty.
@@ -2409,7 +3018,7 @@ enum TDMR_ERROR // no_property_type
      *  before the acquisition engine has been completely started. In this case a small delay and
      *  then again calling the software trigger function will succeed.
      *
-     * \n \b [-2106]
+     *  \b [-2106]
      */
     DMR_DEV_REQUEST_QUEUE_EMPTY = -2106,
     /// \brief A request object couldn't be created.
@@ -2417,7 +3026,7 @@ enum TDMR_ERROR // no_property_type
      *  The creation of a request object failed. This might e.g. happen, if the system
      *  runs extremely low on memory.
      *
-     * \n \b [-2107]
+     *  \b [-2107]
      */
     DMR_DEV_REQUEST_CREATION_FAILED = -2107,
     /// \brief An invalid parameter has been passed to a function.
@@ -2426,7 +3035,7 @@ enum TDMR_ERROR // no_property_type
      *  an unassigned pointer or if a value has been passed, that is either too large or too small in
      *  that context.
      *
-     * \n \b [-2108]
+     *  \b [-2108]
      */
     DMR_INVALID_PARAMETER = -2108,
     /// \brief One or more symbols needed in a detected driver library couldn't be resolved.
@@ -2436,17 +3045,17 @@ enum TDMR_ERROR // no_property_type
      *  to an <b>IMPACT</b> buffer type while the needed <b>IMPACT Base libraries</b> are not installed
      *  on the target system this error code also might be returned to the user.
      *
-     * \n \b [-2109]
+     *  \b [-2109]
      */
     DMR_EXPORTED_SYMBOL_NOT_FOUND = -2109,
     /// \brief An unknown error occurred while processing a user called driver function.
     /**
-     * \n \b [-2110]
+     *  \b [-2110]
      */
     DEV_UNKNOWN_ERROR = -2110,
     /// \brief A driver function has been called with an invalid device handle.
     /**
-     * \n \b [-2111]
+     *  \b [-2111]
      */
     DEV_HANDLE_INVALID = -2111,
     /// \brief A driver function has been called but one or more of the input parameters are invalid.
@@ -2457,12 +3066,12 @@ enum TDMR_ERROR // no_property_type
      *  - one or more parameters contain an invalid value (e.g. a filename that points to a file that can't
      *  be found, a value, that is larger or smaller than the allowed values.
      *
-     * \n \b [-2112]
+     *  \b [-2112]
      */
     DEV_INPUT_PARAM_INVALID = -2112,
     /// \brief A function has been called with an invalid number of input parameters.
     /**
-     * \n \b [-2113]
+     *  \b [-2113]
      */
     DEV_WRONG_INPUT_PARAM_COUNT = -2113,
     /// \brief The creation of a setting failed.
@@ -2471,7 +3080,7 @@ enum TDMR_ERROR // no_property_type
      *  tried to create already exists or if the system can't allocate memory for the
      *  new setting.
      *
-     * \n \b [-2114]
+     *  \b [-2114]
      */
     DEV_CREATE_SETTING_FAILED = -2114,
     /// \brief The unlock for a <b>mvIMPACT::acquire::Request</b> object failed.
@@ -2482,7 +3091,7 @@ enum TDMR_ERROR // no_property_type
      *  capture image data into its buffer. Another reason for this error might be that the user tries to
      *  unlock a request that is currently processed by the device driver.
      *
-     * \n \b [-2115]
+     *  \b [-2115]
      */
     DEV_REQUEST_CANT_BE_UNLOCKED = -2115,
     /// \brief The number for the <b>mvIMPACT::acquire::Request</b> object is invalid.
@@ -2490,7 +3099,7 @@ enum TDMR_ERROR // no_property_type
      *  The max. number for a <b>mvIMPACT::acquire::Request</b> object is
      *  the value of the property \a RequestCount in the <b>mvIMPACT::acquire::SystemSettings</b> list - 1.
      *
-     * \n \b [-2116]
+     *  \b [-2116]
      */
     DEV_INVALID_REQUEST_NUMBER = -2116,
     /// \brief A Request that hasn't been unlocked has been passed back to the driver.
@@ -2499,63 +3108,67 @@ enum TDMR_ERROR // no_property_type
      *  unlocked the <b>mvIMPACT::acquire::Request</b> that will be used for this new
      *  image.
      *
-     * \n \b [-2117]
+     *  \b [-2117]
      */
     DEV_LOCKED_REQUEST_IN_QUEUE = -2117,
     /// \brief The user requested a new image, but no free <b>mvIMPACT::acquire::Request</b> object is available to process this request.
     /**
-     * \n \b [-2118]
+     *  \b [-2118]
      */
     DEV_NO_FREE_REQUEST_AVAILABLE = -2118,
     /// \brief The wait for a request failed.
     /**
      *  This might have several reasons:
      *
-     *  &bull; The user waited for an image, but no image has been requested before. \n \n
-     *  &bull; The user waited for a requested image, but the image is still not ready(e.g. because of a short timeout and a long exposure time). \n \n
-     *  &bull; A triggered image has been requested but no trigger signal has been detected within the wait period. \n \n
-     *  &bull; A plug and play device(e.g. an USB device) has been unplugged and therefore can't deliver images anymore. In this case the \a 'state' property should be checked to find out if the device is still present or not.
+     *  - the user waited for an image, but no image has been requested before.
+     *  - the user waited for a requested image, but the image is still not ready(e.g. because of
+     *  a short timeout and a long exposure time).
+     *  - a triggered image has been requested but no trigger signal has been detected within the
+     *  wait period.
+     *  - a plug and play device(e.g. an USB device) has been unplugged and therefore can't deliver
+     *  images anymore. In this case the \a 'state' property should be checked to find out if the
+     *  device is still present or not.
      *
-     * \n \b [-2119]
+     *  \b [-2119]
      */
     DEV_WAIT_FOR_REQUEST_FAILED = -2119,
     /// \brief The user tried to get/set a parameter, which is not supported by this device.
     /**
-     * \n \b [-2120]
+     *  \b [-2120]
      */
     DEV_UNSUPPORTED_PARAMETER = -2120,
     /// \brief The requested real time controller is not available for this device.
     /**
-     * \n \b [-2121]
+     *  \b [-2121]
      */
     DEV_INVALID_RTC_NUMBER = -2121,
     /// \brief Some kind of internal error occurred.
     /**
      *  More information can be found in the *.log-file or the debug output.
      *
-     * \n \b [-2122]
+     *  \b [-2122]
      */
     DMR_INTERNAL_ERROR = -2122,
     /// \brief The user allocated input buffer is too small to accommodate the result.
     /**
-     * \n \b [-2123]
+     *  \b [-2123]
      */
     DMR_INPUT_BUFFER_TOO_SMALL = -2123,
     /// \brief Some kind of internal error occurred in the device driver.
     /**
      *  More information can be found in the *.log-file or the debug output.
      *
-     * \n \b [-2124]
+     *  \b [-2124]
      */
     DEV_INTERNAL_ERROR = -2124,
     /// \brief One or more needed libraries are not installed on the system.
     /**
-     * \n \b [-2125]
+     *  \b [-2125]
      */
     DMR_LIBRARY_NOT_FOUND = -2125,
     /// \brief A called function or accessed feature is not available for this device.
     /**
-     * \n \b [-2126]
+     *  \b [-2126]
      */
     DMR_FUNCTION_NOT_IMPLEMENTED = -2126,
     /// \brief The feature in question is (currently) not available for this device or driver.
@@ -2563,7 +3176,7 @@ enum TDMR_ERROR // no_property_type
      *  This might be because another feature currently blocks the one in question from being accessible.
      *  More information can be found in the *.log-file or the debug output.
      *
-     * \n \b [-2127]
+     *  \b [-2127]
      */
     DMR_FEATURE_NOT_AVAILABLE = -2127,
     /// \brief The user is not permitted to perform the requested operation.
@@ -2571,14 +3184,14 @@ enum TDMR_ERROR // no_property_type
      *  This e.g. might happen if the user tried to delete user data without specifying the
      *  required password.
      *
-     * \n \b [-2128]
+     *  \b [-2128]
      */
     DMR_EXECUTION_PROHIBITED = -2128,
     /// \brief The specified file can't be found.
     /**
      *  This might e.g. happen if the current working directory doesn't contain the file specified.
      *
-     *  \n \b [-2129]
+     *  \b [-2129]
      */
     DMR_FILE_NOT_FOUND = -2129,
     /// \brief The licence doesn't match the device it has been assigned to.
@@ -2587,21 +3200,19 @@ enum TDMR_ERROR // no_property_type
      *  device this file has been assigned to has a different serial number then the one used
      *  to create the licence this error will occur.
      *
-     *  \n \b [-2130]
+     *  \b [-2130]
      */
     DMR_INVALID_LICENCE = -2130,
     /// \brief There is no sensor found or the found sensor type is wrong or not supported.
     /**
-     *  \n \b [-2131]
+     *  \b [-2131]
      */
     DEV_SENSOR_TYPE_ERROR = -2131,
     /// \brief A function call was associated with a camera description, that is invalid.
     /**
      *  One possible reason might be, that the camera description has been deleted(driver closed?).
      *
-     *  \since 1.5.0
-     *
-     *  \n \b [-2132]
+     *  \b [-2132]
      */
     DMR_CAMERA_DESCRIPTION_INVALID = -2132,
     /// \brief A suitable driver library to work with the device manager has been detected, but it is too old to work with this version of the mvDeviceManager library.
@@ -2615,9 +3226,7 @@ enum TDMR_ERROR // no_property_type
      *  will always be an updated version of the library considered to be too old for download from
      *  here.
      *
-     *  \since 1.6.6
-     *
-     *  \n \b [-2133]
+     *  \b [-2133]
      */
     DMR_NEWER_LIBRARY_REQUIRED = -2133,
     /// \brief A general timeout occurred.
@@ -2627,9 +3236,7 @@ enum TDMR_ERROR // no_property_type
      *
      *  More information can be found in the *.log-file or the debug output.
      *
-     *  \since 1.7.2
-     *
-     *  \n \b [-2134]
+     *  \b [-2134]
      */
     DMR_TIMEOUT = -2134,
     /// \brief A wait operation has been aborted.
@@ -2638,18 +3245,14 @@ enum TDMR_ERROR // no_property_type
      *  device driver has been closed within another thread. In order to inform the user that this waiting operation
      *  terminated in an unusual wait, <b>mvIMPACT::acquire::DMR_WAIT_ABANDONED</b> will be returned then.
      *
-     *  \since 1.7.2
-     *
-     *  \n \b [-2135]
+     *  \b [-2135]
      */
     DMR_WAIT_ABANDONED = -2135,
     /// \brief The execution of a method object or reading/writing to a feature failed.
     /**
      *  More information can be found in the log-file.
      *
-     *  \since 1.9.0
-     *
-     *  \n \b [-2136]
+     *  \b [-2136]
      */
     DMR_EXECUTION_FAILED = -2136,
     /// \brief This request is currently used by the driver
@@ -2657,17 +3260,12 @@ enum TDMR_ERROR // no_property_type
      *  This error may occur if the user tries to send a certain request object to the driver by a call to the
      *  corresponding image request function.
      *
-     *  \since 1.10.31
-     *
-     *  \n \b [-2137]
+     *  \b [-2137]
      */
     DEV_REQUEST_ALREADY_IN_USE = -2137,
     /// \brief A request has been configured to use a user supplied buffer, but the buffer pointer associated with the request is invalid.
     /**
-     *
-     *  \since 1.10.31
-     *
-     *  \n \b [-2138]
+     *  \b [-2138]
      */
     DEV_REQUEST_BUFFER_INVALID = -2138,
     /// \brief A request has been configured to use a user supplied buffer, but the buffer pointer associated with the request has an incorrect alignment.
@@ -2675,25 +3273,16 @@ enum TDMR_ERROR // no_property_type
      *  Certain devices need aligned memory to perform efficiently thus when a user supplied buffer shall be used to
      *  capture data into this buffer must follow these alignment constraints
      *
-     *  \since 1.10.31
-     *
-     *  \n \b [-2139]
+     *  \b [-2139]
      */
     DEV_REQUEST_BUFFER_MISALIGNED = -2139,
     /// \brief The requested access to a device could not be granted.
     /**
-     * There are multiple reasons for this error code. Detailed information can be found in the *.log-file.
+     *  This might e.g. happen if an application tries to access a device exclusively that is already open in another
+     *  process. This could also happen if a network device has already been opened with control access from another system
+     *  and the current system also tries to establish control access to the device.
      *
-     *  <b>POSSIBLE CAUSES:</b>
-     *
-     *  &bull; an application tries to access a device exclusively that is already open in another process \n \n
-     *  &bull; a network device has already been opened with control access from another system and the current system also tries to establish control access to the device \n \n
-     *  &bull; an application tried to execute a function that is currently not available \n \n
-     *  &bull; an application tries to write to a read-only location.
-     *
-     *  \since 1.10.39
-     *
-     *  \n \b [-2140]
+     *  \b [-2140]
      */
     DEV_ACCESS_DENIED = -2140,
     /// \brief A pre-load condition for loading a device driver failed.
@@ -2704,9 +3293,7 @@ enum TDMR_ERROR // no_property_type
      *  fails the device manager will not try to load the device driver and an error message will be written
      *  to the selected log outputs.
      *
-     *  \since 1.10.52
-     *
-     *  \n \b [-2141]
+     *  \b [-2141]
      */
     DMR_PRELOAD_CHECK_FAILED = -2141,
     /// \brief One or more of the camera descriptions parameters are invalid for the grabber it is used with.
@@ -2715,16 +3302,14 @@ enum TDMR_ERROR // no_property_type
      *
      *  <b>POSSIBLE CAUSES:</b>
      *
-     *  &bull; The TapsXGeometry or TapsYGeometry parameter of the selected camera description cannot be used with a user defined AOI. \n \n
-     *  &bull; A scan standard has been selected, that is not supported by this device. \n \n
-     *  &bull; An invalid scan rate has been selected. \n \n
-     *  &bull; ...
+     *  - The TapsXGeometry or TapsYGeometry parameter of the selected camera description cannot be used with a user defined AOI.
+     *  - A scan standard has been selected, that is not supported by this device.
+     *  - An invalid scan rate has been selected.
+     *  - ...
      *
      *  This error code will be returned by frame grabbers only.
      *
-     *  \since 1.10.57
-     *
-     *  \n \b [-2142]
+     *  \b [-2142]
      */
     DMR_CAMERA_DESCRIPTION_INVALID_PARAMETER = -2142,
     /// \brief A general error returned whenever there has been a problem with accessing a file.
@@ -2734,48 +3319,24 @@ enum TDMR_ERROR // no_property_type
      *
      *  <b>POSSIBLE CAUSES:</b>
      *
-     * &bull; The driver tried to modify a file, for which it has no write access. \n \n
-     * &bull; The driver tried to read from a file, for which it has no read access. \n \n
-     * &bull; ...
+     *  - The driver tried to modify a file, for which it has no write access
+     *  - The driver tried to read from a file, for which it has no read access
+     *  - ...
      *
-     *  \since 1.10.87
-     *
-     *  \n \b [-2143]
+     *  \b [-2143]
      */
     DMR_FILE_ACCESS_ERROR = -2143,
     /// \brief An error returned when the user application attempts to operate on an invalid queue.
     /**
-     *  \since 1.11.0
-     *
-     *  \n \b [-2144]
+     *  \b [-2144]
      */
     DMR_INVALID_QUEUE_SELECTION = -2144,
     /// \brief An error returned when the user application attempts to start the acquisition engine at a
     /// time, where it is already running.
     /**
-     *  \since 2.5.3
-     *
-     *  \n \b [-2145]
+     *  \b [-2145]
      */
     DMR_ACQUISITION_ENGINE_BUSY = -2145,
-    /// \brief An error returned when the user application attempts to perform any operation that currently for any reason cannot be started because something else already running.
-    /**
-     *  The log-output will provide additional information.
-     *
-     *  \since 2.32.0
-     *
-     *  \n \b [-2146]
-     */
-    DMR_BUSY = -2146,
-    /// \brief An error returned when for any reason internal resources (memory, handles, ...) cannot be allocated.
-    /**
-     *  The log-output will provide additional information.
-     *
-     *  \since 2.32.0
-     *
-     *  \n \b [-2147]
-     */
-    DMR_OUT_OF_MEMORY = -2147,
     // If new error codes must be added this happens HERE!
     // When adding a new value here NEVER forget to update the internal string AND/OR exception table!
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
@@ -2786,7 +3347,7 @@ enum TDMR_ERROR // no_property_type
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
     /// \brief Defines the last valid error code value for device and device manager related errors.
     /**
-     *  \n \b [-2199]
+     *  \b [-2199]
      */
     DMR_LAST_VALID_ERROR_CODE = -2199
 };
@@ -2844,46 +3405,6 @@ enum TFlatFieldFilterMode
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Defines valid steps for the actual firmware update process.
-/*
-*  \since 2.41.0
-*/
-enum TFirmwareUpdateStep
-//-----------------------------------------------------------------------------
-{
-    /// \brief A message wants to be sent
-    fusErrorMessage = -1,
-    /// \brief Unzipping the .mvu file.
-    fusUnzippingFirmwareArchive = 5,
-    /// \brief Saving user sets of the device.
-    fusSavingUserSets = 10,
-    /// \brief Erasing the device's flash memory.
-    fusErasingFlash = 15,
-    /// \brief Updating the boot programmer of the device.
-    fusUpdatingBootProgrammer = 20,
-    /// \brief Uploading firmware into device memory.
-    fusUploadingFirmware = 25,
-    /// \brief Rebooting the device.
-    fusRebootingDevice = 90,
-    /// \brief Loading user sets of the device.
-    fusLoadingUserSets = 95
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Defines valid steps for the actual firmware update process.
-/*
-*  \since 2.41.0
-*/
-enum TFirmwareUpdateAction
-//-----------------------------------------------------------------------------
-{
-    /// \brief The default return value to tell the driver to continue processing the firmware update.
-    fuaContinue = 0,
-    /// \brief Return this value to request the driver to terminate an ongoing firmware update as soon as possible.
-    fuaCancel
-};
-
-//-----------------------------------------------------------------------------
 /// \brief Defines valid \b Device HW update results.
 /**
  *  This defines valid result e.g. of a user executed firmware update.
@@ -2912,11 +3433,11 @@ enum THWUpdateResult
     urUpdateFWOK,
     /// \brief The <b>mvIMPACT::acquire::Device</b> is currently setting device ID.
     urSetDevID,
-    /// \brief The <b>mvIMPACT::acquire::Device</b> signaled an error when setting device ID.
+    /// \brief The <b>mvIMPACT::acquire::Device</b> signalled an error when setting device ID.
     urSetDevIDError,
     /// \brief An invalid device ID has been specified.
     /**
-     *  Valid device IDs are within 0 and 250 including the upper and lower limit.
+     *  Valid device ID lie within 0 and 250 including the upper and lower limit.
      */
     urSetDevIDInvalidID,
     /// \brief The <b>mvIMPACT::acquire::Device</b> has successfully been assigned a new ID.
@@ -3246,15 +3767,21 @@ enum TImageBufferPixelFormat
      * \endcode
      *
      *  \note
-     *  When the width is not divisible by 2 the line pitch of a buffer can't be used to calculate line start offsets in a buffer!
-     *  In that case something like this can be used to access a certain pixel (pseudo code assuming 'pointerToStartOfTheBuffer' is a 'byte pointer'):
+     *  When the width is not divisible by 2 the line pitch of buffer can't be used to calculate line start offsets in a buffer.
+     *  In that case something like this can be used to access a certain pixel:
      *
      * \code
-     *  GetMono12Packed_V1Pixel( pointerToStartOfTheBuffer, pixelIndex )
-     *    const int offsetFromStartOfTheBuffer = (3*pixel)/2
-     *    if pixel divisible by 2
-     *      return (pointerToStartOfTheBuffer[offset+1] << shift) | (pointerToStartOfTheBuffer[offset] >> 4)
-     *    return pointerToStartOfTheBuffer[offset] << shift) | (pointerToStartOfTheBuffer[offset+1] & 0xF)
+     *  //-----------------------------------------------------------------------------
+     *  inline unsigned short GetMonoPacked_V2Pixel( const unsigned char* const pBuffer, int pixel, int shift )
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    int offset = (3*pixel)/2;
+     *    if( pixel % 2 )
+     *    {
+     *      return static_cast<unsigned short>(pBuffer[offset+1] << shift) | static_cast<unsigned short>(pBuffer[offset] >> 4);
+     *    }
+     *    return static_cast<unsigned short>(pBuffer[offset] << shift) | static_cast<unsigned short>(pBuffer[offset+1] & 0xF);
+     *  }
      * \endcode
      */
     ibpfMono12Packed_V2 = 18,
@@ -3336,9 +3863,8 @@ enum TImageBufferPixelFormat
      *  RRRRRRRR | RRGGGGGG | GGGGBBBB | BBBBBB   |
      * \endcode
      *
-     * \if (DOXYGEN_C_DOCUMENTATION || DOXYGEN_CPP_DOCUMENTATION)
-     * \note
-     * Access to a certain pixel can e.g. be implemented like this:
+     *  \note
+     *  Access to a certain pixel can e.g. be implemented like this:
      *
      * \code
      *  //-----------------------------------------------------------------------------
@@ -3362,7 +3888,6 @@ enum TImageBufferPixelFormat
      *    blue  = static_cast<unsigned short>(( pixel >> 20 ) & 0x3FF);
      *  }
      * \endcode
-     * \endif
      *
      * \sa \ref Channel_Split_PackedToPlanar
      */
@@ -3458,15 +3983,21 @@ enum TImageBufferPixelFormat
      * \endcode
      *
      *  \note
-     *  When the width is not divisible by 2 the line pitch of a buffer can't be used to calculate line start offsets in a buffer!
-     *  In that case something like this can be used to access a certain pixel (pseudo code assuming 'pointerToStartOfTheBuffer' is a 'byte pointer'):
+     *  When the width is not divisible by 2 the line pitch of buffer can't be used to calculate line start offsets in a buffer.
+     *  In that case something like this can be used to access a certain pixel:
      *
      * \code
-     *  GetMono12Packed_V1Pixel( pointerToStartOfTheBuffer, pixelIndex )
-     *    const int offsetFromStartOfTheBuffer = pixel + pixel/2
-     *    if pixel divisible by 2
-     *      return (pointerToStartOfTheBuffer[offset] >> 4) | (pointerToStartOfTheBuffer[offset+1] << 4)
-     *    return pointerToStartOfTheBuffer[offset]) | (pointerToStartOfTheBuffer[offset+1] & 0xF) << 8)
+     *  //-----------------------------------------------------------------------------
+     *  inline unsigned short GetMono12Packed_V1Pixel( const unsigned char* const pBuffer, int pixel )
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    const int offset = pixel + pixel/2;
+     *    if( pixel % 2 )
+     *    {
+     *      return static_cast<unsigned short>(pBuffer[offset] >> 4) | static_cast<unsigned short>(pBuffer[offset+1] << 4);
+     *    }
+     *    return static_cast<unsigned short>(pBuffer[offset]) | static_cast<unsigned short>((pBuffer[offset+1] & 0xF) << 8);
+     *  }
      * \endcode
      *
      * \since 2.5.0
@@ -3534,11 +4065,6 @@ enum TImageBufferPixelFormat
 enum TImageBufferFormatReinterpreterMode // dotNETReplacement=ibpf;TImageBufferPixelFormat.ibpf
 //------------------------------------------------------------------------------
 {
-    /// \brief Attach or remove a <b>mvIMPACT::acquire::TBayerMosaicParity</b> attribute to a <b>mvIMPACT::acquire::ibpfMono8</b> buffer OR change the existing Bayer attribute to a different value.
-    /**
-     *  The new <b>mvIMPACT::acquire::TBayerMosaicParity</b> value for the buffer can be selected by the property <b>FormatReinterpreterBayerMosaicParity</b>.
-     */
-    ibfrmMono8_To_Mono8 = ibpfMono8 << 16 | ibpfMono8,
     /// \brief Reinterpret <b>mvIMPACT::acquire::ibpfMono8</b> as <b>mvIMPACT::acquire::ibpfRGB888Packed</b>.
     /**
      * This will effectively divide the width by 3 but preserve the original line pitch.
@@ -3549,41 +4075,21 @@ enum TImageBufferFormatReinterpreterMode // dotNETReplacement=ibpf;TImageBufferP
      * This will effectively divide the width by 3 but preserve the original line pitch.
      */
     ibfrmMono8_To_BGR888Packed = ibpfMono8 << 16 | ibpfBGR888Packed,
-    /// \brief Attach or remove a <b>mvIMPACT::acquire::TBayerMosaicParity</b> attribute to a <b>mvIMPACT::acquire::ibpfMono8</b> buffer OR change the existing Bayer attribute to a different value.
-    /**
-     *  The new <b>mvIMPACT::acquire::TBayerMosaicParity</b> value for the buffer can be selected by the property <b>FormatReinterpreterBayerMosaicParity</b>.
-     */
-    ibfrmMono10_To_Mono10 = ibpfMono10 << 16 | ibpfMono10,
     /// \brief Reinterpret <b>mvIMPACT::acquire::ibpfMono10</b> as <b>mvIMPACT::acquire::ibpfRGB101010Packed</b>.
     /**
      * This will effectively divide the width by 3 but preserve the original line pitch.
      */
     ibfrmMono10_To_RGB101010Packed = ibpfMono10 << 16 | ibpfRGB101010Packed,
-    /// \brief Attach or remove a <b>mvIMPACT::acquire::TBayerMosaicParity</b> attribute to a <b>mvIMPACT::acquire::ibpfMono8</b> buffer OR change the existing Bayer attribute to a different value.
-    /**
-     *  The new <b>mvIMPACT::acquire::TBayerMosaicParity</b> value for the buffer can be selected by the property <b>FormatReinterpreterBayerMosaicParity</b>.
-     */
-    ibfrmMono12_To_Mono12 = ibpfMono12 << 16 | ibpfMono12,
     /// \brief Reinterpret <b>mvIMPACT::acquire::ibpfMono12</b> as <b>mvIMPACT::acquire::ibpfRGB121212Packed</b>.
     /**
      * This will effectively divide the width by 3 but preserve the original line pitch.
      */
     ibfrmMono12_To_RGB121212Packed = ibpfMono12 << 16 | ibpfRGB121212Packed,
-    /// \brief Attach or remove a <b>mvIMPACT::acquire::TBayerMosaicParity</b> attribute to a <b>mvIMPACT::acquire::ibpfMono8</b> buffer OR change the existing Bayer attribute to a different value.
-    /**
-     *  The new <b>mvIMPACT::acquire::TBayerMosaicParity</b> value for the buffer can be selected by the property <b>FormatReinterpreterBayerMosaicParity</b>.
-     */
-    ibfrmMono14_To_Mono14 = ibpfMono14 << 16 | ibpfMono14,
     /// \brief Reinterpret <b>mvIMPACT::acquire::ibpfMono14</b> as <b>mvIMPACT::acquire::ibpfRGB141414Packed</b>.
     /**
      * This will effectively divide the width by 3 but preserve the original line pitch.
      */
     ibfrmMono14_To_RGB141414Packed = ibpfMono14 << 16 | ibpfRGB141414Packed,
-    /// \brief Attach or remove a <b>mvIMPACT::acquire::TBayerMosaicParity</b> attribute to a <b>mvIMPACT::acquire::ibpfMono8</b> buffer OR change the existing Bayer attribute to a different value.
-    /**
-     *  The new <b>mvIMPACT::acquire::TBayerMosaicParity</b> value for the buffer can be selected by the property <b>FormatReinterpreterBayerMosaicParity</b>.
-     */
-    ibfrmMono16_To_Mono16 = ibpfMono16 << 16 | ibpfMono16,
     /// \brief Reinterpret <b>mvIMPACT::acquire::ibpfMono16</b> as <b>mvIMPACT::acquire::ibpfRGB161616Packed</b>.
     /**
      * This will effectively divide the width by 3 but preserve the original line pitch.
@@ -3848,15 +4354,20 @@ enum TImageDestinationPixelFormat
      * \endcode
      *
      *  \note
-     *  When the width is not divisible by 2 the line pitch of a buffer can't be used to calculate line start offsets in a buffer!
-     *  In that case something like this can be used to access a certain pixel (pseudo code assuming 'pointerToStartOfTheBuffer' is a 'byte pointer'):
+     *  When the width is not divisible by 2 the line pitch of buffer can't be used to calculate line start offsets in a buffer.
+     *  In that case something like this can be used to access a certain pixel:
      *
      * \code
-     *  GetMono12Packed_V1Pixel( pointerToStartOfTheBuffer, pixelIndex )
-     *    const int offsetFromStartOfTheBuffer = (3*pixel)/2
-     *    if pixel divisible by 2
-     *      return (pointerToStartOfTheBuffer[offset+1] << shift) | (pointerToStartOfTheBuffer[offset] >> 4)
-     *    return pointerToStartOfTheBuffer[offset] << shift) | (pointerToStartOfTheBuffer[offset+1] & 0xF)
+     *  //-----------------------------------------------------------------------------
+     *  inline unsigned short GetMonoPacked_V2Pixel( const unsigned char* const pBuffer, int pixel, int shift )
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    int offset = (3*pixel)/2;
+     *    if( pixel % 2 )
+     *    {
+     *      return static_cast<unsigned short>(pBuffer[offset+1] << shift) | static_cast<unsigned short>(pBuffer[offset] >> 4);
+     *    }
+     *    return static_cast<unsigned short>(pBuffer[offset] << shift) | static_cast<unsigned short>(pBuffer[offset+1] & 0xF);
      *  }
      * \endcode
      */
@@ -3939,9 +4450,9 @@ enum TImageDestinationPixelFormat
      *  RRRRRRRR | RRGGGGGG | GGGGBBBB | BBBBBB   |
      * \endcode
      *
-     * \if (DOXYGEN_C_DOCUMENTATION || DOXYGEN_CPP_DOCUMENTATION)
      *  \note
      *  Access to a certain pixel can e.g. be implemented like this:
+     *
      * \code
      *  //-----------------------------------------------------------------------------
      *  // slow version
@@ -3964,7 +4475,6 @@ enum TImageDestinationPixelFormat
      *    blue  = static_cast<unsigned short>(( pixel >> 20 ) & 0x3FF);
      *  }
      * \endcode
-     * \endif
      *
      * \sa \ref Channel_Split_PackedToPlanar
      */
@@ -4060,15 +4570,21 @@ enum TImageDestinationPixelFormat
      * \endcode
      *
      *  \note
-     *  When the width is not divisible by 2 the line pitch of a buffer can't be used to calculate line start offsets in a buffer!
-     *  In that case something like this can be used to access a certain pixel (pseudo code assuming 'pointerToStartOfTheBuffer' is a 'byte pointer'):
+     *  When the width is not divisible by 2 the line pitch of buffer can't be used to calculate line start offsets in a buffer.
+     *  In that case something like this can be used to access a certain pixel:
      *
      * \code
-     *  GetMono12Packed_V1Pixel( pointerToStartOfTheBuffer, pixelIndex )
-     *    const int offsetFromStartOfTheBuffer = pixel + pixel/2
-     *    if pixel divisible by 2
-     *      return (pointerToStartOfTheBuffer[offset] >> 4) | (pointerToStartOfTheBuffer[offset+1] << 4)
-     *    return pointerToStartOfTheBuffer[offset]) | (pointerToStartOfTheBuffer[offset+1] & 0xF) << 8)
+     *  //-----------------------------------------------------------------------------
+     *  inline unsigned short GetMono12Packed_V1Pixel( const unsigned char* const pBuffer, int pixel )
+     *  //-----------------------------------------------------------------------------
+     *  {
+     *    const int offset = pixel + pixel/2;
+     *    if( pixel % 2 )
+     *    {
+     *      return static_cast<unsigned short>(pBuffer[offset] >> 4) | static_cast<unsigned short>(pBuffer[offset+1] << 4);
+     *    }
+     *    return static_cast<unsigned short>(pBuffer[offset]) | static_cast<unsigned short>((pBuffer[offset+1] & 0xF) << 8);
+     *  }
      * \endcode
      *
      * \since 2.5.0
@@ -4189,12 +4705,6 @@ enum TImageProcessingMode
 
 //-----------------------------------------------------------------------------
 /// \brief Defines valid modes the internal image processing algorithms can be operated in.
-/**
- * \sa \ref ImageProcessing_General.
- *
- * \since 2.12.2
- *
- */
 /// \ingroup CommonInterface
 enum TImageProcessingOptimization
 //-----------------------------------------------------------------------------
@@ -4379,23 +4889,6 @@ enum TInfoSensorType
 };
 
 //-----------------------------------------------------------------------------
-/// \brief Defines the enumeration behaviour of a certain interface of a third party GenTL producer.
-/**
- *  \since 2.34.0
- */
-/// \ingroup CommonInterface
-enum TInterfaceEnumerationBehaviour
-//-----------------------------------------------------------------------------
-{
-    /// \brief The interface will enumerate devices or not according to the general enumeration behavior of this interface type(according to EnumerateEnable setting).
-    iebNotConfigured = 0,
-    /// \brief The interface will not enumerate devices, regardless of the general enumeration behavior of this interface type(overrides EnumerateEnable setting).
-    iebForceIgnore = 1,
-    /// \brief The interface will forcefully enumerate devices, regardless of the general enumeration behavior of this interface type(overrides EnumerateEnable setting).
-    iebForceEnumerate = 2
-};
-
-//-----------------------------------------------------------------------------
 /// \brief Defines how to handle interlaced image data.
 /**
  *  Image data might be transmitted as fields. These later can either be combined
@@ -4539,15 +5032,6 @@ enum TLUTMode
     /// \brief Maps an image by applying interpolated intensity transformation between a set of given sampling points.
     LUTmInterpolated,
     /// \brief Maps an image by applying intensity transformation with gamma correction.
-    /**
-    *  Since the human eye perceives light similar to a logarithm of real light intensity it's characteristic curve is
-    *  non-linear. It follows the rule of (intensity ^ gamma) with a gamma value between 0.3-0.5.
-    *  To provide as much useful information as possible, the image is converted from 12-bit acquired by the sensor to 8-bit utilizing
-    *  this characteristic curve. The result is a linearized image optimized for the human eye's non-linear behavior which allows
-    *  to perceive as much intensity differences as possible.
-    *  \image html Gamma_correction_filter.png
-    <center>Conversion from 12- to 8-bit utilizing the gamma function</center>
-    */
     LUTmGamma,
     /// \brief Maps an image by applying intensity transformation.
     LUTmDirect
@@ -4646,130 +5130,6 @@ enum TOnBoardMemoryMode
 #endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
 
 //-----------------------------------------------------------------------------
-/// \brief Defines valid modes for polarization data extraction filters.
-/// \ingroup CommonInterface
-/**
- * \since 2.29.0
- */
-enum TPolarizedDataExtractionMode
-//-----------------------------------------------------------------------------
-{
-    /// \brief The pixels will be re-arranged one after the other thus the resulting image will have a width of 'input image width / 2' and a height of 'input image height * 2'
-    /**
-     * The resulting image will consist of several small images sitting on top of each other. The first image will contain all the upper left
-     * pixels from each extraction ROI, the last image all the lower right pixels. The images in between will be extracted line by line and then row by row.
-     *
-     * \since 2.29.0
-     */
-    prmVertical,
-    /// \brief The pixels will be re-arranged one after the other thus the resulting image will have a width of 'input image width * 2' and a height of 'input image height / 2'
-    /**
-     * The resulting image will consist of several small images sitting next each other. The first image will contain all the upper left
-     * pixels from each extraction ROI, the last image all the lower right pixels. The images in between will be extracted line by line and then row by row.
-     *
-     * \since 2.29.0
-     */
-    prmHorizontal,
-    /// \brief The pixel selected by 'PolarizedDataExtractionChannelIndex' will be extracted and forwarded from each region defined by '2 * 2'.
-    /**
-     * The resulting image therefore will have a width equal to 'input image width / 2' and a height equal to 'input image height / 2'
-     *
-     * \since 2.29.0
-     */
-    prmExtractSingle,
-    /// \brief The pixel with the minimum value will be extracted and forwarded from each region defined by '2 * 2'.
-    /**
-     * The resulting image therefore will have a width equal to 'input image width / 2' and a height equal to 'input image height / 2'
-     *
-     * \since 2.29.0
-     */
-    prmMinimumValue,
-    /// \brief The mean value of all pixels whose value ranges from 'PolarizedDataExtractionLowerLimit' to 'PolarizedDataExtractionUpperLimit' will be calculated within each region defined by '2 * 2' in the source image and will be forwarded as a single new pixel in the destination image.
-    /**
-     * The resulting image therefore will have a width equal to 'input image width / 2' and a height equal to 'input image height / 2'
-     *
-     * \since 2.29.0
-     */
-    prmMeanValue,
-    /// \brief The pixels will be re-arranged in a way the image keeps its original dimension but each polarization angle will afterwards occupy a certain section in the image
-    /**
-     * The upper left quarter of the resulting image will contain all the upper left pixels from each 2 by 2 pixel region etc.
-     *
-     * \since 2.29.1
-     */
-    prm2By2,
-    /// \brief The angle of the maximum polarization for every '2 * 2' region in the image will be calculated and the resulting value will then be mapped to the value range of the source pixel format.
-    /**
-     * The resulting image therefore will have a width equal to 'input image width / 2' and a height equal to 'input image height / 2'. From each 2 by 2 region (thus 4 input values) a single output
-     * value will be calculated and placed into the resulting image. In this mode the output pixel format will be the same as the input pixel format and the resulting value will be mapped to this
-     * pixel formats value range thus the maximum angle (180 degree) will correspond the maximum pixel value in this format (e.g. 1023 for \b mvIMPACT::acquire::ibpfMono10).
-     *
-     * The angle of the maximum polarization is calculated based the formula:
-     * \f[\Theta = \frac{1}{2}*atan\left (\left ( P45-P135 \right ); \left (P0 - P90\right )\right ) \f]
-     *
-     * \attention Pixels which are saturated or which don't show a signal at all will cause incorrect polarization data. This happens as a result of wrong relations between the different
-     * polarization directions which causes wrong values for the different stokes parameters resulting in incorrect pixel data. Different exposure settings might improve the result.
-     * \since 2.38.0
-     */
-    prmExtractAngle,
-    /// \brief The degree of the polarization for every '2 * 2' region in the image will be calculated and the resulting value will then be mapped to the value range of the source pixel format.
-    /**
-     * The resulting image therefore will have a width equal to 'input image width / 2' and a height equal to 'input image height / 2'. From each 2 by 2 region (thus 4 input values) a single output
-     * value will be calculated and placed into the resulting image. In this mode the output pixel format will be the same as the input pixel format and the resulting value will be mapped to this
-     * pixel formats value range thus the maximum polarization will correspond the maximum pixel value in this format (e.g. 1023 for \b mvIMPACT::acquire::ibpfMono10).
-     *
-     * The calculation of the degree of the maximum polarization is based the formula:
-     * \f[\Pi = \frac{\sqrt{\left(P0-P90\right)^{2}+\left(P45-P135\right)^{2}}}{\left(P0+P90\right)}\f]
-     *
-     * \attention Pixels which are saturated or which don't show a signal at all will cause incorrect polarization data. This happens as a result of wrong relations between the different
-     * polarization directions which causes wrong values for the different stokes parameters resulting in incorrect pixel data. Different exposure settings might improve the result.
-     * \since 2.38.0
-     */
-    prmExtractDegree,
-    /// \brief The angle of the maximum polarization and the degree of the polarization for every '2 * 2' region in the image will be calculated and the resulting value will then be mapped to the value range of and 8-bit HSL image.
-    /**
-     * The angle and the degree are calculated as described in \b mvIMPACT::acquire::prmExtractDegree and \b mvIMPACT::acquire::prmExtractAngle mode. Afterwards the angle is used as hue and the degree is used as saturation value
-     * in the HSL color representation and converted to RGB color representation.
-     *
-     * The resulting image therefore will have a width equal to 'input image width / 2' and a height equal to 'input image height / 2'. From each 2 by 2 region (thus 4 input values) 2 output
-     * values will be calculated and placed into the resulting temporary HSL image. Afterwards this HSL image will transformed back to RGB to generate a pseudo-color image in \b mvIMPACT::acquire::ibpfRGB888Planar format.
-     *
-     * \attention Pixels which are saturated or which don't show a signal at all will cause incorrect polarization data. This happens as a result of wrong relations between the different
-     * polarization directions which causes wrong values for the different stokes parameters resulting in incorrect pixel data. Different exposure settings might improve the result.
-     * \since 2.38.0
-     */
-    prmPseudoColorRepresentation
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Defines valid modes for the interpolation mode of polarization data extraction filters.
-/// \ingroup CommonInterface
-/**
- * \since 2.29.0
- */
-enum TPolarizedDataExtractionInterpolationMode
-//-----------------------------------------------------------------------------
-{
-    /// \brief No interpolation
-    /**
-     * The resulting image therefore will have the same amount of pixels for horizontal or vertical polarization data extraction modes
-     * or a reduced number of pixels for all other modes.
-     *
-     * \since 2.29.0
-     */
-    primOff,
-    /// \brief Linear interpolation
-    /**
-     * The resulting image therefore will have either 4 times the number of pixels for horizontal or vertical polarization data extraction modes
-     * or the same dimensions as the input image for single extraction mode. The additional pixel data will be generated using
-     * linear interpolation algorithm
-     *
-     * \since 2.29.0
-     */
-    primLinear
-};
-
-//-----------------------------------------------------------------------------
 /// \brief Defines valid pulse start trigger values.
 /// \ingroup DeviceSpecificInterface
 enum TPulseStartTrigger
@@ -4841,7 +5201,7 @@ enum TRequestResult // uint_type
      *  frame being lost.
      *
      *  This e.g. might happen if several network devices transmit at the same time or a single device (e.g. connected
-     *  to a PCI bus transfers more data than the PCI bus can pass to the receiving end until a temporary buffer on the
+     *  to a PCI bus transfers more data then the PCI bus can pass to the receiving end until a temporary buffer on the
      *  device runs full. The log output will contain additional information.
      *
      *  If the information is available the property 'MissingData_pc' belonging to that request will contain information
@@ -5068,7 +5428,7 @@ enum TScanClock
      *  - locked after a single line, therefore this mode is very useful for fast channel switching
      *
      *  <b>DISADVANTAGE:</b> \n
-     *  - bigger jitter as the analogue mode(<10ns), therefore not suitable for cameras with a pixel clock higher than about 20Mhz
+     *  - bigger jitter as the analogue mode(<10ns), therefore not suitable for cameras with a pixel clock higher then about 20Mhz
      */
     scDigital
 };
@@ -5087,6 +5447,28 @@ enum TScanStandard
     ssUser
 };
 #endif // IGNORE_MVGRABBER_SPECIFIC_DOCUMENTATION
+
+//-----------------------------------------------------------------------------
+/// \brief Defines valid thread priorities.
+/// \ingroup CommonInterface
+enum TThreadPriority
+//-----------------------------------------------------------------------------
+{
+    /// \brief Idle thread priority.
+    tpIdle,
+    /// \brief Lowest thread priority.
+    tpLowest,
+    /// \brief Below normal thread priority.
+    tpBelowNormal,
+    /// \brief Normal thread priority.
+    tpNormal,
+    /// \brief Above normal thread priority.
+    tpAboveNormal,
+    /// \brief Highest priority.
+    tpHighest,
+    /// \brief time critical thread priority.
+    tpTimeCritical
+};
 
 //-----------------------------------------------------------------------------
 /// \brief Defines a trigger moment for a digital signal.
@@ -5151,41 +5533,6 @@ enum TUserDataReconnectBehaviour
      *  data stored in the devices non-volatile memory.
      */
     udrbUpdateFromDeviceData
-};
-
-//-----------------------------------------------------------------------------
-/// \brief Defines valid video codecs that might be supported by the underlying video compression engine.
-/// \ingroup CommonInterface
-enum TVideoCodec
-//-----------------------------------------------------------------------------
-{
-    /// \brief MPEG2.
-    /**
-     * Recommend file extension for this codec: .m2v
-     *
-     * Supported input pixel formats for this video codec:
-     * - \b mvIMPACT::acquire::ibpfYUV422Packed
-     * - \b mvIMPACT::acquire::ibpfYUV422Planar
-     */
-    vcMPEG2 = 2,
-    /// \brief H264.
-    /**
-     * Recommend file extension for this codec: .mp4
-     *
-     * Supported input pixel formats for this video codec:
-     * - \b mvIMPACT::acquire::ibpfYUV422Packed
-     * - \b mvIMPACT::acquire::ibpfYUV422Planar
-     */
-    vcH264 = 27,
-    /// \brief H265.
-    /**
-     * Recommend file extension for this codec: .mp4
-     *
-     * Supported input pixel formats for this video codec:
-     * - \b mvIMPACT::acquire::ibpfYUV422Packed
-     * - \b mvIMPACT::acquire::ibpfYUV422Planar
-     */
-    vcH265 = 173
 };
 
 //-----------------------------------------------------------------------------
@@ -5287,13 +5634,13 @@ enum TVirtualDeviceTestMode
     vdtmMovingRGB141414PackedImage,
     /// \brief Will generate a moving test pattern with pixel format <b>mvIMPACT::acquire::ibpfRGB161616Packed</b>.
     vdtmMovingRGB161616PackedImage,
-    /// \brief Will generate a moving Bayer test pattern.
+    /// \brief Will generate a moving bayer test pattern.
     vdtmMovingBayerDataRamp,
-    /// \brief Will generate a still Bayer test pattern that can be used for white balancing.
+    /// \brief Will generate a still bayer test pattern that can be used for white balancing.
     vdtmBayerWhiteBalanceTestImage,
     /// \brief Will capture images from a user supplied directory.
     vdtmImageDirectory,
-    /// \brief Will generate a still 8 bit Bayer test pattern for leaky pixel calibration.
+    /// \brief Will generate a still 8 bit bayer test pattern for leaky pixel calibration.
     vdtmLeakyPixelTestImageMono8Bayer,
     /// \brief Will generate a moving test pattern with pixel format <b>mvIMPACT::acquire::ibpfYUV422_UYVYPacked</b> or <b>mvIMPACT::acquire::ibpfYUV422_UYVY_10Packed</b> depending on the value of the 'ChannelBitDepth' property.
     vdtmMovingYUV422_UYVYPackedRamp,
@@ -5339,17 +5686,7 @@ enum TVirtualDeviceTestMode
     /**
      * \since 2.17.0
      */
-    vdtmMovingRGB888PlanarImage,
-    /// \brief Will generate a still Bayer test pattern for hot and cold pixel calibration.
-    /**
-     * \since 2.31.0
-     */
-    vdtmHotAndColdPixelTestImageBayer,
-    /// \brief Will generate a still RGB8 test pattern for hot and cold pixel calibration.
-    /**
-     * \since 2.33.0
-     */
-    vdtmHotAndColdPixelTestImageRGB888Packed
+    vdtmMovingRGB888PlanarImage
 };
 #endif // #ifndef IGNORE_MVVIRTUALDEVICE_SPECIFIC_DOCUMENTATION
 
@@ -5449,14 +5786,11 @@ typedef enum TDarkCurrentFilterMode TDarkCurrentFilterMode;
 typedef enum TDefectivePixelsFilterMode TDefectivePixelsFilterMode;
 typedef enum TDeviceAccessMode TDeviceAccessMode;
 typedef enum TDeviceAdvancedOptions TDeviceAdvancedOptions;
-typedef enum TDeviceAutoNegotiatePacketSizeMode TDeviceAutoNegotiatePacketSizeMode;
 typedef enum TDeviceCapability TDeviceCapability;
 typedef enum TDeviceClass TDeviceClass;
 typedef enum TDeviceDigitalOutputMode TDeviceDigitalOutputMode;
-#if !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 typedef enum TDeviceEventMode TDeviceEventMode;
 typedef enum TDeviceEventType TDeviceEventType;
-#endif // #if !defined(BUILD_FOR_JAVA) // don't wrap deprecated stuff
 typedef enum TDeviceImageTrigger TDeviceImageTrigger;
 typedef enum TDeviceInterfaceLayout TDeviceInterfaceLayout;
 typedef enum TDeviceLoadSettings TDeviceLoadSettings;
@@ -5474,8 +5808,6 @@ typedef enum TDigitalIOMeasurementSource TDigitalIOMeasurementSource;
 typedef enum TDigitalOutputControlMode TDigitalOutputControlMode;
 typedef enum TDigitalSignal TDigitalSignal;
 typedef enum TDMR_ERROR TDMR_ERROR;
-typedef enum TFirmwareUpdateAction TFirmwareUpdateAction;
-typedef enum TFirmwareUpdateStep TFirmwareUpdateStep;
 typedef enum TFieldGateMode TFieldGateMode;
 typedef enum TFlatFieldFilterCorrectionMode TFlatFieldFilterCorrectionMode;
 typedef enum TFlatFieldFilterMode TFlatFieldFilterMode;
@@ -5494,7 +5826,6 @@ typedef enum TImageRequestControlMode TImageRequestControlMode;
 typedef enum TInfoSensorColorMode TInfoSensorColorMode;
 typedef enum TInfoSensorColorPattern TInfoSensorColorPattern;
 typedef enum TInfoSensorType TInfoSensorType;
-typedef enum TInterfaceEnumerationBehaviour TInterfaceEnumerationBehaviour;
 typedef enum TInterlacedMode TInterlacedMode;
 typedef enum TLineCounter TLineCounter;
 typedef enum TLUTGammaMode TLUTGammaMode;
@@ -5507,8 +5838,6 @@ typedef enum TMemoryManagerPoolMode TMemoryManagerPoolMode;
 typedef enum TMirrorMode TMirrorMode;
 typedef enum TMirrorOperationMode TMirrorOperationMode;
 typedef enum TOnBoardMemoryMode TOnBoardMemoryMode;
-typedef enum TPolarizedDataExtractionMode TPolarizedDataExtractionMode;
-typedef enum TPolarizedDataExtractionInterpolationMode TPolarizedDataExtractionInterpolationMode;
 typedef enum TPulseStartTrigger TPulseStartTrigger;
 typedef enum TRequestImageMemoryMode TRequestImageMemoryMode;
 typedef enum TRequestResult TRequestResult;
@@ -5519,52 +5848,15 @@ typedef enum TScalerInterpolationMode TScalerInterpolationMode;
 typedef enum TScalerMode TScalerMode;
 typedef enum TScanClock TScanClock;
 typedef enum TScanStandard TScanStandard;
+typedef enum TThreadPriority TThreadPriority;
 typedef enum TTriggerMoment TTriggerMoment;
 typedef enum TUserDataAccessRight TUserDataAccessRight;
 typedef enum TUserDataReconnectBehaviour TUserDataReconnectBehaviour;
-typedef enum TVideoCodec TVideoCodec;
 typedef enum TVideoStandard TVideoStandard;
 typedef enum TVirtualDeviceImageType TVirtualDeviceImageType;
 typedef enum TVirtualDeviceTestMode TVirtualDeviceTestMode;
 typedef enum TWhiteBalanceCalibrationMode TWhiteBalanceCalibrationMode;
 typedef enum TWhiteBalanceParameter TWhiteBalanceParameter;
-
-#ifdef __GNUC__
-#   define ATTR_PACK_FOUR __attribute__((packed)) __attribute__ ((aligned (4)))
-#else
-#define ATTR_PACK_FOUR
-#   pragma pack(push, 4) // 4 byte structure alignment
-#endif // #ifdef __GNUC__
-
-//-----------------------------------------------------------------------------
-/// \brief A structure containing information about the currently running firmware update process
-struct FirmwareUpdateStatusData
-//-----------------------------------------------------------------------------
-{
-    unsigned int structSize;
-    TFirmwareUpdateStep updateStep;
-    int progressPercent;
-    double timeElapsed_s;
-} ATTR_PACK_FOUR;
-
-#ifndef __GNUC__
-#   pragma pack(pop) // restore previous structure alignment
-#endif
-#undef ATTR_PACK_FOUR
-typedef struct FirmwareUpdateStatusData FirmwareUpdateStatusData;
-
-//-----------------------------------------------------------------------------
-/// \brief A prototype for a callback function that is attached to a firmware update process.
-/**
- *  This callback will be executed to inform the user about the progress of the firmware update.
- */
-typedef int( *CBP_FIRMWARE_UPDATE )( /// The pointer to the associated FirmwareUpdater object
-    void* pUserData,
-    /// The information about the internal states
-    FirmwareUpdateStatusData* statusData,
-    /// The size of the statusData structure
-    unsigned long sizeStatusData );
-//-----------------------------------------------------------------------------
 #endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
 
 #if defined(MVIMPACT_ACQUIRE_H_) || defined(DOXYGEN_CPP_DOCUMENTATION)

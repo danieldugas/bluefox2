@@ -1,20 +1,4 @@
 //-----------------------------------------------------------------------------
-// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
-//
-// This software is provided by MATRIX VISION GmbH "as is"
-// and any express or implied warranties, including, but not limited to, the
-// implied warranties of merchantability and fitness for a particular purpose
-// are disclaimed.
-//
-// In no event shall MATRIX VISION GmbH be liable for any direct,
-// indirect, incidental, special, exemplary, or consequential damages
-// (including, but not limited to, procurement of substitute goods or services;
-// loss of use, data, or profits; or business interruption) however caused and
-// on any theory of liability, whether in contract, strict liability, or tort
-// (including negligence or otherwise) arising in any way out of the use of
-// this software, even if advised of the possibility of such damage.
-
-//-----------------------------------------------------------------------------
 #ifndef MV_CUSTOM_COMMAND_DATA_TYPES_H
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define MV_CUSTOM_COMMAND_DATA_TYPES_H MV_CUSTOM_COMMAND_DATA_TYPES_H
@@ -23,7 +7,7 @@
 
 #ifdef __GNUC__
 #   define ATTR_PACK __attribute__((packed)) __attribute__ ((aligned (1)))
-#elif defined _MSC_VER || defined __BORLANDC__
+#elif defined _MSC_VER
 #   define ATTR_PACK
 #   pragma pack(push, 1) // 1 byte structure alignment
 #elif !defined(SWIG)
@@ -73,8 +57,8 @@ typedef uint32_t uint32_type;
  * what/how to transmit the image.
  *
  * \since 2.18.0
- * \ingroup GenICamInterfaceDevice
  */
+/// \ingroup GenICamInterfaceDevice
 enum TRequestTransmissionMode
 //-----------------------------------------------------------------------------
 {
@@ -90,85 +74,45 @@ enum TRequestTransmissionMode
  * which parameter shall/can be modified.
  *
  * \since 2.18.0
- * \ingroup GenICamInterfaceDevice
  */
+/// \ingroup GenICamInterfaceDevice
 enum TSequencerSetParameter
 //-----------------------------------------------------------------------------
 {
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter1]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter1]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter1,
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter2]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter2]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter2,
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter3]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter3]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter3,
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter4]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter4]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter4,
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter5]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter5]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter5,
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter6]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter6]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter6,
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter7]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter7]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter7,
-    /// \brief Requests the <tt>CounterDuration[CounterSelector=Counter8]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>CounterDuration[CounterSelector=Counter8]</tt> property shall be modified in a user selected sequencer set.
     sspCounterDuration_Counter8,
-    /// \brief Requests the \c ExposureTime property to be modified in a user selected sequencer set.
+    /// \brief Defines the \c ExposureTime property shall be modified in a user selected sequencer set.
     sspExposureTime,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogAll]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogAll]</tt> property shall be modified in a user selected sequencer set.
     sspGain_AnalogAll,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogRed]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogRed]</tt> property shall be modified in a user selected sequencer set.
     sspGain_AnalogRed,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogGreen]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogGreen]</tt> property shall be modified in a user selected sequencer set.
     sspGain_AnalogGreen,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogBlue]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogBlue]</tt> property shall be modified in a user selected sequencer set.
     sspGain_AnalogBlue,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogTap1]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogTap1]</tt> property shall be modified in a user selected sequencer set.
     sspGain_AnalogTap1,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogTap2]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogTap2]</tt> property shall be modified in a user selected sequencer set.
     sspGain_AnalogTap2,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogTap3]</tt> property to be modified in a user selected sequencer set.
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogTap3]</tt> property shall be modified in a user selected sequencer set.
     sspGain_AnalogTap3,
-    /// \brief Requests the <tt>Gain[GainSelector=AnalogTap4]</tt> property to be modified in a user selected sequencer set.
-    sspGain_AnalogTap4,
-    /// \brief Requests the <tt>OffsetX</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.34.0, requires firmware version >= 2.35
-     */
-    sspOffsetX,
-    /// \brief Requests the <tt>OffsetY</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.34.0, requires firmware version >= 2.35
-     */
-    sspOffsetY,
-    /// \brief Requests the <tt>Width</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.36.0, requires firmware version >= 2.36
-     */
-    sspWidth,
-    /// \brief Requests the <tt>Height</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.36.0, requires firmware version >= 2.36
-     */
-    sspHeight,
-    /// \brief Requests the <tt>BinningVertical</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.45.0, requires firmware version >= 2.44
-     */
-    sspBinningVertical,
-    /// \brief Requests the <tt>BinningHorizontal</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.45.0, requires firmware version >= 2.44
-     */
-    sspBinningHorizontal,
-    /// \brief Requests the <tt>DecimationVertical</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.45.0, requires firmware version >= 2.44
-     */
-    sspDecimationVertical,
-    /// \brief Requests the <tt>DecimationHorizontal</tt> property to be modified in a user selected sequencer set.
-    /**
-     * \since 2.45.0, requires firmware version >= 2.44
-     */
-    sspDecimationHorizontal
+    /// \brief Defines the <tt>Gain[GainSelector=AnalogTap4]</tt> property shall be modified in a user selected sequencer set.
+    sspGain_AnalogTap4
 };
 
 #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
@@ -280,7 +224,7 @@ typedef struct CustomCommandUpdateSequencerSetF CustomCommandUpdateSequencerSetF
 
 #ifdef __GNUC__
 #   undef ATTR_PACK
-#elif defined _MSC_VER || defined __BORLANDC__
+#elif defined _MSC_VER
 #   undef ATTR_PACK
 #   pragma pack(pop) // restore previous structure alignment
 #elif !defined(SWIG)

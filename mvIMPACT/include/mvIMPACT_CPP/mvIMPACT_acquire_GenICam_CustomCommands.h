@@ -1,20 +1,4 @@
 //-----------------------------------------------------------------------------
-// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
-//
-// This software is provided by MATRIX VISION GmbH "as is"
-// and any express or implied warranties, including, but not limited to, the
-// implied warranties of merchantability and fitness for a particular purpose
-// are disclaimed.
-//
-// In no event shall MATRIX VISION GmbH be liable for any direct,
-// indirect, incidental, special, exemplary, or consequential damages
-// (including, but not limited to, procurement of substitute goods or services;
-// loss of use, data, or profits; or business interruption) however caused and
-// on any theory of liability, whether in contract, strict liability, or tort
-// (including negligence or otherwise) arising in any way out of the use of
-// this software, even if advised of the possibility of such damage.
-
-//-----------------------------------------------------------------------------
 #ifndef MVIMPACT_ACQUIRE_CUSTOM_COMMANDS_H
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define MVIMPACT_ACQUIRE_CUSTOM_COMMANDS_H MVIMPACT_ACQUIRE_CUSTOM_COMMANDS_H
@@ -53,384 +37,159 @@ namespace acquire
 namespace GenICam
 {
 
+/// \ingroup GenICamInterfaceDevice
+/// @{
+
 //-----------------------------------------------------------------------------
 /// \brief Contains convenience functions to control features understood by a devices custom command interpreter.
 /**
- * Contains convenience functions to control features understood by a devices custom command interpreter.
- * \note Creating an instance of this class will only succeed when the device associated with this object
- * supports the <b>mvIMPACT::acquire::GenICam::mvCustomData.mvCustomCommandBuffer</b> feature. If the
- * feature is not supported an exception will be raised!
- *
- * This class will allow to create various special commands understood by <b>MATRIX VISION GmbH</b> devices.
- * For example an application can modify parameters in a running sequencer program without stopping the
- * acquisition engine and/or the sequencer program
- * (see <b>mvIMPACT::acquire::GenICam::SequencerControl</b> and the corresponding use cases for details).
- * This allows changes to be applied much faster than with a conventional approach which would work like this:
- * \if DOXYGEN_CPP_DOCUMENTATION
- * \code
- *  mvIMPACT::acquire::GenICam::AcquisitionControl ac( getDevicePointerFromSomewhere() );
- *  mvIMPACT::acquire::GenICam::SequencerControl sc( getDevicePointerFromSomewhere() );
- *  sc.sequencerMode.writeS( "Off" );
- *  sc.sequencerConfigurationMode.writeS( "On" );
- *  sc.sequencerSetSelector.write( 2 );
- *  sc.sequencerSetLoad.call(); // needed as otherwise other parameters in the set might get changed as well.
- *  ac.exposureTime.write( 20000 );
- *  sc.sequencerSetSave.call();
- *  sc.sequencerConfigurationMode.writeS( "Off" );
- *  sc.sequencerMode.writeS( "On" );
- * \endcode
- * \elseif DOXYGEN_JAVA_DOCUMENTATION
- * \code
- *  AcquisitionControl ac = new AcquisitionControl( getDevicePointerFromSomewhere() );
- *  SequencerControl sc = new SequencerControl( getDevicePointerFromSomewhere() );
- *  sc.getSequencerMode().writeS( "Off" );
- *  sc.getSequencerConfigurationMode().writeS( "On" );
- *  sc.getSequencerSetSelector().write( 2 );
- *  sc.getSequencerSetLoad().call(); // needed as otherwise other parameters in the set might get changed as well.
- *  ac.getExposureTime().write( 20000 );
- *  sc.getSequencerSetSave().call();
- *  sc.getSequencerConfigurationMode().writeS( "Off" );
- *  sc.getSequencerMode().writeS( "On" );
- * \endcode
- * \elseif DOXYGEN_PYTHON_DOCUMENTATION
- * \code
- *  ac = acquire.AcquisitionControl(getDeviceReferenceFromSomewhere())
- *  sc = acquire.SequencerControl(getDeviceReferenceFromSomewhere())
- *  sc.sequencerMode.writeS("Off")
- *  sc.sequencerConfigurationMode.writeS("On")
- *  sc.sequencerSetSelector.write(2)
- *  sc.sequencerSetLoad.call() # needed as otherwise other parameters in the set might get changed as well.
- *  ac.exposureTime.write(20000)
- *  sc.sequencerSetSave.call()
- *  sc.sequencerConfigurationMode.writeS("Off")
- *  sc.sequencerMode.writeS("On")
- * \endcode
- * \endif
- *
- * A single parameter in a defined sequencer set can be modified much faster at runtime like this:
- *
- * \if DOXYGEN_CPP_DOCUMENTATION
- * \code
- *  mvIMPACT::acquire::GenICam::CustomCommandGenerator ccg( getDevicePointerFromSomewhere() );
- *  // change the exposure time in sequencer set 2 to 30000 us.
- *  ccg.modifySequencerSetValue( 2, sspExposureTime, 30000 );
- * \endcode
- * \elseif DOXYGEN_JAVA_DOCUMENTATION
- * \code
- *  CustomCommandGenerator ccg = new CustomCommandGenerator( getDevicePointerFromSomewhere() );
- *  // change the exposure time in sequencer set 2 to 30000 us.
- *  ccg.modifySequencerSetValue( 2, TSequencerSetParameter.sspExposureTime, 30000 );
- * \endcode
- * \elseif DOXYGEN_PYTHON_DOCUMENTATION
- * \code
- *  ccg = acquire.CustomCommandGenerator(getDeviceReferenceFromSomewhere())
- *  # change the exposure time in sequencer set 2 to 30000 us.
- *  ccg.modifySequencerSetValue(2, acquire.sspExposureTime, 30000)
- * \endcode
- * \endif
- *
- * \attention In a real world application the instance of <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator</b> should be a member of a class
- * or stored elsewhere as constructing objects from the <b>mvIMPACT::acquire::GenICam</b> namespace is taking time so this shouldn't be done for each command
- * that shall be sent!
- *
- * This class uses an internal command buffer which allows an application to send multiple change commands in a single packet.
- * This can be achieved like this:
- *
- * \if DOXYGEN_CPP_DOCUMENTATION
- * \code
- *  mvIMPACT::acquire::GenICam::CustomCommandGenerator ccg( getDevicePointerFromSomewhere() );
- *  // queue 2 parameter change requests
- *  // change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
- *  ccg.queueSequencerSetValueModification( 0, sspGain_AnalogAll, 3.14 );
- *  // change the exposure time in sequencer set 1 to 20000 us.
- *  ccg.queueSequencerSetValueModification( 1, sspExposureTime, 20000 );
- *  // send the 2 modifications in a single package
- *  ccg.sendCommandBuffer();
- * \endcode
- * \elseif DOXYGEN_JAVA_DOCUMENTATION
- * \code
- *  CustomCommandGenerator ccg = new CustomCommandGenerator( getDevicePointerFromSomewhere() );
- *  // queue 2 parameter change requests
- *  // change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
- *  ccg.queueSequencerSetValueModification( 0, TSequencerSetParameter.sspGain_AnalogAll, 3.14 );
- *  // change the exposure time in sequencer set 1 to 20000 us.
- *  ccg.queueSequencerSetValueModification( 1, TSequencerSetParameter.sspExposureTime, 20000 );
- *  // send the 2 modifications in a single package
- *  ccg.sendCommandBuffer();
- * \endcode
- * \elseif DOXYGEN_PYTHON_DOCUMENTATION
- * \code
- *  ccg = acquire.CustomCommandGenerator(getDeviceReferenceFromSomewhere())
- *  # queue 2 parameter change requests
- *  # change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
- *  ccg.queueSequencerSetValueModification(0, acquire.sspGain_AnalogAll, 3.14)
- *  # change the exposure time in sequencer set 1 to 20000 us.
- *  ccg.queueSequencerSetValueModification(1, acquire.sspExposureTime, 20000)
- *  # send the 2 modifications in a single package
- *  ccg.sendCommandBuffer()
- * \endcode
- * \endif
- *
- * The command queue NEVER overflows. When no more data can be stored in the queue before queuing the next parameter
- * change all the pending changes will be transmitted to the device. Calling <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.queueSequencerSetValueModification</b>
- * and <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.sendCommandBuffer</b> directly afterwards is equivalent to call
- * <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.modifySequencerSetValue</b>. So the previous example can also be rewritten like this:
- *
- * \if DOXYGEN_CPP_DOCUMENTATION
- * \code
- *  mvIMPACT::acquire::GenICam::CustomCommandGenerator ccg( getDevicePointerFromSomewhere() );
- *  // queue 2 parameter change requests
- *  // change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
- *  ccg.queueSequencerSetValueModification( 0, sspGain_AnalogAll, 3.14 );
- *  // change the exposure time in sequencer set 1 to 20000 us and send both requests to the device in a single packet.
- *  ccg.modifySequencerSetValue( 1, sspExposureTime, 20000 );
- * \endcode
- * \elseif DOXYGEN_JAVA_DOCUMENTATION
- * \code
- *  CustomCommandGenerator ccg = new CustomCommandGenerator( getDevicePointerFromSomewhere() );
- *  // queue 2 parameter change requests
- *  // change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
- *  ccg.queueSequencerSetValueModification( 0, TSequencerSetParameter.sspGain_AnalogAll, 3.14 );
- *  // change the exposure time in sequencer set 1 to 20000 us and send both requests to the device in a single packet.
- *  ccg.modifySequencerSetValue( 1, TSequencerSetParameter.sspExposureTime, 20000 );
- * \endcode
- * \elseif DOXYGEN_PYTHON_DOCUMENTATION
- * \code
- *  ccg = acquire.CustomCommandGenerator(getDeviceReferenceFromSomewhere ())
- *  # queue 2 parameter change requests
- *  # change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
- *  ccg.queueSequencerSetValueModification(0, acquire.sspGain_AnalogAll, 3.14)
- *  # change the exposure time in sequencer set 1 to 20000 us and send both requests to the device in a single packet.
- *  ccg.modifySequencerSetValue(1, acquire.sspExposureTime, 20000)
- * \endcode
- * \endif
- *
- * Because there can never be an overflow of the command queue even this code is valid:
- * \if DOXYGEN_CPP_DOCUMENTATION
- * \code
- *  for( int i = 0; i < 100; i += 2 )
- *  {
- *    // if the command buffer is full everything should be sent to the device thus no error should be returned here
- *    ccg.queueSequencerSetValueModification( i % 5, sspCounterDuration_Counter1, i * 100 );
- *    ccg.queueSequencerSetValueModification( i % 5, sspExposureTime, ac.exposureTime.getMinValue() + static_cast<double>( i * 10 ) );
- *  }
- * \endcode
- * \elseif DOXYGEN_JAVA_DOCUMENTATION
- * \code
- *  for( int i = 0; i < 100; i += 2 )
- *  {
- *    // if the command buffer is full everything should be sent to the device thus no error should be returned here
- *    ccg.queueSequencerSetValueModification( i % 5, TSequencerSetParameter.sspCounterDuration_Counter1, i * 100 );
- *    ccg.queueSequencerSetValueModification( i % 5, TSequencerSetParameter.sspExposureTime, ac.getExposureTime().getMinValue() + ( i * 10.0 ) );
- *  }
- * \endcode
- * \elseif DOXYGEN_PYTHON_DOCUMENTATION
- * \code
- *  for i in range(0, 100, 2):
- *     # if the command buffer is full everything should be sent to the device thus no error should be returned here
- *     ccg.queueSequencerSetValueModification(i % 5, acquire.sspCounterDuration_Counter1, i * 100)
- *     ccg.queueSequencerSetValueModification(i % 5, acquire.sspExposureTime, ac.exposureTime.getMinValue() + (i * 10))
- * \endcode
- * \endif
- *
- * Apart from modifying sequencer sets at runtime some <b>MATRIX VISION GmbH</b> devices support the so called <tt>Smart Frame Recall</tt> feature.
- * For more information about the feature itself please refer to the corresponding use case in the product documentation. There is also a C++ example
- * called \b GenICamSmartFrameRecallUsage.cpp which can be read to get a first glimpse. The source code and the documentation of this example can be found in the C++
- * version of this documentation. The <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator</b> provides functions to request a full resolution
- * version of an image based on a <b>mvIMPACT::acquire::Request</b> object containing an image with
- * reduced resolution passed to it (internally the relevant piece of information is the timestamp of the image to request). To request an image an
- * application can call one of the various versions of the <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.requestTransmission</b> functions.
- *
- * \if DOXYGEN_CPP_DOCUMENTATION
- * \code
- * int getNextRandomValue( int min, int max )
- * {
- *   return ( rand() % ( max - min ) ) + min;
- * }
- * //...
- *
- * // switch on the smart frame recall feature
- * mvIMPACT::acquire::GenICam::AcquisitionControl ac( pDev );
- * ac.mvSmartFrameRecallEnable.write( bTrue );
- * // more code
- * Request* pRequest = getRequestFromSomewhere();
- * // request the transmission of an arbitrary ROI of this image in full resolution
- * int w = getNextRandomValue( 1, pRequest->imageWidth.read() );
- * int h = getNextRandomValue( 1, pRequest->imageHeight.read() );
- * int x = getNextRandomValue( 0, pRequest->imageWidth.read() - w );
- * int y = getNextRandomValue( 0, pRequest->imageHeight.read() - h );
- * ccg.requestTransmission( pRequest, x, y, w, h, rtmFullResolution );
- * \endcode
- * \elseif DOXYGEN_JAVA_DOCUMENTATION
- * \code
- *  import java.util.concurrent.ThreadLocalRandom; // for random number!
- *
- *  // ... more code, class definition, etc.
- *
- *  public static int getNextRandomValue( int min, int max )
- *  {
- *    return ThreadLocalRandom.current().nextInt( min, max + 1 );
- *  }
- *
- *  // ... more code, function body, etc.
- *
- *   CustomCommandGenerator ccg = new CustomCommandGenerator( pDev );
- *  //...
- *
- *  // switch on the smart frame recall feature
- *  AcquisitionControl ac = new AcquisitionControl( pDev );
- *  ac.getMvSmartFrameRecallEnable().write( TBoolean.bTrue );
- *  // more code
- *  Request pRequest = getRequestFromSomewhere();
- *  // request the transmission of an arbitrary ROI of this image in full resolution
- *  int w = getNextRandomValue( 1, pRequest.getImageWidth().read() );
- *  int h = getNextRandomValue( 1, pRequest.getImageHeight().read() );
- *  int x = getNextRandomValue( 0, pRequest.getImageWidth().read() - w );
- *  int y = getNextRandomValue( 0, pRequest.getImageHeight().read() - h );
- *  ccg.requestTransmission( pRequest, x, y, w, h, TRequestTransmissionMode.rtmFullResolution );
- * \endcode
- * \elseif DOXYGEN_PYTHON_DOCUMENTATION
- * \code
- *  def getNextRandomValue(min, max):
- *     value = min + int((max - min + 1) * random.uniform(0, 1))
- *     if(value < min):
- *         return min
- *     if(value > max):
- *         return max
- *     return value
- *  ...
- *  # switch on the smart frame recall feature
- *  ac = acquire.AcquisitionControl( pDev )
- *  ac.mvSmartFrameRecallEnable.write( acquire.bTrue )
- *  # more code
- *  pRequest = getRequestFromSomewhere()
- *  # request the transmission of an arbitrary ROI of this image in full resolution
- *  w = getNextRandomValue(1, pRequest.getImageWidth.read())
- *  h = getNextRandomValue(1, pRequest.getImageHeight.read())
- *  x = getNextRandomValue(0, pRequest.getImageWidth.read() - w)
- *  y = getNextRandomValue(0, pRequest.getImageHeight.read() - h)
- *  ccg.requestTransmission(pRequest, x, y, w, h, acquire.rtmFullResolution)
- * \endcode
- * \endif
- *
- * To allow the application to distinguish easily between images belonging to the reduced data stream and the ones that have been explicitly requested
- * by the application the <b>mvIMPACT::acquire::Request.chunkmvCustomIdentifier</b> can be used. When requesting a full resolution ROI the application can
- * tag the requested images with a custom identifier. This identifier is later returned in the chunk data of the image. The following example demonstrates
- * how to use this feature:
- *
- * \if DOXYGEN_CPP_DOCUMENTATION
- * \code
- * // switch on the smart frame recall feature
- * mvIMPACT::acquire::GenICam::AcquisitionControl ac( pDev );
- * ac.mvSmartFrameRecallEnable.write( bTrue );
- * // the chunk mode must be switched on to use chunk data for processing:
- * mvIMPACT::acquire::GenICam::ChunkDataControl cdc( getDevicePointerFromSomewhere() );
- * cdc.chunkModeActive.write( bTrue );
- * cdc.chunkSelector.writeS("Image");
- * cdc.chunkEnable.write( bTrue );
- * // enable the 'mvCustomIdentifier' chunk
- * cdc.chunkSelector.writeS("mvCustomIdentifier");
- * cdc.chunkEnable.write( bTrue );
- * // more code ...
- * Request* pRequest = getRequestFromSomewhere();
- * uint customID = 42;
- * if( pRequest->chunkmvCustomIdentifier.read() == 0 )
- * {
- *   // As the 'mvCustomIdentifier' is 0 this is a frame from the normal stream
- *   Rect r;
- *   if( doesImageContainInteresstingData( r ) )
- *   {
- *     // request the transmission of the interesting ROI this image in full resolution
- *     ccg.requestTransmission( pRequest, r.x, r.y, r.w, r.h, rtmFullResolution, customID );
- *   }
- * }
- * else if( pRequest->chunkmvCustomIdentifier.read() == static_cast<int64_type>( customID ) )
- * {
- *   // As the 'mvCustomIdentifier' is 'customID' this is a frame explicitly requested by the application
- *   processImage( pRequest );
- * }
- * else
- * {
- *   // some other ID (this however must have been set by the application as well)
- * }
- * // normal 'unlocking' code for requests should reside here!!
- * // more code...
- * \endcode
- * \elseif DOXYGEN_JAVA_DOCUMENTATION
- * \code
- *  CustomCommandGenerator ccg = new CustomCommandGenerator( getDevicePointerFromSomewhere() );
- *  // switch on the smart frame recall feature
- *  AcquisitionControl ac = new AcquisitionControl( getDevicePointerFromSomewhere() );
- *  ac.getMvSmartFrameRecallEnable().write( TBoolean.bTrue );
- *  // the chunk mode must be switched on to use chunk data for processing:
- *  ChunkDataControl cdc = new ChunkDataControl( getDevicePointerFromSomewhere() );
- *  cdc.getChunkModeActive().write( TBoolean.bTrue );
- *  cdc.getChunkSelector().writeS("Image");
- *  cdc.getChunkEnable().write( TBoolean.bTrue );
- *  // enable the 'mvCustomIdentifier' chunk
- *  cdc.getChunkSelector().writeS( "mvCustomIdentifier" );
- *  cdc.getChunkEnable().write( TBoolean.bTrue );
- *  // more code ...
- *  long customID = 42;
- *  Request pRequest = getRequestFromSomewhere();
- *  if( pRequest.getChunkmvCustomIdentifier().read() == 0 )
- *  {
- *    // As the 'mvCustomIdentifier' is 0 this is a frame from the normal stream
- *    Rectangle r = new Rectangle();
- *    if( doesImageContainInteresstingData( r ) )
- *    {
- *      // request the transmission of the interesting ROI this image in full resolution
- *      ccg.requestTransmission( pRequest, r.x, r.y, r.w, r.h, TRequestTransmissionMode.rtmFullResolution, customID );
- *    }
- *  }
- *  else if( pRequest.getChunkmvCustomIdentifier.read() == customID )
- *  {
- *    // As the 'mvCustomIdentifier' is 'customID' this is a frame explicitly requested by the application
- *    processImage( pRequest );
- *  }
- *  else
- *  {
- *    // some other ID (this however must have been set by the application as well)
- *  }
- *  // normal 'unlocking' code for requests should reside here!!
- *  // more code...
- * \endcode
- * \elseif DOXYGEN_PYTHON_DOCUMENTATION
- * \code
- *  ccg = acquire.CustomCommandGenerator(getDeviceReferenceFromSomewhere())
- *  # switch on the smart frame recall feature
- *  ac = acquire.AcquisitionControl(getDeviceReferenceFromSomewhere())
- *  ac.mvSmartFrameRecallEnable.write(acquire.bTrue)
- *  # the chunk mode must be switched on to use chunk data for processing:
- *  cdc = acquire.ChunkDataControl(getDeviceReferenceFromSomewhere())
- *  cdc.chunkModeActive.write(acquire.bTrue)
- *  cdc.chunkSelector.writeS("Image")
- *  cdc.chunkEnable.write(acquire.bTrue)
- *  # enable the 'mvCustomIdentifier' chunk
- *  cdc.chunkSelector.writeS("mvCustomIdentifier")
- *  cdc.chunkEnable.write(acquire.bTrue)
- *  # more code ...
- *  pRequest = getRequestFromSomewhere()
- *  customID = 42
- *  if pRequest.chunkmvCustomIdentifier.read() == 0:
- *   # As the 'mvCustomIdentifier' is 0 this is a frame from the normal stream
- *   Rect r # assuming this to be a valid Python class for a rectangle
- *   if doesImageContainInteresstingData(r):
- *     # request the transmission of the interesting ROI this image in full resolution
- *     ccg.requestTransmission(pRequest, r.x, r.y, r.w, r.h, acquire.rtmFullResolution, customID)
- *  elif pRequest.chunkmvCustomIdentifier.read() == customID:
- *    # As the 'mvCustomIdentifier' is 'customID' this is a frame explicitly requested by the application
- *    processImage(pRequest)
- *  else:
- *    # some other ID (this however must have been set by the application as well)
- *  # normal 'unlocking' code for requests should reside here!!
- *  # more code...
- * \endcode
- * \endif
- *
- * \since 2.18.0
- * \ingroup GenICamInterfaceDevice
- */
+* Contains convenience functions to control features understood by a devices custom command interpreter.
+* \note Creating an instance of this class will only succeed when the device associated with this object
+* supports the <b>mvIMPACT::acquire::GenICam::mvCustomData.mvCustomCommandBuffer</b> feature. If the
+* feature is not supported an exception will be raised!
+*
+* This class will allow to create various special commands understood by <b>MATRIX VISION GmbH</b> devices.
+* For example an application can modify parameters in a running sequencer program without stopping the
+* acquisition engine and/or the sequencer program
+* (see <b>mvIMPACT::acquire::GenICam::SequencerControl</b> and the corresponding use cases for details).
+* This allows changes to be applied much faster than with a conventional approach which would work like this:
+* \code
+*  mvIMPACT::acquire::GenICam::AcquisitionControl ac( getDevicePointerFromSomewhere() );
+*  mvIMPACT::acquire::GenICam::SequencerControl sc( getDevicePointerFromSomewhere() );
+*  sc.sequencerMode.writeS( "Off" );
+*  sc.sequencerConfigurationMode.writeS( "On" );
+*  sc.sequencerSetSelector.write( 2 );
+*  sc.sequencerSetLoad.call(); // needed as otherwise other parameters in the set might get changed as well.
+*  ac.exposureTime.write( 20000 );
+*  sc.sequencerSetSave.call();
+*  sc.sequencerConfigurationMode.writeS( "Off" );
+*  sc.sequencerMode.writeS( "On" );
+* \endcode
+*
+* A single parameter in a defined sequencer set can be modified much faster at runtime like this:
+*
+* \code
+*  mvIMPACT::acquire::GenICam::CustomCommandGenerator ccg( getDevicePointerFromSomewhere() );
+*  // change the exposure time in sequencer set 2 to 30000 us.
+*  ccg.modifySequencerSetValue( 2, sspExposureTime, 30000 );
+* \endcode
+*
+* \attention In a real world application the instance of <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator</b> should be a member of a class
+* or stored elsewhere as constructing objects from the <b>mvIMPACT::acquire::GenICam</b> namespace is taking time so this shouldn't be done for each command
+* that shall be sent!
+*
+* This class uses an internal command buffer which allows an application to send multiple change commands in a single packet.
+* This can be achieved like this:
+*
+* \code
+*  mvIMPACT::acquire::GenICam::CustomCommandGenerator ccg( getDevicePointerFromSomewhere() );
+*  // queue 2 parameter change requests
+*  // change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
+*  ccg.queueSequencerSetValueModification( 0, sspGain_AnalogAll, 3.14 );
+*  // change the exposure time in sequencer set 1 to 20000 us.
+*  ccg.queueSequencerSetValueModification( 1, sspExposureTime, 20000 );
+*  // send the 2 modifications in a single package
+*  ccg.sendCommandBuffer();
+* \endcode
+*
+* The command queue NEVER overflows. When no more data can be stored in the queue before queuing the next parameter
+* change all the pending changes will be transmitted to the device. Calling <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.queueSequencerSetValueModification</b>
+* and <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.sendCommandBuffer</b> directly afterwards is equivalent to call
+* <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.modifySequencerSetValue</b>. So the previous example can also be rewritten like this:
+*
+* \code
+*  mvIMPACT::acquire::GenICam::CustomCommandGenerator ccg = new mvIMPACT::acquire::GenICam::CustomCommandGenerator( getDevicePointerFromSomewhere() );
+*  // queue 2 parameter change requests
+*  // change the \c AnalogAll gain in sequencer set 0 to 3.14 dB.
+*  ccg.queueSequencerSetValueModification( 0, sspGain_AnalogAll, 3.14 );
+*  // change the exposure time in sequencer set 1 to 20000 us and send both requests to the device in a single packet.
+*  ccg.modifySequencerSetValue( 1, sspExposureTime, 20000 );
+* \endcode
+*
+* Because there can never be an overflow of the command queue even this code is valid:
+* \code
+*  for( int i = 0; i < 100; i += 2 )
+*  {
+*    // if the command buffer is full everything should be sent to the device thus no error should be returned here
+*    ccg.queueSequencerSetValueModification( i % 5, GenICam.sspCounterDuration_Counter1, i * 100 );
+*    ccg.queueSequencerSetValueModification( i % 5, GenICam.sspExposureTime, ac.exposureTime.minValue + static_cast<double>( i * 10 ) );
+* }
+* \endcode
+*
+* Apart from modifying sequencer sets at runtime some <b>MATRIX VISION GmbH</b> devices support the so called <tt>Smart Frame Recall</tt> feature.
+* For more information about the feature itself please refer to the corresponding use case in the product documentation. There is also a C++ example
+* called \b GenICamSmartFrameRecallUsage.cpp which can be read to get a first glimpse. The source code and the documentation of this example can be found in the C++
+* version of this documentation. The <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator</b> provides functions to request a full resolution
+* version of an image based on a <b>mvIMPACT::acquire::Request</b> object containing an image with
+* reduced resolution passed to it (internally the relevant piece of information is the timestamp of the image to request). To request an image an
+* application can call one of the various versions of the <b>mvIMPACT::acquire::GenICam::CustomCommandGenerator.requestTransmission</b> functions.
+*
+* \code
+* int64_type getNextRandomValue( Random r, int64_type min, int64_type max )
+* {
+*   int64_type value = min + static_cast<int64_type>( ( max - min + 1 ) * r.NextDouble() );
+*   return value < min ? min : value > max ? max : value;
+* }
+* // switch on the smart frame recall feature
+* mvIMPACT::acquire::GenICam::AcquisitionControl ac( pDev );
+* ac.mvSmartFrameRecallEnable.write( bTrue );
+* // more code
+* Request* pRequest = getRequestFromSomewhere();
+* // request the transmission of an arbitrary ROI of this image in full resolution
+* int w = getNextRandomValue( r, 1, pRequest->imageWidth.read() );
+* int h = getNextRandomValue( r, 1, pRequest->imageHeight.read() );
+* int x = getNextRandomValue( r, 0, pRequest->imageWidth.read() - w );
+* int y = getNextRandomValue( r, 0, pRequest->imageHeight.read() - h );
+* ccg.requestTransmission( pRequest, x, y, w, h, rtmFullResolution );
+* \endcode
+*
+* To allow the application to distinguish easily between images belonging to the reduced data stream and the ones that have been explicitly requested
+* by the application the <b>mvIMPACT::acquire::Request.chunkmvCustomIdentifier</b> can be used. When requesting a full resolution ROI the application can
+* tag the requested images with a custom identifier. This identifier is later returned in the chunk data of the image. The following example demonstrates
+* how to use this feature:
+*
+* \code
+* // switch on the smart frame recall feature
+* mvIMPACT::acquire::GenICam::AcquisitionControl ac( pDev );
+* ac.mvSmartFrameRecallEnable.write( bTrue );
+* // the chunk mode must be switched on to use chunk data for processing:
+* mvIMPACT::acquire::GenICam::ChunkDataControl cdc( getDevicePointerFromSomewhere() );
+* cdc.chunkModeActive.write( bTrue );
+* cdc.chunkSelector.writeS("Image");
+* cdc.chunkEnable.write( bTrue );
+* // enable the 'mvCustomIdentifier' chunk
+* cdc.chunkSelector.writeS("mvCustomIdentifier");
+* cdc.chunkEnable.write( bTrue );
+* // more code ...
+* Request* pRequest = getRequestFromSomewhere();
+* uint customID = 42;
+* Request pRequest = getRequestFromSomewhere();
+* if( pRequest->chunkmvCustomIdentifier.read() == 0 )
+* {
+*   // As the 'mvCustomIdentifier' is 0 this is a frame from the normal stream
+*   Rect r;
+*   if( doesImageContainInteresstingData( r ) )
+*   {
+*     // request the transmission of the interesting ROI this image in full resolution
+*     ccg.requestTransmission( pRequest, r.x, r.y, r.w, r.h, rtmFullResolution, customID );
+*   }
+* }
+* else if( pRequest->chunkmvCustomIdentifier.read() == static_cast<int64_type>( customID ) )
+* {
+*   // As the 'mvCustomIdentifier' is 'customID' this is a frame explicitly requested by the application
+*   processImage( pRequest );
+* }
+* else
+* {
+*   // some other ID (this however must have been set by the application as well)
+* }
+* // normal 'unlocking' code for requests should reside here!!
+* // more code...
+* \endcode
+*
+* \since 2.18.0
+*/
+/// \ingroup GenICamInterfaceDevice
 class CustomCommandGenerator
 //-----------------------------------------------------------------------------
 {
@@ -624,7 +383,7 @@ public:
      * - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR otherwise.
      */
     int queueTransmissionRequest(
-        /// [in] The timestamp of the <b>mvIMPACT::acquire::Request</b> object shall be transmitted again.
+        /// [in] The timestamp of the <b>mv.impact.acquire.Request</b> object shall be transmitted again.
         int64_type timestamp_us,
         /// [in] The X-offset of the ROI of the image that shall be transmitted within the current image.
         int offsetX,
@@ -756,7 +515,7 @@ public:
      * - A negative error code of type \b mvIMPACT::acquire::TDMR_ERROR otherwise.
      */
     int requestTransmission(
-        /// [in] The timestamp of the <b>mvIMPACT::acquire::Request</b> object shall be transmitted again.
+        /// [in] The timestamp of the <b>mv.impact.acquire.Request</b> object shall be transmitted again.
         int64_type timestamp_us,
         /// [in] The X-offset of the ROI of the image that shall be transmitted within the current image.
         int offsetX,
@@ -1032,14 +791,16 @@ public:
     }
 };
 
+/// @}
+
 } // namespace GenICam
 } // namespace acquire
 } // namespace mvIMPACT
 
-#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_PYTHON)
 #   ifndef MVIMPACT_USE_NAMESPACES
 using namespace mvIMPACT::acquire::GenICam;
 #   endif // #ifndef MVIMPACT_USE_NAMESPACES
-#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_PYTHON)
 
 #endif //MVIMPACT_ACQUIRE_CUSTOM_COMMANDS_H

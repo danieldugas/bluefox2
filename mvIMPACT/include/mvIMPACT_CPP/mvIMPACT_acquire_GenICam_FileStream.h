@@ -1,20 +1,4 @@
 //-----------------------------------------------------------------------------
-// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
-//
-// This software is provided by MATRIX VISION GmbH "as is"
-// and any express or implied warranties, including, but not limited to, the
-// implied warranties of merchantability and fitness for a particular purpose
-// are disclaimed.
-//
-// In no event shall MATRIX VISION GmbH be liable for any direct,
-// indirect, incidental, special, exemplary, or consequential damages
-// (including, but not limited to, procurement of substitute goods or services;
-// loss of use, data, or profits; or business interruption) however caused and
-// on any theory of liability, whether in contract, strict liability, or tort
-// (including negligence or otherwise) arising in any way out of the use of
-// this software, even if advised of the possibility of such damage.
-
-//-----------------------------------------------------------------------------
 #ifndef MVIMPACT_ACQUIRE_GENICAM_FILESTREAM_H_
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #   define MVIMPACT_ACQUIRE_GENICAM_FILESTREAM_H_ MVIMPACT_ACQUIRE_GENICAM_FILESTREAM_H_
@@ -1040,11 +1024,11 @@ typedef IDevFileStreamBase<char, std::char_traits<char> > IDevFileStream;
 } // namespace acquire
 } // namespace mvIMPACT
 
-#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
+#if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_PYTHON)
 #   ifndef MVIMPACT_USE_NAMESPACES
 using namespace mvIMPACT::acquire::GenICam;
 #   endif // #ifndef MVIMPACT_USE_NAMESPACES
-#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_ANY)
+#endif // #if !defined(DOXYGEN_SHOULD_SKIP_THIS) && !defined(WRAP_PYTHON)
 
 #ifdef _MSC_VER
 #   pragma pop_macro("min")

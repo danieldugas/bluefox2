@@ -1,20 +1,4 @@
 //-----------------------------------------------------------------------------
-// (C) Copyright 2005 - 2021 by MATRIX VISION GmbH
-//
-// This software is provided by MATRIX VISION GmbH "as is"
-// and any express or implied warranties, including, but not limited to, the
-// implied warranties of merchantability and fitness for a particular purpose
-// are disclaimed.
-//
-// In no event shall MATRIX VISION GmbH be liable for any direct,
-// indirect, incidental, special, exemplary, or consequential damages
-// (including, but not limited to, procurement of substitute goods or services;
-// loss of use, data, or profits; or business interruption) however caused and
-// on any theory of liability, whether in contract, strict liability, or tort
-// (including negligence or otherwise) arising in any way out of the use of
-// this software, even if advised of the possibility of such damage.
-
-//-----------------------------------------------------------------------------
 #ifndef auto_array_ptrH
 #define auto_array_ptrH auto_array_ptrH
 //-----------------------------------------------------------------------------
@@ -79,11 +63,8 @@ public:
         if( newSize > m_cnt )
         {
             T* p = new T[newSize];
-            if( m_pBuf && ( m_cnt > 0 ) )
-            {
-                memcpy( p, m_pBuf, m_cnt );
-                delete [] m_pBuf;
-            }
+            memcpy( p, m_pBuf, m_cnt );
+            delete [] m_pBuf;
             m_pBuf = p;
             m_cnt = newSize;
         }
